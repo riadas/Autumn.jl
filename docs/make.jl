@@ -8,6 +8,8 @@ makedocs(
   sitename = "Omega.jl",
   pages = [
     "Home" => "index.md",
+    "Tutorial" => "tutorial.md",
+    "Language" => "lang.md"
   ]
 )
 
