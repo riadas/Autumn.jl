@@ -1,11 +1,11 @@
 using Documenter
-using Omega
+using Autumn
 
 makedocs(
-  modules = [Omega],
+  modules = [Autumn],
   authors = "Zenna Tavares, Ria Das",
   format = Documenter.HTML(),
-  sitename = "Omega.jl",
+  sitename = "Autumn.jl",
   pages = [
     "Home" => "index.md",
     "Tutorial" => "tutorial.md",

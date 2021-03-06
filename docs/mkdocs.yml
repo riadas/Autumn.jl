@@ -1,7 +1,7 @@
-site_name:        Omega.jl
-repo_url:         https://github.com/zenna/Omega.jl
-site_description: A higher-order, causal, probabilistic programming language
-site_author:      zenna
+site_name:        Autumn.jl
+repo_url:         https://github.com/riadas/Autumn.jl
+site_description: Autumn is a library for causal and probabilistic inference in Julia.
+site_author:      zenna, riadas
 
 theme: readthedocs
 
