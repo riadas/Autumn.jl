@@ -9,7 +9,7 @@ module Interpret
 - `env`: Environment
 - `ext`: External inputs
 
-$ Return type
+# Return type
 
 """
 function auinterpret(aex::AExpr, env, ext)
