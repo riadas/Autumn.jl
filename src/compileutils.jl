@@ -14,8 +14,8 @@ abstract type Object end
 
 function compile(expr::AExpr, data::Dict{String, Any}, parent::Union{AExpr, Nothing}=nothing)::Expr
   arr = [expr.head, expr.args...]
-  print(arr)
-  print("\n")
+  # print(arr)
+  # print("\n")
   res = @match arr begin
     [:if, args...] => :($(compile(args[1], data)) ? $(compile(args[2], data)) : $(compile(args[3], data)))
     [:assign, args...] => compileassign(expr, data, parent)
@@ -167,10 +167,10 @@ end
 
 function compileobject(expr::AExpr, data::Dict{String, Any})
   name = expr.args[1]
-  println("NAME")
-  println(name)
-  println(expr)
-  println(expr.args)
+  # println("NAME")
+  # println(name)
+  # println(expr)
+  # println(expr.args)
   push!(data["objects"], name)
   custom_fields = map(field -> (
     :($(field.args[1])::$(compile(field.args[2], data)))
@@ -198,9 +198,12 @@ end
 function compileon(expr::AExpr, data::Dict{String, Any})
   # println("here")
   # println(typeof(expr.args[1]) == AExpr ? expr.args[1].args[1] : expr.args[1])
-  event = compile(expr.args[1], data)
-  response = compile(expr.args[2], data)
-  push!(data["on"], (event, compile(expr.args[2], data)))
+  # event = compile(expr.args[1], data)
+  # response = compile(expr.args[2], data)
+
+  event = expr.args[1]
+  response = expr.args[2]
+  push!(data["on"], (event, response))
   :()
 end
 
@@ -211,21 +214,22 @@ function compileinitnext(data::Dict{String, Any})
   end
 
   onClauses = map(x -> quote 
-    if $(x[1])
-      $(x[2])
+    if $(compile(x[1], data))
+      $(compile(x[2], data))
     end
   end, data["on"])
-  notOnClause = quote
-    if !(foldl(|, [$(map(x -> x[1], data["on"])...)]; init=false))
-      $(map(x -> :($(compile(x.args[1], data)) = $(compile(x.args[2].args[2], data))), data["initnext"])...)
-    end
-  end
+
+  notOnClauses = map(x -> quote 
+                          if !(foldl(|, [$(map(y -> compile(y[1], data), filter(z -> ((z[2].head == :assign) && (z[2].args[1] == x.args[1])) || ((z[2].head == :let) && (x.args[1] in map(w -> w.args[1], z[2].args))), data["on"]))...)]; init=false))
+                            $(compile(x.args[1], data)) = $(compile(x.args[2].args[2], data));                                 
+                          end
+                        end, data["initnext"])
 
   next = quote
     $(map(x -> :($(compile(x.args[1], data)) = state.$(Symbol(string(x.args[1])*"History"))[state.time - 1]), 
       vcat(data["initnext"], data["lifted"]))...)
     $(onClauses...)
-    $(notOnClause)
+    $(notOnClauses...)
     $(map(x -> :($(compile(x.args[1], data)) = $(compile(x.args[2], data))), filter(x -> x.args[1] != :GRID_SIZE, data["lifted"]))...)
   end
 
@@ -409,7 +413,7 @@ const builtInDict = Dict([
                         end
 
                         function objClicked(click::Union{Click, Nothing}, objects::AbstractArray)::Object
-                          println(click)
+                          # println(click)
                           filter(obj -> clicked(click, obj), objects)[1]
                         end
 
@@ -645,7 +649,7 @@ const builtInDict = Dict([
                         end
 
                         function randomPositions(GRID_SIZE::Int, n::Int)::Array{Position}
-                          nums = uniformChoice([0:(GRID_SIZE * GRID_SIZE - 1);], n)
+                          nums = uniformChoice(rng, [0:(GRID_SIZE * GRID_SIZE - 1);], n)
                           # println(nums)
                           # println(map(num -> Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), nums))
                           map(num -> Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), nums)
