@@ -609,6 +609,26 @@ const builtInDict = Dict([
                           move(object, Position(x, y))                          
                         end
 
+                        # ----- begin left/right move ----- #
+
+                        function moveLeft(object::Object)::Object
+                          move(object, Position(-1, 0))                          
+                        end
+
+                        function moveRight(object::Object)::Object
+                          move(object, Position(1, 0))                          
+                        end
+
+                        function moveUp(object::Object)::Object
+                          move(object, Position(0, -1))                          
+                        end
+
+                        function moveDown(object::Object)::Object
+                          move(object, Position(0, 1))                          
+                        end
+
+                        # ----- end left/right move ----- #
+
                         function moveNoCollision(object::Object, position::Position)::Object
                           (isWithinBounds(move(object, position)) && isFree(move(object, position.x, position.y), object)) ? move(object, position.x, position.y) : object 
                         end
@@ -616,6 +636,26 @@ const builtInDict = Dict([
                         function moveNoCollision(object::Object, x::Int, y::Int)
                           (isWithinBounds(move(object, x, y)) && isFree(move(object, x, y), object)) ? move(object, x, y) : object 
                         end
+
+                        # ----- begin left/right moveNoCollision ----- #
+
+                        function moveLeftNoCollision(object::Object)::Object
+                          (isWithinBounds(move(object, -1, 0)) && isFree(move(object, -1, 0), object)) ? move(object, -1, 0) : object 
+                        end
+
+                        function moveRightNoCollision(object::Object)::Object
+                          (isWithinBounds(move(object, 1, 0)) && isFree(move(object, 1, 0), object)) ? move(object, 1, 0) : object 
+                        end
+
+                        function moveUpNoCollision(object::Object)::Object
+                          (isWithinBounds(move(object, 0, -1)) && isFree(move(object, 0, -1), object)) ? move(object, 0, -1) : object 
+                        end
+                        
+                        function moveDownNoCollision(object::Object)::Object
+                          (isWithinBounds(move(object, 0, 1)) && isFree(move(object, 0, 1), object)) ? move(object, 0, 1) : object 
+                        end
+
+                        # ----- end left/right moveNoCollision ----- #
 
                         function moveWrap(object::Object, position::Position)::Object
                           new_object = deepcopy(object)
@@ -647,6 +687,34 @@ const builtInDict = Dict([
                           # println(Position((position.x + x + GRID_SIZE) % GRID_SIZE, (position.y + y + GRID_SIZE) % GRID_SIZE))
                           Position((position.x + x + GRID_SIZE) % GRID_SIZE, (position.y + y + GRID_SIZE) % GRID_SIZE)
                         end
+
+                        # ----- begin left/right moveWrap ----- #
+
+                        function moveLeftWrap(object::Object)::Object
+                          new_object = deepcopy(object)
+                          new_object.position = moveWrap(object.origin, -1, 0)
+                          new_object
+                        end
+                          
+                        function moveRightWrap(object::Object)::Object
+                          new_object = deepcopy(object)
+                          new_object.position = moveWrap(object.origin, 1, 0)
+                          new_object
+                        end
+
+                        function moveUpWrap(object::Object)::Object
+                          new_object = deepcopy(object)
+                          new_object.position = moveWrap(object.origin, 0, -1)
+                          new_object
+                        end
+
+                        function moveDownWrap(object::Object)::Object
+                          new_object = deepcopy(object)
+                          new_object.position = moveWrap(object.origin, 0, 1)
+                          new_object
+                        end
+
+                        # ----- end left/right moveWrap ----- #
 
                         function randomPositions(GRID_SIZE::Int, n::Int)::Array{Position}
                           nums = uniformChoice(rng, [0:(GRID_SIZE * GRID_SIZE - 1);], n)
