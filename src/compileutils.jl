@@ -490,7 +490,8 @@ const builtInDict = Dict([
                           setproperty!(new_obj, :alive, obj.alive)
                           setproperty!(new_obj, :hidden, obj.hidden)
 
-                          setproperty!(new_obj, Symbol(field), value)  
+                          setproperty!(new_obj, Symbol(field), value)
+                          state.objectsCreated -= 1    
                           new_obj
                         end
 
