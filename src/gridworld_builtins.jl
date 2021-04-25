@@ -1,4 +1,4 @@
-const builtInDict = Dict([
+const general_builtInDict = Dict([
 "occurred"        =>  quote
                         function occurred(click)
                           click !== nothing
@@ -23,8 +23,13 @@ const builtInDict = Dict([
                       function range(start::Int, stop::Int)
                         [start:stop;]
                       end
-                    end,
-"utils"           => quote
+                    end
+# add utils somehow
+])
+
+# const general_utils = 
+
+const gridworld_utils = Dict(["utils"           => quote
                         abstract type Object end
                         abstract type KeyPress end
 
