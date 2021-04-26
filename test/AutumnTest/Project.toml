@@ -1,0 +1,7 @@
+name = "AutumnTest"
+uuid = "eea69fe2-c968-418d-a6d7-0b5bf8a4324a"
+authors = ["Zenna Tavares <zennatavares@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+Autumn = "1149b079-14b7-44b1-a7c1-de8e2f6b625a"
