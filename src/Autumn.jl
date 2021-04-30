@@ -29,6 +29,9 @@ include("abstractinterpretation.jl")
 include("interpret/interpret.jl")
 @reexport using .Interpret
 
+include("interpret/interpret2.jl")
+@reexport using .Interpret2
+
 include("scope.jl")
 @reexport using .Scope
 
