@@ -1,0 +1,4 @@
+(program
+  (: std_test (List Particle))
+  (= std_test 3)
+)
