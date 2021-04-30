@@ -3,12 +3,42 @@ module Compile
 
 using ..AExpressions, ..CompileUtils, ..SExpr
 import MacroTools: striplines
+import ..Autumn
 
-export compiletojulia, runprogram, compiletosketch
+export compiletojulia, runprogram, compiletosketch, AULIBPATH
+
+const AULIBPATH = joinpath(dirname(pathof(Autumn)), "..", "lib")
+
+# Return an AExpr where all includes have been replaced with the code that it points to
+function sub_includes(aexpr::AExpr)
+  aexpr.head == :program || error("Expects program Aexpr")
+
+  newargs = []
+  for child in aexpr.args
+    if child.head == :include
+      path = child.args[1]
+      includedcode = sub_includes(parsefromfile(path)) # Get the source code
+      append!(newargs, includedcode.args)
+    else
+      push!(newargs, child)
+    end
+  end
+  AExpr(:program, newargs...)
+end
+
+preprocess(aexpr::AExpr) = sub_includes(aexpr)
+
+"Produces `AExpr` from Autumn code at `path`"
+function parsefromfile(path)
+  progstring = open(path, "r") do io
+    read(io, String)
+  end
+  parseautumn(progstring) 
+end
 
 "compile `aexpr` into Expr"
-function compiletojulia(aexpr::AExpr)::Expr
-
+function compiletojulia(aexpr_::AExpr)::Expr
+  aexpr = preprocess(aexpr_)
   # dictionary containing types/definitions of global variables, for use in constructing init func.,
   # next func., etcetera; the three categories of global variable are external, initnext, and lifted  
   historydata = Dict([("external" => [au"""(external (: click Click))""".args[1], au"""(external (: left KeyPress))""".args[1], au"""(external (: right KeyPress))""".args[1], au"""(external (: up KeyPress))""".args[1], au"""(external (: down KeyPress))""".args[1]]), # :typedecl aexprs for all external variables

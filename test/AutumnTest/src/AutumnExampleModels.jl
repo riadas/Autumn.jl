@@ -2,7 +2,8 @@ module AutumnExampleModels
 
 using Autumn
 
-const particles = au"""(program
+particlessrc = """(program
+(include "stdlib.au")
 (= GRID_SIZE 16)
 
 (type alias Position ((: x Int) (: y Int)))

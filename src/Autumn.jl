@@ -15,6 +15,8 @@ include("sexpr.jl")
 include("subexpr.jl")
 @reexport using .SubExpressions
 
+include("passes.jl")
+
 include("compileutils.jl")
 @reexport using .CompileUtils
 

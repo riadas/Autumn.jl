@@ -128,6 +128,7 @@ function showstring(expr::Expr)
     Expr(:lambda, var, val) => "($(showstring(var)) -> ($(showstring(val))))"
     Expr(:object, name, args...) => "object $(showstring(name)) {$(join(map(showstring, args), ","))}"
     Expr(:on, name, args...) => "on $(showstring(name)) ($(join(map(showstring, args))))"
+    Expr(:include, path)    => "include $path"
     x                       => "Fail $x"
 
   end
