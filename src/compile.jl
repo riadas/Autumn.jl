@@ -63,7 +63,8 @@ function compiletojulia(aexpr_::AExpr)::Expr
 
     # remove empty lines
     lines = filter(x -> x != :(), 
-            vcat(builtinfunctions, lines, statestruct, initstatestruct, prevfunctions, initnextfunctions))
+            # vcat(builtinfunctions, lines, statestruct, initstatestruct, prevfunctions, initnextfunctions))
+            vcat(lines, statestruct, initstatestruct, prevfunctions, initnextfunctions))
 
     # construct module
     expr = quote

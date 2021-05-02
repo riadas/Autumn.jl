@@ -56,6 +56,7 @@ function parseau(sexpr::AbstractArray)
     [:on, args...]                    => AExpr(:on, map(parseau, args)...)
     [:object, args...]                => AExpr(:object, map(parseau, args)...)
     [:include, path]                  => AExpr(:include, path)
+    [:structure, name::Symbol, args...] => AExpr(:structure, name, map(parseau, args)...)
     [f, xs...]                        => AExpr(:call, parseau(f), map(parseau, xs)...)
     [vars...]                         => AExpr(:list, map(parseau, vars)...)
   end

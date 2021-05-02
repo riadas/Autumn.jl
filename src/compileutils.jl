@@ -30,6 +30,7 @@ function compile(expr::AExpr, data::Dict{String, Any}, parent::Union{AExpr, Noth
     [:field, args...] => :($(compile(expr.args[1], data)).$(compile(expr.args[2], data)))
     [:object, args...] => compileobject(expr, data)
     [:on, args...] => compileon(expr, data)
+    [:structure, name, args...] => compilestructure(expr, data)
     [args...] => throw(AutumnError(string("Invalid AExpr Head: ", expr.head))) # if expr head is not one of the above, throw error
   end
 end
@@ -191,6 +192,19 @@ function compileobject(expr::AExpr, data::Dict{String, Any})
       state.objectsCreated += 1
       rendering = $(rendering)      
       $(name)(state.objectsCreated, origin, true, false, $(custom_field_names...), rendering isa AbstractArray ? vcat(rendering...) : [rendering])
+    end
+  end
+end
+
+function compilestructure(expr::AExpr, data::Dict{String, Any})
+  name = expr.args[1]
+  # push!(data["structures"], name)
+  custom_fields = map(field -> (
+    :($(field.args[1])::$(compile(field.args[2], data)))
+  ), filter(x -> (typeof(x) == AExpr && x.head == :typedecl), expr.args[2:end]))
+  quote
+    struct $(name)
+      $(custom_fields...)
     end
   end
 end

@@ -23,7 +23,7 @@ x           := a | b | ... | aa ...
 program     := statement*
 statement   := externaldecl | assignexpr | typedecl | typedef
 
-typedef     := type fields  #FIXME
+typedef     := "stucture" x fields
 typealias   := "type alias" type fields
 fields      := field | fields field
 field       := constructor | constructor typesymbol*
@@ -129,6 +129,7 @@ function showstring(expr::Expr)
     Expr(:object, name, args...) => "object $(showstring(name)) {$(join(map(showstring, args), ","))}"
     Expr(:on, name, args...) => "on $(showstring(name)) ($(join(map(showstring, args))))"
     Expr(:include, path)    => "include $path"
+    Expr(:structure, name, args...) => "structure $(showstring(name))\n\t$(join(map(showstring, args), "\n\t"))"
     x                       => "Fail $x"
 
   end
