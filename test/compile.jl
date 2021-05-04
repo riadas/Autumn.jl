@@ -68,6 +68,17 @@ function test_compile_field()
   @test compile(aexpr, data) == :(position.x)
 end
 
+function test_compile_structure()
+  data = construct_data()
+  aexpr = au"""(structure Name (: x Int) (: y Bool))"""
+  @test compile(aexpr, data) == quote
+    struct Name
+      x::Int
+      y::Bool
+    end
+  end
+end
+
 function test_compile_particles()
   a = au"""(program
     (: GRID_SIZE Int)
@@ -132,6 +143,7 @@ end
   test_compile_list()
   test_compile_call()
   test_compile_field()
+  # test_compile_structure()
   test_compile_particles()
   test_compile_types_inferred()
 end

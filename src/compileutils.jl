@@ -4,7 +4,7 @@ using ..AExpressions
 using Distributions: Categorical
 using MLStyle: @match
 
-export compile, compilestatestruct, compileinitstate, compileinitnext, compileprevfuncs, compilebuiltin, compileobject, compileon
+export compile, compilestatestruct, compileinitstate, compileinitnext, compileprevfuncs, compilebuiltin, compileobject, compilestructure, compileon
 
 # binary operators
 binaryOperators = map(string, [:+, :-, :/, :*, :&, :|, :>=, :<=, :>, :<, :(==), :!=, :%, :&&])
