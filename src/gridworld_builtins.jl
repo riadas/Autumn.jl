@@ -84,6 +84,8 @@ quote
   end
 end 
 
+general_utils_dict = Dict(["utils" => general_utils])
+
 const gridworld_utils = quote
     abstract type KeyPress end
 
@@ -551,3 +553,10 @@ const gridworld_utils = quote
     end
   
 end
+
+gridworld_utils_dict = Dict(["utils" => gridworld_utils])
+
+all_utils = Expr(:block)
+all_utils.args = [CompileUtils.general_utils.args..., CompileUtils.gridworld_utils.args...]
+
+all_utils_dict = Dict(["utils" => all_utils])

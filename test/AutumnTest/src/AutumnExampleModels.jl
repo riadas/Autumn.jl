@@ -1,0 +1,46 @@
+module AutumnExampleModels
+
+using Autumn
+
+particlessrc = """(program
+(include "stdlib.au")
+(= GRID_SIZE 16)
+
+(type alias Position ((: x Int) (: y Int)))
+(type alias Particle ((: position Position)))
+
+(external (: click Click))
+
+(: particles (List Particle))
+(= particles (initnext (list) (if (occurred click) 
+                             then (push! (prev particles) (particleGen (Position 1 1))) 
+                             else (map nextParticle particles))))
+
+(= nparticles (length particles))
+
+(: isFree (-> Position Bool))
+(= isFree (fn (position) 
+              (length (filter (--> particle (!= (.. particle position) position)) particles))))
+
+(: isWithinBounds (-> Position Bool))
+(= isWithinBounds (fn (position) 
+                      (& (>= (.. position x) 0) (& (< (.. position x) GRID_SIZE) (& (>= (.. position y) 0) (< (.. position y) GRID_SIZE))))))
+
+(: adjacentPositions (-> Position (List Position)))
+(= adjacentPositions (fn (position) 
+                         (let ((= x (.. position x)) 
+                               (= y (.. position y)) 
+                               (= positions (filter isWithinBounds (list (Position (+ x 1) y) (Position (- x 1) y) (Position x (+ y 1)) (Position x (- y 1))))))
+                              positions)))
+
+(: nextParticle (-> Particle Particle))
+(= nextParticle (fn (particle) 
+                    (let ((= freePositions (filter isFree (adjacentPositions (.. particle position))))) 
+                         (case freePositions
+                              (=> (list) particle)
+                              (=> _ (Particle (uniformChoice freePositions)))))))
+
+(: particleGen (-> Position Particle))
+(= particleGen (fn (initPosition) (Particle initPosition)))
+)"""
+end

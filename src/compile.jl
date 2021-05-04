@@ -3,12 +3,46 @@ module Compile
 
 using ..AExpressions, ..CompileUtils, ..SExpr
 import MacroTools: striplines
+import ..Autumn  # this is because autumn is not defined relative to this module
 
-export compiletojulia, runprogram, compiletosketch
+export compiletojulia, runprogram, compiletosketch, AULIBPATH
+
+const AULIBPATH = joinpath(dirname(pathof(Autumn)), "..", "lib")
+
+# Return an AExpr where all includes have been replaced with the code that it points to
+function sub_includes(aexpr::AExpr)
+    # this is a short-circuit or, so then it would only compute error when the first statement is false
+  aexpr.head == :program || error("Expects program Aexpr")
+
+  # copy and paste the include source file into our actual autumn file
+  newargs = []
+  for child in aexpr.args
+    if child.head == :include
+      path = child.args[1]
+      # TODO we don't want to have duplicated code
+      includedcode = sub_includes(parsefromfile(path)) # Get the source code
+      append!(newargs, includedcode.args)  # we wouldn't be including a program because we have the args
+    else
+      push!(newargs, child)
+    end
+  end
+  AExpr(:program, newargs...)
+end
+
+preprocess(aexpr::AExpr) = sub_includes(aexpr)
+
+"Produces `AExpr` from Autumn code at `path`"
+function parsefromfile(path)
+  progstring = open(path, "r") do io
+    read(io, String)
+  end
+  parseautumn(progstring) 
+end
 
 "compile `aexpr` into Expr"
-function compiletojulia(aexpr::AExpr)::Expr
-
+function compiletojulia(aexpr_::AExpr)::Expr
+  aexpr = preprocess(aexpr_)
+  # TODO make historydata applicable to our scenario
   # dictionary containing types/definitions of global variables, for use in constructing init func.,
   # next func., etcetera; the three categories of global variable are external, initnext, and lifted  
   historydata = Dict([("external" => [au"""(external (: click Click))""".args[1], au"""(external (: left KeyPress))""".args[1], au"""(external (: right KeyPress))""".args[1], au"""(external (: up KeyPress))""".args[1], au"""(external (: down KeyPress))""".args[1]]), # :typedecl aexprs for all external variables
@@ -33,7 +67,8 @@ function compiletojulia(aexpr::AExpr)::Expr
 
     # remove empty lines
     lines = filter(x -> x != :(), 
-            vcat(builtinfunctions, lines, statestruct, initstatestruct, prevfunctions, initnextfunctions))
+            # vcat(builtinfunctions, lines, statestruct, initstatestruct, prevfunctions, initnextfunctions))
+            vcat(lines, statestruct, initstatestruct, prevfunctions, initnextfunctions))
 
     # construct module
     expr = quote
