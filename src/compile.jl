@@ -10,28 +10,17 @@ export compiletojulia, runprogram, compiletosketch, AULIBPATH
 const AULIBPATH = joinpath(dirname(pathof(Autumn)), "..", "lib")
 
 # Return an AExpr where all includes have been replaced with the code that it points to
-function sub_includes(aexpr::AExpr, already_included=Set{String}()::Set{String})
-    # this is a short-circuit or, so then it would only compute error when the first statement is false
+function sub_includes(aexpr::AExpr)
+  # this is a short-circuit or, so then it would only compute error when the first statement is false
   aexpr.head == :program || error("Expects program Aexpr")
 
   # copy and paste the include source file into our actual autumn file
   newargs = []
   for child in aexpr.args
     if child.head == :include
-      # TODO
-      # file a
-      # file b includes a (uses the local path)
-      # file c includes a (uses the global path)
-      # something that is more robust than the path
       path = child.args[1]
-      if path in already_included
-        continue
-      end
-      # TODO use AULIBPATH
-      push!(already_included, path)
-
       # TODO we don't want to have duplicated code
-      includedcode = sub_includes(parsefromfile(path), already_included) # Get the source code
+      includedcode = sub_includes(parsefromfile(path)) # Get the source code
       append!(newargs, includedcode.args)  # we wouldn't be including a program because we have the args
     else
       push!(newargs, child)
@@ -39,6 +28,35 @@ function sub_includes(aexpr::AExpr, already_included=Set{String}()::Set{String})
   end
   AExpr(:program, newargs...)
 end
+# Return an AExpr where all includes have been replaced with the code that it points to
+# function sub_includes(aexpr::AExpr, already_included=Set{String}()::Set{String})
+#     # this is a short-circuit or, so then it would only compute error when the first statement is false
+#   aexpr.head == :program || error("Expects program Aexpr")
+#   # copy and paste the include source file into our actual autumn file
+#   newargs = []
+#   for child in aexpr.args
+#     if child.head == :include
+#       # TODO
+#       # file a
+#       # file b includes a (uses the local path)
+#       # file c includes a (uses the global path)
+#       # something that is more robust than the path
+#       path = child.args[1]
+#       if path in already_included
+#         continue
+#       end
+#       # TODO use AULIBPATH
+#       push!(already_included, path)
+#       # TODO we don't want to have duplicated code
+#       includedcode = sub_includes(parsefromfile(path), already_included) # Get the source code
+#       append!(newargs, includedcode.args)  # we wouldn't be including a program because we have the args
+#     else
+#       push!(newargs, child)
+#     end
+#   end
+#   AExpr(:program, newargs...)
+# end
+
 
 # TODO add import_module to preprocessing
 preprocess(aexpr::AExpr) = sub_includes(aexpr)
