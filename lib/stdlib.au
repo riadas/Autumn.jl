@@ -2,7 +2,7 @@
   (: std_test (List Particle))
   (= std_test 3)
 
-  (import Base)
+  (import TestBase)
 
   (structure name (: x Int) (: y Bool))
 )
