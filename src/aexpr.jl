@@ -131,7 +131,8 @@ function showstring(expr::Expr)
     Expr(:lambda, var, val) => "($(showstring(var)) -> ($(showstring(val))))"
     Expr(:object, name, args...) => "object $(showstring(name)) {$(join(map(showstring, args), ","))}"
     Expr(:on, name, args...) => "on $(showstring(name)) ($(join(map(showstring, args))))"
-    Expr(:include, path)    => "include $path"
+    Expr(:include, path) => "include $path"
+    Expr(:import, name) => "import $(showstring(name))"
     Expr(:structure, name, args...) => "structure $(showstring(name))\n\t$(join(map(showstring, args), "\n\t"))"
     Expr(:module, name, statements...) => string("module $(showstring(name))\n\t", join(map(showstring, statements), "\n\t"))
     x                       => "Fail $x"

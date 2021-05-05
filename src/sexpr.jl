@@ -56,6 +56,7 @@ function parseau(sexpr::AbstractArray)
     [:on, args...]                    => AExpr(:on, map(parseau, args)...)
     [:object, args...]                => AExpr(:object, map(parseau, args)...)  # note that this isn't super clear wrt naming
     [:include, path]                  => AExpr(:include, path)
+    [:import, name]                   => AExpr(:import, name)
     [:structure, name::Symbol, args...] => AExpr(:structure, name, map(parseau, args)...) # Julia literally uses Symbol for variable names
     [:module, name::Symbol, lines...] => AExpr(:module, name, map(parseau, lines)...)
     [f, xs...]                        => AExpr(:call, parseau(f), map(parseau, xs)...)
