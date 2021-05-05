@@ -1,0 +1,4 @@
+(module TestBase
+  (: x Int)
+  (: y Bool)
+)
