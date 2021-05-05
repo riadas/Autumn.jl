@@ -64,9 +64,9 @@ function sub_import(aexpr::AExpr, already_included=Set{String}()::Set{String})
         continue
       end
       push!(already_included, modulename)
-
-      # TODO modulename might not be a string
-      includedcode = sub_import(parsefromfile(joinpath(AULIBPATH, modulename + ".au")), already_included) # Get the source code
+      
+      modulepath = joinpath(AULIBPATH, string(modulename) + ".au")
+      includedcode = sub_import(parsefromfile(modulepath), already_included) # Get the source code
       append!(newargs, includedcode.args)  # note that includedcode.args
     else
       push!(newargs, child)
