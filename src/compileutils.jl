@@ -31,7 +31,6 @@ function compile(expr::AExpr, data::Dict{String, Any}, parent::Union{AExpr, Noth
     [:object, args...] => compileobject(expr, data)
     [:on, args...] => compileon(expr, data)
     [:structure, name, args...] => compilestructure(expr, data)
-    [:module, name, args...] => compilemodule(expr, data)
     [args...] => throw(AutumnError(string("Invalid AExpr Head: ", expr.head))) # if expr head is not one of the above, throw error
   end
 end

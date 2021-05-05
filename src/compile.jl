@@ -40,8 +40,10 @@ function sub_includes(aexpr::AExpr, already_included=Set{String}()::Set{String})
   AExpr(:program, newargs...)
 end
 
-# TODO add import_module to preprocessing
-preprocess(aexpr::AExpr) = sub_includes(aexpr)
+function preprocess(aexpr::AExpr)
+  aexpr = sub_includes(aexpr)
+  sub_import(aexpr)
+end
 
 # TODO add import module
 """
@@ -53,7 +55,7 @@ Files are located in the lib folder
 """
 function sub_import(aexpr::AExpr, already_included=Set{String}()::Set{String})
   # this is a short-circuit or, so then it would only compute error when the first statement is false
-  aexpr.head == :program || :module || error("Expects program or module AExpr")
+  aexpr.head == :program || error("Expects program or module AExpr")
 
   # copy and paste the include source file into our actual autumn file
   newargs = []
@@ -63,10 +65,12 @@ function sub_import(aexpr::AExpr, already_included=Set{String}()::Set{String})
       if modulename in already_included
         continue
       end
-      push!(already_included, modulename)
+      push!(already_included, string(modulename))
       
-      modulepath = joinpath(AULIBPATH, string(modulename) + ".au")
-      includedcode = sub_import(parsefromfile(modulepath), already_included) # Get the source code
+      modulepath = joinpath(AULIBPATH, string(modulename) * ".au")
+      # assume for now that modules cannot import other modules or include other code
+      # includedcode = sub_import(parsefromfile(modulepath), already_included) # Get the source code
+      includedcode = parsefromfile(modulepath)
       append!(newargs, includedcode.args)  # note that includedcode.args
     else
       push!(newargs, child)
@@ -89,6 +93,8 @@ function compiletojulia(aexpr_::AExpr)::Expr
   # TODO make historydata applicable to our scenario
   # dictionary containing types/definitions of global variables, for use in constructing init func.,
   # next func., etcetera; the three categories of global variable are external, initnext, and lifted  
+
+  # TODO: named tuple
   historydata = Dict([("external" => [au"""(external (: click Click))""".args[1], au"""(external (: left KeyPress))""".args[1], au"""(external (: right KeyPress))""".args[1], au"""(external (: up KeyPress))""".args[1], au"""(external (: down KeyPress))""".args[1]]), # :typedecl aexprs for all external variables
                ("initnext" => []), # :assign aexprs for all initnext variables
                ("lifted" => []), # :assign aexprs for all lifted variables
