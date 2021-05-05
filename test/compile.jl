@@ -71,12 +71,16 @@ end
 function test_compile_structure()
   data = construct_data()
   aexpr = au"""(structure Name (: x Int) (: y Bool))"""
-  @test compile(aexpr, data) == quote
-    struct Name
+  eval(compile(aexpr, data))  
+  expected = quote
+    struct Expected
       x::Int
       y::Bool
     end
   end
+  eval(expected)
+  @test fieldnames(Name) == fieldnames(Expected)
+  @test fieldtypes(Name) == fieldtypes(Expected)
 end
 
 function test_compile_particles()
@@ -143,7 +147,7 @@ end
   test_compile_list()
   test_compile_call()
   test_compile_field()
-  # test_compile_structure()
+  test_compile_structure()
   test_compile_particles()
   test_compile_types_inferred()
 end

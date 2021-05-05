@@ -20,10 +20,10 @@ AutumnError() = AutumnError("")
 
 const autumngrammar = """
 x           := a | b | ... | aa ...
-program     := statement*
-statement   := externaldecl | assignexpr | typedecl | typedef | include
+auprogram   := program statement*
+statement   := externaldecl | assignexpr | typedecl | typedef | includeexpr
 
-typedef     := "stucture" x fields
+typedef     := stucture x fields
 typealias   := "type alias" type fields
 fields      := field | fields field
 field       := constructor | constructor typesymbol*
@@ -34,8 +34,7 @@ externaldecl:= external typedecl
 
 assignexpr  := x = valueexpr
 
-include     := "include" path
-path        := string
+includeexpr := include path
 
 typeexpr    := typesymbol | paramtype | typevar | functiontype
 funtype     := typeexpr -> typeexpr
