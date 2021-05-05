@@ -21,13 +21,14 @@ AutumnError() = AutumnError("")
 const autumngrammar = """
 x           := a | b | ... | aa ...
 auprogram   := program statement*
+moduleexpr  := module modulename statement*
 statement   := externaldecl | assignexpr | typedecl | typedef | includeexpr
 
-typedef     := stucture x fields
+typedef     := structure x fields
 typealias   := "type alias" type fields
 fields      := field | fields field
 field       := constructor | constructor typesymbol*
-cosntructor := typesymbol
+constructor := typesymbol
 
 typedecl    := x : typeexpr
 externaldecl:= external typedecl

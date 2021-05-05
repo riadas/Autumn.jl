@@ -18,10 +18,16 @@ function sub_includes(aexpr::AExpr, already_included=Set{String}()::Set{String})
   newargs = []
   for child in aexpr.args
     if child.head == :include
+      # TODO
+      # file a
+      # file b includes a (uses the local path)
+      # file c includes a (uses the global path)
+      # something that is more robust than the path
       path = child.args[1]
       if path in already_included
         continue
       end
+      # TODO use AULIBPATH
       push!(already_included, path)
 
       # TODO we don't want to have duplicated code
@@ -34,7 +40,40 @@ function sub_includes(aexpr::AExpr, already_included=Set{String}()::Set{String})
   AExpr(:program, newargs...)
 end
 
+# TODO add import_module to preprocessing
 preprocess(aexpr::AExpr) = sub_includes(aexpr)
+
+# TODO add import module
+"""
+Finds all the import statements. Imports modules by name.
+
+We name the file of the module such that the name of Module = filename
+
+Files are located in the lib folder
+"""
+function sub_import(aexpr::AExpr, already_included=Set{String}()::Set{String})
+  # this is a short-circuit or, so then it would only compute error when the first statement is false
+  aexpr.head == :program || :module || error("Expects program or module AExpr")
+
+  # copy and paste the include source file into our actual autumn file
+  newargs = []
+  for child in aexpr.args
+    if child.head == :import
+      modulename = child.args[1]
+      if modulename in already_included
+        continue
+      end
+      push!(already_included, modulename)
+      
+      modulepath = joinpath(AULIBPATH, string(modulename) + ".au")
+      includedcode = sub_import(parsefromfile(modulepath), already_included) # Get the source code
+      append!(newargs, includedcode.args)  # note that includedcode.args
+    else
+      push!(newargs, child)
+    end
+  end
+  AExpr(:program, newargs...)
+end
 
 "Produces `AExpr` from Autumn code at `path`"
 function parsefromfile(path)

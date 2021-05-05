@@ -1,0 +1,29 @@
+(using AutumnBase) <-- this doesn't happen here, it gets added during compilation
+
+
+
+(program asdfkjasdlkfj
+  (import AutumnModule) <-- let's put this inside of program for now
+
+)
+
+
+(module ModuleName
+  (import AnotherModule)
+  (statements)
+)
+
+; things to think about
+; do we want modules and programs
+; or do we want program to be modules?
+
+; module would be a different structure
+; with head module
+; statements
+
+; we would have primitives in Julia
+; this would be addition, subtraction
+
+; autumn standard library should be autumn code
+; julia primitives could be a module (more low level) than autumn standard libraries; this would be addition, subtration, etc. (we can call this AutumnBase)
+; contains julia functions
