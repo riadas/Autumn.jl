@@ -1,6 +1,9 @@
 (program
   (import TestBase)
 
+  (structure Click)
+  (external (: click Click))
+
   (structure name (: x Int) (: y Bool))
 
   (: std_test (List Int))
