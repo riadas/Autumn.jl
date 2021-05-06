@@ -112,13 +112,12 @@ function compiletojulia(aexpr_::AExpr)::Expr
   # dictionary containing types/definitions of global variables, for use in constructing init func.,
   # next func., etcetera; the three categories of global variable are external, initnext, and lifted  
 
-  # TODO: named tuple
-  historydata = Dict([("external" => [au"""(external (: click Click))""".args[1], au"""(external (: left KeyPress))""".args[1], au"""(external (: right KeyPress))""".args[1], au"""(external (: up KeyPress))""".args[1], au"""(external (: down KeyPress))""".args[1]]), # :typedecl aexprs for all external variables
-               ("initnext" => []), # :assign aexprs for all initnext variables
-               ("lifted" => []), # :assign aexprs for all lifted variables
-               ("types" => Dict{Symbol, Any}([:click => :Click, :left => :KeyPress, :right => :KeyPress, :up => :KeyPress, :down => :KeyPress, :GRID_SIZE => :Int, :background => :String])), # map of global variable names (symbols) to types
-               ("on" => []),
-               ("objects" => [])]) 
+  historydata = Dict([("external" => []),  # no built-in external variables
+                      ("initnext" => []), # :assign aexprs for all initnext variables
+                      ("lifted" => []), # :assign aexprs for all lifted variables
+                      ("types" => Dict{Symbol, Any}([:click => :Click, :left => :KeyPress, :right => :KeyPress, :up => :KeyPress, :down => :KeyPress, :GRID_SIZE => :Int, :background => :String])), # map of global variable names (symbols) to types
+                      ("on" => []),
+                      ("objects" => [])]) 
                
   if (aexpr.head == :program)
     # handle AExpression lines
@@ -135,8 +134,7 @@ function compiletojulia(aexpr_::AExpr)::Expr
 
     # remove empty lines
     lines = filter(x -> x != :(), 
-            vcat(builtinfunctions, lines, statestruct, initstatestruct, prevfunctions, initnextfunctions))
-            # vcat(lines, statestruct, initstatestruct, prevfunctions, initnextfunctions))
+                   vcat(lines, statestruct, initstatestruct, prevfunctions, initnextfunctions))  # do not automatically include builtinfunctions
 
     # construct module
     expr = quote

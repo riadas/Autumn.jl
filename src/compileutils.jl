@@ -259,10 +259,7 @@ function compileinitnext(data::Dict{String, Any})
       $(init)
       $(map(x -> :($(compile(x.args[1], data)) = $(compile(x.args[2], data))), filter(x -> x.args[1] != :GRID_SIZE, data["lifted"]))...)
       $(map(x -> :(state.$(Symbol(string(x.args[1])*"History"))[state.time] = $(x.args[1])), 
-            vcat(data["external"], data["initnext"], data["lifted"]))...)
-      state.scene = Scene(vcat([$(filter(x -> get(data["types"], x, :Any) in vcat(data["objects"], map(x -> [:List, x], data["objects"])), 
-                                  map(x -> x.args[1], vcat(data["initnext"], data["lifted"])))...)]...), :backgroundHistory in fieldnames(STATE) ? state.backgroundHistory[state.time] : "#ffffff00")
-      
+            vcat(data["external"], data["initnext"], data["lifted"]))...)    
       global state = state
       state
     end
@@ -275,8 +272,6 @@ function compileinitnext(data::Dict{String, Any})
       $(next)
       $(map(x -> :(state.$(Symbol(string(x.args[1])*"History"))[state.time] = $(x.args[1])), 
             vcat(data["external"], data["initnext"], data["lifted"]))...)
-      state.scene = Scene(vcat([$(filter(x -> get(data["types"], x, :Any) in vcat(data["objects"], map(x -> [:List, x], data["objects"])), 
-        map(x -> x.args[1], vcat(data["initnext"], data["lifted"])))...)]...), :backgroundHistory in fieldnames(STATE) ? state.backgroundHistory[state.time] : "#ffffff00")
       global state = state
       state
     end
@@ -294,7 +289,6 @@ function compilestatestruct(data::Dict{String, Any})
     mutable struct STATE
       time::Int
       objectsCreated::Int
-      scene::Scene
       $(stateParamsInternal...)
       $(stateParamsExternal...)
     end
@@ -307,7 +301,7 @@ function compileinitstate(data::Dict{String, Any})
                                 vcat(data["initnext"], data["lifted"]))
   initStateParamsExternal = map(expr -> :(Dict{Int64, Union{$(compile(data["types"][expr.args[1]], data)), Nothing}}()), 
                                 data["external"])
-  initStateParams = [0, 0, :(Scene([])), initStateParamsInternal..., initStateParamsExternal...]
+  initStateParams = [0, 0, initStateParamsInternal..., initStateParamsExternal...]
   initState = :(state = STATE($(initStateParams...)))
   initState
 end
