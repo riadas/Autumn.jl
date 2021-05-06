@@ -7,5 +7,8 @@
   (structure name (: x Int) (: y Bool))
 
   (: std_test (List Int))
-  (= std_test (initnext (list 0 1) (push! std_test 2)))  
+  (= std_test (initnext (list 0 1) (push! std_test 2)))
+
+  (: randint Int)
+  (= randint (initnext 0 (uniformChoice std_test)))
 )

@@ -1,6 +1,8 @@
 "Julia primitives"
 module AutumnBase
 
+using Distributions: Categorical
+
 export uniformChoice, uniformChoice2, min, range
 
 function uniformChoice(rng, freePositions)
