@@ -211,13 +211,6 @@ function compilestructure(expr::AExpr, data::Dict{String, Any})
   end
 end
 
-# TODO
-function compilemodule(expr::AExpr, data::Dict{String, Any})
-  name = expr.args[1]
-  # push!(data["structures"], name)
-  # println(name)
-end
-
 function compileon(expr::AExpr, data::Dict{String, Any})
   # println("here")
   # println(typeof(expr.args[1]) == AExpr ? expr.args[1].args[1] : expr.args[1])
