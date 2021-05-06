@@ -1,8 +1,8 @@
 (program
-  (: std_test (List Particle))
-  (= std_test 3)
-
   (import TestBase)
 
   (structure name (: x Int) (: y Bool))
+
+  (: std_test (List Int))
+  (= std_test (initnext (list 0 1) (push! std_test 2)))  
 )
