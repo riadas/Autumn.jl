@@ -142,6 +142,8 @@ function compilecall(expr::AExpr, data::Dict{String, Any})
   elseif fnName == :uniformChoice
     :(uniformChoice(rng, $(map(x -> compile(x, data), expr.args[2:end])...)))
   elseif !(fnName in binaryOperators) && fnName != :prev
+    # Julia primitive functions like push! get preprocessed here
+    # calling (push! x 1)
     :($(fnName)($(map(x -> compile(x, data), expr.args[2:end])...)))
   elseif fnName == :prev
     :($(Symbol(string(expr.args[2]) * "Prev"))($(map(compile, expr.args[3:end])...)))
