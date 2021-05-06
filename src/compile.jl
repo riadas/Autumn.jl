@@ -89,7 +89,7 @@ function sub_import(aexpr::AExpr, already_included=Set{String}()::Set{String})
       # assume for now that modules cannot import other modules or include other code
       # includedcode = sub_import(parsefromfile(modulepath), already_included) # Get the source code
       includedcode = parsefromfile(modulepath)
-      append!(newargs, includedcode.args)  # note that includedcode.args
+      append!(newargs, includedcode.args[2:end])  # don't include first arg b/c it's the module name
     else
       push!(newargs, child)
     end
@@ -135,8 +135,8 @@ function compiletojulia(aexpr_::AExpr)::Expr
 
     # remove empty lines
     lines = filter(x -> x != :(), 
-            # vcat(builtinfunctions, lines, statestruct, initstatestruct, prevfunctions, initnextfunctions))
-            vcat(lines, statestruct, initstatestruct, prevfunctions, initnextfunctions))
+            vcat(builtinfunctions, lines, statestruct, initstatestruct, prevfunctions, initnextfunctions))
+            # vcat(lines, statestruct, initstatestruct, prevfunctions, initnextfunctions))
 
     # construct module
     expr = quote
