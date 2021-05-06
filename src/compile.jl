@@ -63,7 +63,6 @@ function preprocess(aexpr::AExpr)
   sub_import(aexpr)
 end
 
-# TODO add import module
 """
 Finds all the import statements. Imports modules by name.
 
@@ -108,9 +107,6 @@ end
 "compile `aexpr` into Expr"
 function compiletojulia(aexpr_::AExpr)::Expr
   aexpr = preprocess(aexpr_)
-  # TODO make historydata applicable to our scenario
-  # dictionary containing types/definitions of global variables, for use in constructing init func.,
-  # next func., etcetera; the three categories of global variable are external, initnext, and lifted  
 
   historydata = Dict([("external" => []),  # no built-in external variables
                       ("initnext" => []), # :assign aexprs for all initnext variables
@@ -144,7 +140,7 @@ function compiletojulia(aexpr_::AExpr)::Expr
         using Distributions
         using MLStyle: @match
         using Random
-        # TODO using AutumnBase # or do we just want this to just copy and paste the code
+        using Autumn.AutumnBase
         rng = Random.GLOBAL_RNG
         $(lines...)
       end

@@ -38,4 +38,7 @@ include("scope.jl")
 include("transform.jl")
 @reexport using .Transform
 
+include("autumnbase.jl")
+@reexport using .AutumnBase
+
 end
