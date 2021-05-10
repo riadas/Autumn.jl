@@ -2,7 +2,7 @@
 module AutumnBase
 
 using Distributions: Categorical
-
+import Base.range, Base.min
 export uniformChoice, uniformChoice2, min, range
 
 function uniformChoice(rng, freePositions)
@@ -14,12 +14,12 @@ function uniformChoice2(rng, freePositions, n)
 end
 
 # WARNING: using AutumnBase.min in module CompiledProgram conflicts with an existing identifier.
-function min(arr)
+function Base.min(arr)
   min(arr...)
 end
 
-function range(start::Int, stop::Int)
-  [start:stop;]
+function Base.range(start::Int, stop::Int)
+  Base.range(start, stop=stop)
 end
 
 end

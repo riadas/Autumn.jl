@@ -11,4 +11,7 @@
 
   (: randint Int)
   (= randint (initnext 0 (uniformChoice std_test)))
+
+  (: arange (List Int))
+  (= arange (range 1 5))
 )
