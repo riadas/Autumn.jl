@@ -4,7 +4,9 @@
   (structure Click)
   (external (: click Click))
 
-  (structure name (: x Int) (: y Bool))
+  (structure Thing (: x Int) (: y Bool))
+  (: thing Thing)
+  (= thing (initnext (Thing 0 false) (Thing (- 1 (.. (prev thing) x)) (! (.. (prev thing) y)))))
 
   (: std_test (List Int))
   (= std_test (initnext (list 0 1) (push! std_test 2)))
