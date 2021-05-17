@@ -86,8 +86,8 @@ function sub_import(aexpr::AExpr, already_included=Set{String}()::Set{String})
       
       modulepath = joinpath(AULIBPATH, string(modulename) * ".au")
       # assume for now that modules cannot import other modules or include other code
-      # includedcode = sub_import(parsefromfile(modulepath), already_included) # Get the source code
-      includedcode = parsefromfile(modulepath)
+      includedcode = preprocess(parsefromfile(modulepath), already_included) # Get the source code
+      # includedcode = parsefromfile(modulepath)
       append!(newargs, includedcode.args[2:end])  # don't include first arg b/c it's the module name
     else
       push!(newargs, child)
