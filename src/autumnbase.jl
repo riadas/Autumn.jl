@@ -2,8 +2,9 @@
 module AutumnBase
 
 using Distributions: Categorical
+using StatsBase: sample
 import Base.range, Base.min
-export uniformChoice, min, range, updateObj
+export uniformChoice, min, range, updateObj, sample
 
 function uniformChoice(rng, freePositions)
   freePositions[rand(rng, Categorical(ones(length(freePositions))/length(freePositions)))]
@@ -24,7 +25,6 @@ end
 
 function updateObj(obj, field::String, value)
   fields = fieldnames(typeof(obj))
-  constructor_fields = fields
   constructor_values = map(x -> x == Symbol(field) ? value : getproperty(obj, x), fields)
 
   new_obj = typeof(obj)(constructor_values...)
@@ -41,6 +41,10 @@ end
 
 function filter_fallback(obj)
   true
+end
+
+function sample(list::Array, n::Int)
+  sample(list, n; replace=false)
 end
 
 end
