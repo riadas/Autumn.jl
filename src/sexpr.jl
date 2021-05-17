@@ -33,8 +33,16 @@ prog = \"\"\"
 \"\"\"
 
 """
-parseautumn(sexprstring::AbstractString) =
-  parseau(array(SExpressions.Parser.parse(sexprstring)))
+function parseautumn(sexprstring::AbstractString)
+  io = IOBuffer(sexprstring)
+  nocomments_sexprstring = ""
+  for line in eachline(io)
+    nocomments_sexprstring *= (split(line, ";")[1] * "\n")
+  end
+
+  parseau(array(SExpressions.Parser.parse(nocomments_sexprstring)))
+  # parseau(array(SExpressions.Parser.parse(sexprstring)))
+end
 
 "Parse SExpression into Autumn Expressions"
 function parseau(sexpr::AbstractArray)
