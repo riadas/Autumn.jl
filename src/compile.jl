@@ -75,13 +75,13 @@ function preprocess(aexpr::AExpr, already_included)
         includedcode, already_included = preprocess(parsefromfile(path), already_included) # Get the source code
         append!(newargs, includedcode.args[1+(includedcode.head == :module):end])  # we wouldn't be including a program because we have the args
       elseif child.head == :import
-        modulename = child.args[1]
+        modulename = string(child.args[1])
         if modulename in already_included
           continue
         end
-        push!(already_included, string(modulename))
+        push!(already_included, modulename)
         
-        modulepath = joinpath(AULIBPATH, string(modulename) * ".au")
+        modulepath = joinpath(AULIBPATH, modulename * ".au")
         # assume for now that modules cannot import other modules or include other code
         includedcode, already_included = preprocess(parsefromfile(modulepath), already_included) # Get the source code
         # includedcode = parsefromfile(modulepath)
