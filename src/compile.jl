@@ -17,10 +17,10 @@ function sub_includes(aexpr::AExpr)
   # copy and paste the include source file into our actual autumn file
   newargs = []
   for child in aexpr.args
-    if child.head == :include
+    if typeof(child) == AExpr && child.head == :include
       path = child.args[1]
       # TODO we don't want to have duplicated code
-      includedcode = sub_includes(parsefromfile(path)) # Get the source code
+      includedcode = preprocess(parsefromfile(path)) # Get the source code
       append!(newargs, includedcode.args)  # we wouldn't be including a program because we have the args
     else
       push!(newargs, child)
