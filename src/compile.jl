@@ -57,10 +57,40 @@ end
 #   AExpr(:program, newargs...)
 # end
 
-
 function preprocess(aexpr::AExpr)
-  aexpr = sub_includes(aexpr)
-  sub_import(aexpr)
+  preprocess(aexpr::AExpr, Set{String}()::Set{String})[1]
+end
+
+function preprocess(aexpr::AExpr, already_included)
+    # this is a short-circuit or, so then it would only compute error when the first statement is false
+    aexpr.head == :program || error("Expects program Aexpr")
+
+    # copy and paste the include source file into our actual autumn file
+    newargs = []
+    for child in aexpr.args
+      if typeof(child) == AExpr && child.head == :include
+        path = child.args[1]
+        # TODO we don't want to have duplicated code
+        includedcode = preprocess(parsefromfile(path)) # Get the source code
+        append!(newargs, includedcode.args)  # we wouldn't be including a program because we have the args
+      elseif child.head == :import
+        modulename = child.args[1]
+        if modulename in already_included
+          continue
+        end
+        push!(already_included, string(modulename))
+        
+        modulepath = joinpath(AULIBPATH, string(modulename) * ".au")
+        # assume for now that modules cannot import other modules or include other code
+        includedcode = preprocess(parsefromfile(modulepath), already_included) # Get the source code
+        includedcode = parsefromfile(modulepath)
+        append!(newargs, includedcode.args[2:end])  # don't include first arg b/c it's the module name
+      else
+        push!(newargs, child)
+      end
+    end
+    AExpr(:program, newargs...)
+  
 end
 
 """
