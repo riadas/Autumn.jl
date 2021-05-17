@@ -98,7 +98,7 @@ end
 
 "Produces `AExpr` from Autumn code at `path`"
 function parsefromfile(path)
-  progstring = open(path, "r") do io
+  progstring = open(joinpath(AULIBPATH, path), "r") do io
     read(io, String)
   end
   parseautumn(progstring) 
