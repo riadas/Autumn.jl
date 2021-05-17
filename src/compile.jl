@@ -72,7 +72,7 @@ Files are located in the lib folder
 """
 function sub_import(aexpr::AExpr, already_included=Set{String}()::Set{String})
   # this is a short-circuit or, so then it would only compute error when the first statement is false
-  aexpr.head == :program || error("Expects program or module AExpr")
+  aexpr.head == :program || aexpr.head == :module || error("Expects program or module AExpr")
 
   # copy and paste the include source file into our actual autumn file
   newargs = []
