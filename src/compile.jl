@@ -72,8 +72,8 @@ function preprocess(aexpr::AExpr, already_included)
       if child.head == :include
         path = child.args[1]
         # TODO we don't want to have duplicated code
-        includedcode = preprocess(parsefromfile(path)) # Get the source code
-        append!(newargs, includedcode.args)  # we wouldn't be including a program because we have the args
+        includedcode, already_included = preprocess(parsefromfile(path), already_included) # Get the source code
+        append!(newargs, includedcode.args[1+(includedcode.head == :module):end])  # we wouldn't be including a program because we have the args
       elseif child.head == :import
         modulename = child.args[1]
         if modulename in already_included
@@ -83,8 +83,8 @@ function preprocess(aexpr::AExpr, already_included)
         
         modulepath = joinpath(AULIBPATH, string(modulename) * ".au")
         # assume for now that modules cannot import other modules or include other code
-        includedcode = preprocess(parsefromfile(modulepath), already_included) # Get the source code
-        includedcode = parsefromfile(modulepath)
+        includedcode, already_included = preprocess(parsefromfile(modulepath), already_included) # Get the source code
+        # includedcode = parsefromfile(modulepath)
         append!(newargs, includedcode.args[2:end])  # don't include first arg b/c it's the module name
       else
         push!(newargs, child)
