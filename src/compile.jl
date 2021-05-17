@@ -88,9 +88,12 @@ function preprocess(aexpr::AExpr, already_included)
         append!(newargs, includedcode.args[2:end])  # don't include first arg b/c it's the module name
       else
         push!(newargs, child)
-      end
+      end    
+    else
+      push!(newargs, child)
     end
-    AExpr(:program, newargs...)
+  end
+  AExpr(aexpr.head, newargs...), already_included
   
 end
 
