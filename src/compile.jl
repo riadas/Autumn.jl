@@ -62,13 +62,14 @@ function preprocess(aexpr::AExpr)
 end
 
 function preprocess(aexpr::AExpr, already_included)
-    # this is a short-circuit or, so then it would only compute error when the first statement is false
-    aexpr.head == :program || error("Expects program Aexpr")
+  # this is a short-circuit or, so then it would only compute error when the first statement is false
+  aexpr.head == :program || aexpr.head == :module || error("Expects program Aexpr")
 
-    # copy and paste the include source file into our actual autumn file
-    newargs = []
-    for child in aexpr.args
-      if typeof(child) == AExpr && child.head == :include
+  # copy and paste the include source file into our actual autumn file
+  newargs = []
+  for child in aexpr.args
+    if typeof(child) == AExpr
+      if child.head == :include
         path = child.args[1]
         # TODO we don't want to have duplicated code
         includedcode = preprocess(parsefromfile(path)) # Get the source code
