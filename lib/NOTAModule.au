@@ -1,0 +1,6 @@
+(program
+  (include "stdlib.au")
+  (import TestBase)
+  (: a Int)
+  (: b Bool)
+)
