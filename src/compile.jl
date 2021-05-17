@@ -138,7 +138,7 @@ function compiletojulia(aexpr_::AExpr)::Expr
         export init, next
         import Base.min
         using Distributions
-        using MLStyle: @match
+        # using MLStyle: @match
         using Random
         using Autumn.AutumnBase
         rng = Random.GLOBAL_RNG
