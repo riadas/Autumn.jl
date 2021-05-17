@@ -1,0 +1,78 @@
+(module GovtBase
+    ; type definitions
+    (structure Agent (: agentid Int) (: skill Int) (: altruism Int) (: wealth Int) (: workamount Int))
+    ; action can be "work", "educate", "vote", or "none" -- issue and stance are unused unless action is "vote"
+    (structure Action (: action String) (: issue String) (: stance Int))
+    (structure Policy (: issue String) (: stance Int))
+    (structure IntrinsicState (: agents (List Agent)))
+
+    ; instantiations
+    (: time Int)
+    (= time (initnext 0 (+ (prev time) 1)))
+    (: istate IntrinsicState)
+    (= istate (initnext
+        (IntrinsicState (createAgents NUM_AGENTS))
+        (nextIntrinsicState (prev istate) (prev gstate) (prev time))))
+
+
+    ; functions
+    (= createAgents (fn (numagents) (
+        map (--> i (Agent i (uniformChoice (list 0 1 2)) (uniformChoice (list 0 1)) 0 0)) (range 1 numagents)
+    )))
+
+    (= nextIntrinsicState (fn (istate gstate time) (
+        let ((= npactions (npCombinedAct istate gstate time))
+        (iTransition npactions istate gstate time)
+    ))))
+
+    (= npCombinedAct (fn (istate gstate time) (
+        map (--> agent (npAct agent istate gstate time)) (.. istate agents)
+    )))
+
+    (= npAct (fn (agent istate gstate time) (
+        uniformChoice (list
+        (Action "work" "none" -1)
+        (Action "educate" "none" -1)
+        (Action "none" "none" -1))
+    )))
+
+    (= iTransition (fn (npactions istate gstate time) (
+        ; npactions is assumed to be a list of npactions, in the same order as list of agents
+        let ((= new_agents (map (--> arg (updateAgent (first arg) (last arg))) (zip (.. istate agents) npactions)))
+        ; return new istate
+        (IntrinsicState new_agents)
+    ))))
+
+    (= updateAgent (fn (agent npaction) (
+        if (== (.. npaction action) "work")
+        then (work agent)
+        else (if (== (.. npaction action) "educate")
+              then (educate agent)
+              else agent)
+    )))
+
+    (= work (fn (agent) (
+        updateObj (updateObj agent "wealth" (+ (.. agent wealth) (* 4 (+ (.. agent skill) 1)))) "workamount" (+ (.. agent workamount) 1)
+    )))
+
+    (= educate (fn (agent) (
+        if (< (.. agent skill) 2)
+        then (updateObj agent "skill" (+ (.. agent skill) 1))
+        else agent
+    )))
+
+    (= nextGovtState (fn (istate gstate time numpanelists issues) (
+        let ((= pactions (pCombinedAct istate gstate time))
+        (gTransition pactions istate gstate time numpanelists issues)
+    ))))
+
+    (= pCombinedAct (fn (istate gstate time) (
+        map (--> agent (pAct agent istate gstate time)) (.. istate agents)
+    )))
+
+    (= pAct (fn (agent istate gstate time) (
+        let ((= pactionspace (getpActionSpace istate gstate agent time))
+        (uniformChoice pactionspace)
+    ))))
+
+)
