@@ -63,4 +63,19 @@
     (= pCombinedAct (fn (istate gstate time) (
         map (--> agent (pAct agent istate gstate time)) (.. istate agents)
     )))
+
+    (= pAct (fn (agent istate gstate time) (
+        let ((= pactionspace (getpActionSpace istate gstate agent time))
+        (uniformChoice pactionspace)
+    ))))
+    
+    (= getpActionSpace (fn (istate gstate agent time) (
+        if (== (% time 2) 0)
+        then (list (Action "none" "none" -1))  ; panel gets randomly selected, agents take no paction
+        else (
+            if (in (.. agent agentid) (.. gstate panel))
+            then (list (Action "vote" (.. gstate currentissue) 0) (Action "vote" (.. gstate currentissue) 1))
+            else (list (Action "none" "none" -1))  ; non-panel members can't do anything
+        )
+    )))
 )
