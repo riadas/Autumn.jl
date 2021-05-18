@@ -3,8 +3,8 @@ module AutumnBase
 
 using Distributions: Categorical
 import StatsBase: sample
-import Base.range, Base.min
-export uniformChoice, min, range, updateObj, sample, sort
+import Base: range, min, sort
+export uniformChoice, min, range, sort, slice, updateObj, sample
 
 function uniformChoice(rng, freePositions)
   freePositions[rand(rng, Categorical(ones(length(freePositions))/length(freePositions)))]
@@ -23,12 +23,19 @@ function Base.range(start::Int, stop::Int)
   Base.range(start, stop=stop)
 end
 
+function Base.sort(list, rev)
+  Base.sort(list; by=first, rev=rev)
+end
+
+function slice(list::Array, start::Int, stop::Int)
+  list[start:stop]
+end
+
 function updateObj(obj, field::String, value)
   fields = fieldnames(typeof(obj))
   constructor_values = map(x -> x == Symbol(field) ? value : getproperty(obj, x), fields)
 
   new_obj = typeof(obj)(constructor_values...)
-  # setproperty!(new_obj, Symbol(field), value)
   new_obj
 end
 
@@ -45,10 +52,6 @@ end
 
 function sample(list::Array, n::Int)
   sample(list, n; replace=false)
-end
-
-function sort(list::Array, by, rev)
-  sort(list; by=by, rev=rev)
 end
 
 end
