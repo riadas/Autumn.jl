@@ -2,7 +2,6 @@
     ; type definitions
     (structure Agent (: agentid Int) (: skill Int) (: altruism Int) (: wealth Int) (: workamount Int))
     ; action can be "work", "educate", "vote", or "none" -- issue and stance are unused unless action is "vote"
-    (structure Action (: action String) (: issue String) (: stance Int))
     (structure Policy (: issue String) (: stance Int))
     (structure IntrinsicState (: agents (List Agent)))
 
@@ -61,18 +60,7 @@
         else agent
     )))
 
-    (= nextGovtState (fn (istate gstate time numpanelists issues) (
-        let ((= pactions (pCombinedAct istate gstate time))
-        (gTransition pactions istate gstate time numpanelists issues)
-    ))))
-
     (= pCombinedAct (fn (istate gstate time) (
         map (--> agent (pAct agent istate gstate time)) (.. istate agents)
     )))
-
-    (= pAct (fn (agent istate gstate time) (
-        let ((= pactionspace (getpActionSpace istate gstate agent time))
-        (uniformChoice pactionspace)
-    ))))
-
 )
