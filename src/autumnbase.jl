@@ -2,9 +2,9 @@
 module AutumnBase
 
 using Distributions: Categorical
-using StatsBase: sample
+import StatsBase: sample
 import Base.range, Base.min
-export uniformChoice, min, range, updateObj, sample
+export uniformChoice, min, range, updateObj, sample, sort
 
 function uniformChoice(rng, freePositions)
   freePositions[rand(rng, Categorical(ones(length(freePositions))/length(freePositions)))]
@@ -45,6 +45,10 @@ end
 
 function sample(list::Array, n::Int)
   sample(list, n; replace=false)
+end
+
+function sort(list::Array, by, rev)
+  sort(list; by=by, rev=rev)
 end
 
 end
