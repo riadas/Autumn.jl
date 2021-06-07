@@ -182,7 +182,7 @@ function compileobject(expr::AExpr, data::Dict{String, Any})
       id::Int
       origin::Position
       alive::Bool
-      hidden::Bool
+      changed::Bool
       $(custom_fields...) 
       render::Array{Cell}
     end
@@ -208,9 +208,13 @@ function compileon(expr::AExpr, data::Dict{String, Any})
 end
 
 function compileinitnext(data::Dict{String, Any})
+  # ensure changed field is set to false 
+  list_objects = filter(x -> get(data["types"], x, :Any) in map(x -> [:List, x], data["objects"]), 
+                        map(x -> x.args[1], vcat(data["initnext"], data["lifted"])))
   init = quote
     $(map(x -> :($(compile(x.args[1], data)) = $(compile(x.args[2], data))), data["lifted"])...)
     $(map(x -> :($(compile(x.args[1], data)) = $(compile(x.args[2].args[1], data))), data["initnext"])...)
+    $(map(x -> :(foreach(x -> x.changed = false, $(compile(x, data)))), list_objects)...)
   end
 
   onClauses = map(x -> quote 
@@ -219,17 +223,33 @@ function compileinitnext(data::Dict{String, Any})
     end
   end, data["on"])
 
-  notOnClauses = map(x -> quote 
+  println("Hello")
+  println(data["initnext"][1].args)
+  println(filter(x -> get(data["types"], x.args[1], :Any) in vcat(data["objects"], map(y -> [:List, y], data["objects"])), 
+                        data["initnext"]))
+
+  notOnClausesConstant = map(x -> quote 
                           if !(foldl(|, [$(map(y -> compile(y[1], data), filter(z -> ((z[2].head == :assign) && (z[2].args[1] == x.args[1])) || ((z[2].head == :let) && (x.args[1] in map(w -> w.args[1], z[2].args))), data["on"]))...)]; init=false))
                             $(compile(x.args[1], data)) = $(compile(x.args[2].args[2], data));                                 
                           end
-                        end, data["initnext"])
+                        end, filter(x -> !(get(data["types"], x.args[1], :Any) in map(y -> [:List, y], data["objects"])), 
+                        data["initnext"]))
+
+  notOnClausesList = map(x -> quote 
+                        $(Meta.parse(string(compile(x.args[1], data), "Changed"))) = filter(o -> o.changed, $(compile(x.args[1], data)))
+                        $(compile(x.args[1], data)) = filter(o -> !o.changed, $(compile(x.args[1], data)))
+                        $(compile(x.args[1], data)) = filter(o -> !(o.id in $(Meta.parse(string(compile(x.args[1], data), "Changed")))), $(compile(x.args[2].args[2], data)))
+                        $(compile(x.args[1], data)) = vcat($(Meta.parse(string(compile(x.args[1], data), "Changed")))..., $(compile(x.args[1], data))...)
+                        foreach(x -> x.changed = false, $(compile(x.args[1], data)))
+                      end, filter(x -> get(data["types"], x.args[1], :Any) in map(y -> [:List, y], data["objects"]), 
+                      data["initnext"]))
 
   next = quote
     $(map(x -> :($(compile(x.args[1], data)) = state.$(Symbol(string(x.args[1])*"History"))[state.time - 1]), 
       vcat(data["initnext"], data["lifted"]))...)
     $(onClauses...)
-    $(notOnClauses...)
+    $(notOnClausesConstant...)
+    $(notOnClausesList...)
     $(map(x -> :($(compile(x.args[1], data)) = $(compile(x.args[2], data))), filter(x -> x.args[1] != :GRID_SIZE, data["lifted"]))...)
   end
 
@@ -384,7 +404,7 @@ const builtInDict = Dict([
                         Scene(objects::AbstractArray) = Scene(objects, "#ffffff00")
 
                         function render(scene::Scene)::Array{Cell}
-                          vcat(map(obj -> render(obj), filter(obj -> obj.alive && !obj.hidden, scene.objects))...)
+                          vcat(map(obj -> render(obj), filter(obj -> obj.alive, scene.objects))...)
                         end
 
                         function render(obj::Object)::Array{Cell}
@@ -455,11 +475,13 @@ const builtInDict = Dict([
                         end
 
                         function addObj(list::Array{<:Object}, obj::Object)
+                          obj.changed = true
                           new_list = vcat(list, obj)
                           new_list
                         end
 
                         function addObj(list::Array{<:Object}, objs::Array{<:Object})
+                          foreach(obj -> obj.changed = true, objs)
                           new_list = vcat(list, objs)
                           new_list
                         end
@@ -488,7 +510,7 @@ const builtInDict = Dict([
                           new_obj = typeof(obj)(constructor_values...)
                           setproperty!(new_obj, :id, obj.id)
                           setproperty!(new_obj, :alive, obj.alive)
-                          setproperty!(new_obj, :hidden, obj.hidden)
+                          setproperty!(new_obj, :changed, obj.changed)
 
                           setproperty!(new_obj, Symbol(field), value)
                           state.objectsCreated -= 1    
@@ -503,6 +525,7 @@ const builtInDict = Dict([
                           orig_list = filter(obj -> !filter_fn(obj), list)
                           filtered_list = filter(filter_fn, list)
                           new_filtered_list = map(map_fn, filtered_list)
+                          foreach(obj -> obj.changed = true, new_filtered_list)
                           vcat(orig_list, new_filtered_list)
                         end
 
