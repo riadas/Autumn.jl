@@ -236,10 +236,16 @@ function compileinitnext(data::Dict{String, Any})
                         data["initnext"]))
 
   notOnClausesList = map(x -> quote 
+                        @show $(compile(x.args[1], data))
                         $(Meta.parse(string(compile(x.args[1], data), "Changed"))) = filter(o -> o.changed, $(compile(x.args[1], data)))
+                        @show $(Meta.parse(string(compile(x.args[1], data), "Changed")))
                         $(compile(x.args[1], data)) = filter(o -> !(o.id in map(x -> x.id, $(Meta.parse(string(compile(x.args[1], data), "Changed"))))), $(compile(x.args[2].args[2], data)))
+                        @show $(compile(x.args[1], data))
                         $(compile(x.args[1], data)) = vcat($(Meta.parse(string(compile(x.args[1], data), "Changed")))..., $(compile(x.args[1], data))...)
-                        foreach(x -> x.changed = false, $(compile(x.args[1], data)))
+                        @show $(compile(x.args[1], data))
+                        $(compile(x.args[1], data)) = filter(o -> o.alive, $(compile(x.args[1], data)))
+                        foreach(o -> o.changed = false, $(compile(x.args[1], data)))
+                        @show $(compile(x.args[1], data))
                       end, filter(x -> get(data["types"], x.args[1], :Any) in map(y -> [:List, y], data["objects"]), 
                       data["initnext"]))
 
@@ -407,7 +413,11 @@ const builtInDict = Dict([
                         end
 
                         function render(obj::Object)::Array{Cell}
-                          map(cell -> Cell(move(cell.position, obj.origin), cell.color), obj.render)
+                          if obj.alive
+                            map(cell -> Cell(move(cell.position, obj.origin), cell.color), obj.render)
+                          else
+                            []
+                          end
                         end
 
                         function isWithinBounds(obj::Object)::Bool
@@ -453,14 +463,24 @@ const builtInDict = Dict([
                         end
 
                         function intersects(obj1::Object, obj2::Object)::Bool
+                          println("INTERSECTS 1")
                           nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, render(obj1))
                           nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, render(obj2))
                           length(intersect(nums1, nums2)) != 0
                         end
 
                         function intersects(obj1::Object, obj2::Array{<:Object})::Bool
+                          println("INTERSECTS 2")
                           nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, render(obj1))
                           nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
+                          println(length(intersect(nums1, nums2)) != 0)
+                          length(intersect(nums1, nums2)) != 0
+                        end
+
+                        function intersects(obj1::Array{<:Object}, obj2::Array{<:Object})::Bool
+                          nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj1)...))
+                          nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
+                          println(length(intersect(nums1, nums2)) != 0)
                           length(intersect(nums1, nums2)) != 0
                         end
 
@@ -486,16 +506,27 @@ const builtInDict = Dict([
                         end
 
                         function removeObj(list::Array{<:Object}, obj::Object)
-                          filter(x -> x.id != obj.id, list)
+                          new_list = deepcopy(list)
+                          for x in filter(o -> o.id == obj.id, new_list)
+                            x.alive = false 
+                            x.changed = true
+                          end
+                          new_list
                         end
-
+    
                         function removeObj(list::Array{<:Object}, fn)
-                          orig_list = filter(obj -> !fn(obj), list)
+                          new_list = deepcopy(list)
+                          for x in filter(obj -> fn(obj), new_list)
+                            x.alive = false 
+                            x.changed = true
+                          end
+                          new_list
                         end
-
+    
                         function removeObj(obj::Object)
-                          obj.alive = false
-                          deepcopy(obj)
+                          new_obj = deepcopy(obj)
+                          new_obj.alive = false
+                          new_obj
                         end
 
                         function updateObj(obj::Object, field::String, value)
