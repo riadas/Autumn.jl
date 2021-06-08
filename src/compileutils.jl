@@ -223,11 +223,6 @@ function compileinitnext(data::Dict{String, Any})
     end
   end, data["on"])
 
-  println("Hello")
-  println(data["initnext"][1].args)
-  println(filter(x -> get(data["types"], x.args[1], :Any) in vcat(data["objects"], map(y -> [:List, y], data["objects"])), 
-                        data["initnext"]))
-
   notOnClausesConstant = map(x -> quote 
                           if !(foldl(|, [$(map(y -> compile(y[1], data), filter(z -> ((z[2].head == :assign) && (z[2].args[1] == x.args[1])) || ((z[2].head == :let) && (x.args[1] in map(w -> w.args[1], z[2].args))), data["on"]))...)]; init=false))
                             $(compile(x.args[1], data)) = $(compile(x.args[2].args[2], data));                                 
