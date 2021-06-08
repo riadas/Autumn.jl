@@ -237,8 +237,7 @@ function compileinitnext(data::Dict{String, Any})
 
   notOnClausesList = map(x -> quote 
                         $(Meta.parse(string(compile(x.args[1], data), "Changed"))) = filter(o -> o.changed, $(compile(x.args[1], data)))
-                        $(compile(x.args[1], data)) = filter(o -> !o.changed, $(compile(x.args[1], data)))
-                        $(compile(x.args[1], data)) = filter(o -> !(o.id in $(Meta.parse(string(compile(x.args[1], data), "Changed")))), $(compile(x.args[2].args[2], data)))
+                        $(compile(x.args[1], data)) = filter(o -> !(o.id in map(x -> x.id, $(Meta.parse(string(compile(x.args[1], data), "Changed"))))), $(compile(x.args[2].args[2], data)))
                         $(compile(x.args[1], data)) = vcat($(Meta.parse(string(compile(x.args[1], data), "Changed")))..., $(compile(x.args[1], data))...)
                         foreach(x -> x.changed = false, $(compile(x.args[1], data)))
                       end, filter(x -> get(data["types"], x.args[1], :Any) in map(y -> [:List, y], data["objects"]), 
