@@ -578,7 +578,8 @@ const builtInDict = Dict([
                           deltaX = position2.x - position1.x
                           deltaY = position2.y - position1.y
                           if (floor(Int, abs(sign(deltaX))) == 1 && floor(Int, abs(sign(deltaY))) == 1)
-                            uniformChoice(rng, [Position(sign(deltaX), 0), Position(0, sign(deltaY))])
+                            Position(sign(deltaX), 0)
+                            # uniformChoice(rng, [Position(sign(deltaX), 0), Position(0, sign(deltaY))])
                           else
                             Position(sign(deltaX), sign(deltaY))  
                           end
