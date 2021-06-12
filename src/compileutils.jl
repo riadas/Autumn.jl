@@ -231,16 +231,11 @@ function compileinitnext(data::Dict{String, Any})
                         data["initnext"]))
 
   notOnClausesList = map(x -> quote 
-                        @show $(compile(x.args[1], data))
                         $(Meta.parse(string(compile(x.args[1], data), "Changed"))) = filter(o -> o.changed, $(compile(x.args[1], data)))
-                        @show $(Meta.parse(string(compile(x.args[1], data), "Changed")))
                         $(compile(x.args[1], data)) = filter(o -> !(o.id in map(x -> x.id, $(Meta.parse(string(compile(x.args[1], data), "Changed"))))), $(compile(x.args[2].args[2], data)))
-                        @show $(compile(x.args[1], data))
                         $(compile(x.args[1], data)) = vcat($(Meta.parse(string(compile(x.args[1], data), "Changed")))..., $(compile(x.args[1], data))...)
-                        @show $(compile(x.args[1], data))
                         $(compile(x.args[1], data)) = filter(o -> o.alive, $(compile(x.args[1], data)))
                         foreach(o -> o.changed = false, $(compile(x.args[1], data)))
-                        @show $(compile(x.args[1], data))
                       end, filter(x -> get(data["types"], x.args[1], :Any) in map(y -> [:List, y], data["objects"]), 
                       data["initnext"]))
 
@@ -344,7 +339,7 @@ end
 const builtInDict = Dict([
 "occurred"        =>  quote
                         function occurred(click)
-                          click !== nothing
+                          !isnothing(click)
                         end
                       end,
 "uniformChoice"   =>  quote
