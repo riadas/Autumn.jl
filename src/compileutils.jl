@@ -516,6 +516,7 @@ const builtInDict = Dict([
                         function removeObj(obj::Object)
                           new_obj = deepcopy(obj)
                           new_obj.alive = false
+                          new_obj.changed = true
                           new_obj
                         end
 
