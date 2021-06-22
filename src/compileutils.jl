@@ -432,7 +432,8 @@ const builtInDict = Dict([
                         end
 
                         function objClicked(click::Union{Click, Nothing}, objects::AbstractArray)::Object
-                          # println(click)
+                          println(click)
+                          println(filter(obj -> clicked(click, obj), objects)[1])
                           filter(obj -> clicked(click, obj), objects)[1]
                         end
 
@@ -617,6 +618,19 @@ const builtInDict = Dict([
 
                         function adjacent(cell::Cell, cells::Array{Cell})
                           length(filter(x -> adjacent(cell, x), cells)) != 0
+                        end
+
+                        function adjacentObjs(obj::Object)
+                          filter(o -> adjacent(o.origin, obj.origin) && (obj.id != o.id), state.scene.objects)
+                        end
+    
+                        function adjacentObjsDiag(obj::Object)
+                          filter(o -> adjacentDiag(o.origin, obj.origin) && (obj.id != o.id), state.scene.objects)
+                        end
+    
+                        function adjacentDiag(position1::Position, position2::Position)
+                          displacement(position1, position2) in [Position(0,1), Position(1, 0), Position(0, -1), Position(-1, 0),
+                                                                 Position(1,1), Position(1, -1), Position(-1, 1), Position(-1, -1)]
                         end
 
                         function rotate(object::Object)::Object
