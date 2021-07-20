@@ -434,12 +434,17 @@ const builtInDict = Dict([
                         function objClicked(click::Union{Click, Nothing}, objects::AbstractArray)::Union{Object, Nothing}
                           println(click)
                           println(filter(obj -> clicked(click, obj), objects)[1])
-                          objects = filter(obj -> clicked(click, obj), objects)
-                          if objects == []
+                          if isnothing(click)
                             nothing
                           else
-                            objects[1]
+                            clicked_objects = filter(obj -> clicked(click, obj), objects)
+                            if length(clicked_objects) == 0
+                              nothing
+                            else
+                              clicked_objects[1]
+                            end
                           end
+
                         end
 
                         function clicked(click::Union{Click, Nothing}, x::Int, y::Int)::Bool
