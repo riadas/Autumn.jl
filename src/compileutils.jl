@@ -433,7 +433,6 @@ const builtInDict = Dict([
 
                         function objClicked(click::Union{Click, Nothing}, objects::AbstractArray)::Union{Object, Nothing}
                           println(click)
-                          println(filter(obj -> clicked(click, obj), objects)[1])
                           if isnothing(click)
                             nothing
                           else
