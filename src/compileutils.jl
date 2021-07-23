@@ -932,7 +932,7 @@ const builtInDict = Dict([
 
                         function isFree(position::Position, object::Object)
                           length(filter(cell -> cell.position.x == position.x && cell.position.y == position.y, 
-                          filter(x -> !(x in render(object)), render(state.scene)))) == 0
+                          render(Scene(filter(obj -> obj.id != object.id , state.scene.objects), state.scene.background)))) == 0
                         end
 
                         function isFree(object::Object, orig_object::Object)::Bool
