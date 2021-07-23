@@ -2,7 +2,7 @@
 
 | **Documentation**                       | **Build Status**                                                                                |
 |:--------------------------------------- |:----------------------------------------------------------------------------------------------- |
-| [![][docs-latest-img]][docs-latest-url] | [![][giactions-img]][giactions-url] [![][codecov-img]][codecov-url] |
+| [![][docs-dev-img]][docs-dev-url] | [![][giactions-img]][giactions-url] [![][codecov-img]][codecov-url] |
 
 Autumn is a library for causal and probabilistic inference in Julia.
 
