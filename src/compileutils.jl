@@ -944,6 +944,18 @@ const builtInDict = Dict([
                           nums = [1:GRID_SIZE*GRID_SIZE - 1;]
                           map(num -> Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), nums)
                         end
+
+                        function unfold(A)
+                          V = []
+                          for x in A
+                              if x === A
+                                  push!(V, x)
+                              else
+                                  append!(V, unfold(x))
+                              end
+                          end
+                          V
+                        end
                       
                     end
 ])
