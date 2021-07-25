@@ -948,10 +948,8 @@ const builtInDict = Dict([
                         function unfold(A)
                           V = []
                           for x in A
-                              if x === A
-                                  push!(V, x)
-                              else
-                                  append!(V, unfold(x))
+                              for elt in x
+                                push!(V, elt)
                               end
                           end
                           V
