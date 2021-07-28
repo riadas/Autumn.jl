@@ -21,6 +21,9 @@ include("compileutils.jl")
 include("compile.jl")
 @reexport using .Compile
 
+include("interpretutils.jl")
+@reexport using .InterpretUtils
+
 include("interpret.jl")
 @reexport using .Interpret
 
