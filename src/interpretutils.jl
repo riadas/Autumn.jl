@@ -8,9 +8,9 @@ import MLStyle
 
 function sub(aex::AExpr, (x, v))
   # print("SUb")
-  # @show aex
-  # @show x
-  # @show v
+  # # @show aex
+  # # @show x
+  # # @show v
   arr = [aex.head, aex.args...]
   # next(x) = interpret(x, Γ)
   if (x isa AExpr) && ([x.head, x.args...] == arr)  
@@ -120,8 +120,7 @@ islib(f) = f in keys(lib_to_func)
 
 # library function handling 
 function libapl(f, args, Γ)
-  println("libapl")
-  @show args
+  # println("libapl")
   has_function_arg = false
   for arg in args 
     if (arg isa AbstractArray) && (length(arg) == 2) && (arg[1] isa AExpr || arg[1] isa Symbol) && (arg[2] isa AExpr || arg[2] isa Symbol)
@@ -159,10 +158,10 @@ end
 
 function interpret(aex::AExpr, Γ::Environment)
   arr = [aex.head, aex.args...]
-  # println()
-  # println("Env:")
+  # # println()
+  # # println("Env:")
   # display(Γ)
-  # @show arr 
+  # # @show arr 
   # next(x) = interpret(x, Γ)
   isaexpr(x) = x isa AExpr
   t = MLStyle.@match arr begin
@@ -204,8 +203,8 @@ function interpret(aex::AExpr, Γ::Environment)
     [args...]                                                  => error(string("Invalid AExpr Head: ", aex.head))
     _                                                          => error("Could not interpret $arr")
   end
-  # println("FINSIH", arr)
-  # @show(t)
+  # # println("FINSIH", arr)
+  # # @show(t)
   t
 end
 
@@ -241,10 +240,7 @@ end
 function interpret_lib(f, args, Γ)
   new_args = []
   for arg in args 
-    @show arg 
     new_arg, Γ = interpret(arg, Γ)
-    @show new_arg 
-    @show typeof(Γ)
     push!(new_args, new_arg)
   end
   libapl(f, new_args, Γ)
@@ -253,8 +249,6 @@ end
 function interpret_julia_lib(f, args, Γ)
   new_args = []
   for arg in args 
-    @show arg 
-    @show typeof(Γ)
     new_arg, Γ = interpret(arg, Γ)
     push!(new_args, new_arg)
   end
@@ -290,11 +284,7 @@ function interpret_let(args::AbstractArray, Γ::Environment)
 end
 
 function interpret_call(f, params, Γ::Environment)
-  @show Γ.object_types
-  @show f 
   func, Γ = interpret(f, Γ)
-  @show func 
-  @show typeof(Γ)
   func_args = func[1]
   func_body = func[2]
 
@@ -313,19 +303,19 @@ function interpret_call(f, params, Γ::Environment)
   else
     error("Could not interpret $(func_args)")
   end
-  @show typeof(Γ2)
+  # @show typeof(Γ2)
   # evaluate func_body in environment 
   v, Γ2 = interpret(func_body, Γ2)
   
   # return value and original environment, except with state updated 
   Γ = update(Γ, :state, update(Γ.state, :objectsCreated, Γ2.state.objectsCreated))
-  println("DONE")
+  # println("DONE")
   (v, Γ)
 end
 
 function interpret_object_call(f, args, Γ)
-  println("BEFORE")
-  @show Γ.state.objectsCreated 
+  # println("BEFORE")
+  # @show Γ.state.objectsCreated 
   origin, Γ = interpret(args[end], Γ)
   render, Γ = interpret(Γ.object_types[f][:render], Γ)
 
@@ -340,8 +330,8 @@ function interpret_object_call(f, args, Γ)
     field_value, Γ = interpret(args[i], Γ)
     object_repr = update(object_repr, field_name, field_value)
   end
-  println("AFTER")
-  @show Γ.state.objectsCreated
+  # println("AFTER")
+  # @show Γ.state.objectsCreated
   (object_repr, Γ)  
 end
 
@@ -371,12 +361,12 @@ function interpret_init_next(var_name, var_val, Γ)
       # replace (prev var_name) or var_name with unchanged_val 
       modified_next_func = sub(next_func, AExpr(:call, :prev, var_name) => unchanged_val)
       modified_next_func = sub(modified_next_func, var_name => unchanged_val)
-      println("here i am, once again")
-      @show Γ.state.objectsCreated
+      # println("here i am, once again")
+      # @show Γ.state.objectsCreated
       default_val, Γ = interpret(modified_next_func, Γ)
-      @show default_val 
-      println("here i am, once again 2")
-      @show Γ.state.objectsCreated
+      # @show default_val 
+      # println("here i am, once again 2")
+      # @show Γ.state.objectsCreated
       final_val = map(o -> update(o, :changed, false), filter(obj -> obj.alive, vcat(changed_val, default_val)))
     else # variable is not an array
       events = Γ[:on_clauses][var_name]
@@ -437,7 +427,7 @@ function interpret_on(args, Γ)
       error("Could not interpret $(update_)")
     end
   else
-    println("here 1")
+    # println("here 1")
     e, Γ2 = interpret(event, Γ2) 
     if e == true 
       ex, Γ2 = interpret(update_, Γ2)
@@ -455,11 +445,11 @@ function interpret_updateObj(args, Γ)
     map_func = args[2]
     new_list = []
     for item in list 
-      println("PRE=PLS WORK")
-      @show Γ2.state.objectsCreated      
+      # println("PRE=PLS WORK")
+      # @show Γ2.state.objectsCreated      
       new_item, Γ2 = interpret(AExpr(:call, map_func, item), Γ2)
-      println("PLS WORK")
-      @show Γ2.state.objectsCreated
+      # println("PLS WORK")
+      # @show Γ2.state.objectsCreated
       push!(new_list, new_item)
     end
     new_list, Γ2
