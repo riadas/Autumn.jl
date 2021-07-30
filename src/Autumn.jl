@@ -21,6 +21,9 @@ include("compileutils.jl")
 include("compile.jl")
 @reexport using .Compile
 
+include("autumnstdlib.jl")
+@reexport using .AutumnStandardLibrary
+
 include("interpretutils.jl")
 @reexport using .InterpretUtils
 
