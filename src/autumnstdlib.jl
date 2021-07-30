@@ -50,7 +50,7 @@ Cell(position::Position, color::String, state) = Cell(position::Position, color:
 # end
 
 function render(obj::NamedTuple, state=nothing)::Array{Cell}
-  if !(:id in fieldnames(obj))
+  if !(:id in keys(obj))
     vcat(map(o -> render(o), filter(x -> x.alive, obj.objects))...)
   else
     if obj.alive
@@ -82,12 +82,12 @@ function range(start::Int, stop::Int, state=nothing)
   [start:stop;]
 end
 
-function isWithinBounds(obj::NamedTuple, state=nothing)::Bool
+function isWithinBounds(obj::NamedTuple, state)::Bool
   # println(filter(cell -> !isWithinBounds(cell.position),render(obj)))
   length(filter(cell -> !isWithinBounds(cell.position, state), render(obj))) == 0
 end
 
-function clicked(click::Union{Click, Nothing}, object::NamedTuple, state=nothing)::Bool
+function clicked(click::Union{Click, Nothing}, object::NamedTuple, state)::Bool
   if click == nothing
     false
   else
@@ -97,7 +97,7 @@ function clicked(click::Union{Click, Nothing}, object::NamedTuple, state=nothing
   end
 end
 
-function clicked(click::Union{Click, Nothing}, objects::AbstractArray, state=nothing)  
+function clicked(click::Union{Click, Nothing}, objects::AbstractArray, state)  
   # println("LOOK AT ME")
   # println(reduce(&, map(obj -> clicked(click, obj), objects)))
   reduce(|, map(obj -> clicked(click, obj, state), objects))
@@ -118,7 +118,7 @@ function objClicked(click::Union{Click, Nothing}, objects::AbstractArray, state=
 
 end
 
-function clicked(click::Union{Click, Nothing}, x::Int, y::Int, state=nothing)::Bool
+function clicked(click::Union{Click, Nothing}, x::Int, y::Int, state)::Bool
   if click == nothing
     false
   else
@@ -126,7 +126,7 @@ function clicked(click::Union{Click, Nothing}, x::Int, y::Int, state=nothing)::B
   end
 end
 
-function clicked(click::Union{Click, Nothing}, pos::Position, state=nothing)::Bool
+function clicked(click::Union{Click, Nothing}, pos::Position, state)::Bool
   if click == nothing
     false
   else
@@ -134,25 +134,21 @@ function clicked(click::Union{Click, Nothing}, pos::Position, state=nothing)::Bo
   end
 end
 
-function intersects(obj1::NamedTuple, obj2::NamedTuple, state=nothing)::Bool
-  println("INTERSECTS 1")
+function intersects(obj1::NamedTuple, obj2::NamedTuple, state)::Bool
   nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, render(obj1))
   nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, render(obj2))
   length(intersect(nums1, nums2)) != 0
 end
 
-function intersects(obj1::NamedTuple, obj2::AbstractArray, state=nothing)::Bool
-  println("INTERSECTS 2")
+function intersects(obj1::NamedTuple, obj2::AbstractArray, state)::Bool
   nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, render(obj1))
   nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
-  println(length(intersect(nums1, nums2)) != 0)
   length(intersect(nums1, nums2)) != 0
 end
 
-function intersects(obj1::AbstractArray, obj2::AbstractArray, state=nothing)::Bool
+function intersects(obj1::AbstractArray, obj2::AbstractArray, state)::Bool
   nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj1)...))
   nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
-  println(length(intersect(nums1, nums2)) != 0)
   length(intersect(nums1, nums2)) != 0
 end
 
@@ -160,7 +156,7 @@ function intersects(list1, list2, state=nothing)::Bool
   length(intersect(list1, list2)) != 0 
 end
 
-function intersects(object::NamedTuple, state=nothing)::Bool
+function intersects(object::NamedTuple, state)::Bool
   objects = state.scene.objects
   intersects(object, objects, state)
 end
@@ -245,19 +241,19 @@ function updateObj(list::AbstractArray, map_fn, state::NamedTuple=nothing)
   vcat(orig_list, new_filtered_list)
 end
 
-function adjPositions(position::Position, state=nothing)::Array{Position}
+function adjPositions(position::Position, state)::Array{Position}
   filter(x -> isWithinBounds(x, state), [Position(position.x, position.y + 1), Position(position.x, position.y - 1), Position(position.x + 1, position.y), Position(position.x - 1, position.y)])
 end
 
-function isWithinBounds(position::Position, state=nothing)::Bool
+function isWithinBounds(position::Position, state)::Bool
   (position.x >= 0) && (position.x < state.GRID_SIZEHistory[0]) && (position.y >= 0) && (position.y < state.GRID_SIZEHistory[0])                          
 end
 
-function isFree(position::Position, state=nothing)::Bool
+function isFree(position::Position, state)::Bool
   length(filter(cell -> cell.position.x == position.x && cell.position.y == position.y, render(state.scene))) == 0
 end
 
-function isFree(click::Union{Click, Nothing}, state=nothing)::Bool
+function isFree(click::Union{Click, Nothing}, state)::Bool
   if click == nothing
     false
   else
@@ -329,11 +325,11 @@ function adjacent(cell::Cell, cells::Array{Cell}, state=nothing)
   length(filter(x -> adjacent(cell, x), cells)) != 0
 end
 
-function adjacentObjs(obj::NamedTuple, state=nothing)
+function adjacentObjs(obj::NamedTuple, state)
   filter(o -> adjacent(o.origin, obj.origin) && (obj.id != o.id), state.scene.objects)
 end
 
-function adjacentObjsDiag(obj::NamedTuple, state=nothing)
+function adjacentObjsDiag(obj::NamedTuple, state)
   filter(o -> adjacentDiag(o.origin, obj.origin) && (obj.id != o.id), state.scene.objects)
 end
 
@@ -352,7 +348,7 @@ function rotate(position::Position, state=nothing)::Position
   Position(-position.y, position.x)
  end
 
-function rotateNoCollision(object::NamedTuple, state=nothing)::NamedTuple
+function rotateNoCollision(object::NamedTuple, state)::NamedTuple
   (isWithinBounds(rotate(object), state) && isFree(rotate(object), object), state) ? rotate(object) : object
 end
 
@@ -398,59 +394,59 @@ end
 
 # ----- end left/right move ----- #
 
-function moveNoCollision(object::NamedTuple, position::Position, state=nothing)::NamedTuple
+function moveNoCollision(object::NamedTuple, position::Position, state)::NamedTuple
   (isWithinBounds(move(object, position), state) && isFree(move(object, position.x, position.y), object, state)) ? move(object, position.x, position.y) : object 
 end
 
-function moveNoCollision(object::NamedTuple, x::Int, y::Int, state=nothing)
+function moveNoCollision(object::NamedTuple, x::Int, y::Int, state)
   (isWithinBounds(move(object, x, y), state) && isFree(move(object, x, y), object, state)) ? move(object, x, y) : object 
 end
 
 # ----- begin left/right moveNoCollision ----- #
 
-function moveLeftNoCollision(object::NamedTuple, state=nothing)::NamedTuple
+function moveLeftNoCollision(object::NamedTuple, state)::NamedTuple
   (isWithinBounds(move(object, -1, 0), state) && isFree(move(object, -1, 0), object, state)) ? move(object, -1, 0) : object 
 end
 
-function moveRightNoCollision(object::NamedTuple, state=nothing)::NamedTuple
+function moveRightNoCollision(object::NamedTuple, state)::NamedTuple
   (isWithinBounds(move(object, 1, 0), state) && isFree(move(object, 1, 0), object, state)) ? move(object, 1, 0) : object 
 end
 
-function moveUpNoCollision(object::NamedTuple, state=nothing)::NamedTuple
+function moveUpNoCollision(object::NamedTuple, state)::NamedTuple
   (isWithinBounds(move(object, 0, -1), state) && isFree(move(object, 0, -1), object, state)) ? move(object, 0, -1) : object 
 end
 
-function moveDownNoCollision(object::NamedTuple, state=nothing)::NamedTuple
+function moveDownNoCollision(object::NamedTuple, state)::NamedTuple
   (isWithinBounds(move(object, 0, 1), state) && isFree(move(object, 0, 1), object, state)) ? move(object, 0, 1) : object 
 end
 
 # ----- end left/right moveNoCollision ----- #
 
-function moveWrap(object::NamedTuple, position::Position, state=nothing)::NamedTuple
+function moveWrap(object::NamedTuple, position::Position, state)::NamedTuple
   new_object = deepcopy(object)
   new_object = update_nt(new_object, :origin, moveWrap(object.origin, position.x, position.y, state))
   new_object
 end
 
-function moveWrap(cell::Cell, position::Position, state=nothing)
+function moveWrap(cell::Cell, position::Position, state)
   moveWrap(cell.position, position.x, position.y, state)
 end
 
-function moveWrap(position::Position, cell::Cell, state=nothing)
+function moveWrap(position::Position, cell::Cell, state)
   moveWrap(cell.position, position, state)
 end
 
-function moveWrap(object::NamedTuple, x::Int, y::Int, state=nothing)::NamedTuple
+function moveWrap(object::NamedTuple, x::Int, y::Int, state)::NamedTuple
   new_object = deepcopy(object)
   new_object = update_nt(new_object, :origin, moveWrap(object.origin, x, y, state))
   new_object
 end
 
-function moveWrap(position1::Position, position2::Position, state=nothing)::Position
+function moveWrap(position1::Position, position2::Position, state)::Position
   moveWrap(position1, position2.x, position2.y, state)
 end
 
-function moveWrap(position::Position, x::Int, y::Int, state=nothing)::Position
+function moveWrap(position::Position, x::Int, y::Int, state)::Position
   GRID_SIZE = state.GRID_SIZEHistory[0]
   # println("hello")
   # println(Position((position.x + x + GRID_SIZE) % GRID_SIZE, (position.y + y + GRID_SIZE) % GRID_SIZE))
@@ -510,7 +506,7 @@ function distance(position::Position, object::NamedTuple, state=nothing)::Int
   distance(object.origin, position)
 end
 
-function closest(object::NamedTuple, type::DataType, state=nothing)::Position
+function closest(object::NamedTuple, type::DataType)::Position
   objects_of_type = filter(obj -> (obj isa type) && (obj.alive), state.scene.objects)
   if length(objects_of_type) == 0
     object.origin
@@ -541,7 +537,7 @@ function updateAlive(object::NamedTuple, new_alive::Bool, state=nothing)::NamedT
   new_object
 end
 
-function nextLiquid(object::NamedTuple, state=nothing)::NamedTuple 
+function nextLiquid(object::NamedTuple, state)::NamedTuple 
   # println("nextLiquid")
   GRID_SIZE = state.GRID_SIZEHistory[0]
   new_object = deepcopy(object)
@@ -587,7 +583,7 @@ function nextLiquid(object::NamedTuple, state=nothing)::NamedTuple
   new_object
 end
 
-function nextSolid(object::NamedTuple, state=nothing)::NamedTuple 
+function nextSolid(object::NamedTuple, state)::NamedTuple 
   # println("nextSolid")
   GRID_SIZE = state.GRID_SIZEHistory[0] 
   new_object = deepcopy(object)
@@ -603,28 +599,28 @@ function closest(object::NamedTuple, positions::Array{Position}, state=nothing):
   closest
 end
 
-function isFree(start::Position, stop::Position, state=nothing)::Bool 
+function isFree(start::Position, stop::Position, state)::Bool 
   GRID_SIZE = state.GRID_SIZEHistory[0]
   nums = [(GRID_SIZE * start.y + start.x):(GRID_SIZE * stop.y + stop.x);]
   reduce(&, map(num -> isFree(Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), state), nums))
 end
 
-function isFree(start::Position, stop::Position, object::NamedTuple, state=nothing)::Bool 
+function isFree(start::Position, stop::Position, object::NamedTuple, state)::Bool 
   GRID_SIZE = state.GRID_SIZEHistory[0]
   nums = [(GRID_SIZE * start.y + start.x):(GRID_SIZE * stop.y + stop.x);]
   reduce(&, map(num -> isFree(Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), object, state), nums))
 end
 
-function isFree(position::Position, object::NamedTuple, state=nothing)
+function isFree(position::Position, object::NamedTuple, state)
   length(filter(cell -> cell.position.x == position.x && cell.position.y == position.y, 
-  render(NamedTuple(objects=filter(obj -> obj.id != object.id , state.scene.objects), background=state.scene.background)))) == 0
+  render((objects=filter(obj -> obj.id != object.id , state.scene.objects), background=state.scene.background)))) == 0
 end
 
-function isFree(object::NamedTuple, orig_object::NamedTuple, state=nothing)::Bool
+function isFree(object::NamedTuple, orig_object::NamedTuple, state)::Bool
   reduce(&, map(x -> isFree(x, orig_object, state), map(cell -> cell.position, render(object))))
 end
 
-function allPositions(state=nothing)
+function allPositions(state)
   GRID_SIZE = state.GRID_SIZEHistory[0]
   nums = [1:GRID_SIZE*GRID_SIZE - 1;]
   map(num -> Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), nums)

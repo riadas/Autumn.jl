@@ -50,10 +50,9 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG)
 
   # add background to scene 
   background_assignments = filter(l -> l.args[1] == :background, lifted_lines)
-  if background_assignments != []
-    background = background_assignments[end]
-    env = update(env, :state, update(env.state, :scene, update(env.state.scene, :background, background)))
-  end 
+  background = background_assignments != [] ? background_assignments[end] : "#ffffff00"
+  env = update(env, :state, update(env.state, :scene, update(env.state.scene, :background, background)))
+
 
   # initialize scene.objects 
   env = update(env, :state, update(env.state, :scene, update(env.state.scene, :objects, [])))
@@ -101,9 +100,13 @@ function update_state(env_)
   # update scene.objects 
   new_scene_objects = []
   for key in keys(env_)
-    if !(key in [:state, :object_types, :on_clauses]) && env_[key] isa NamedTuple && (:id in keys(env_[key]))
+    if !(key in [:state, :object_types, :on_clauses]) && ((env_[key] isa NamedTuple && (:id in keys(env_[key]))) || (env_[key] isa AbstractArray && (length(env_[key]) > 0) && (env_[key][1] isa NamedTuple)))
       object_val = env_[key]
-      push!(new_scene_objects, object_val)
+      if object_val isa AbstractArray 
+        push!(new_scene_objects, object_val...)
+      else
+        push!(new_scene_objects, object_val)
+      end
     end
   end
   env_ = update(env_, :state, update(env_.state, :scene, update(env_.state.scene, :objects, new_scene_objects)))
