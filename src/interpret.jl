@@ -38,7 +38,7 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG)
                          lifted_lines)
 
   # add prev functions and variable history to state for lifted variables 
-  for line in filter(l -> !(l.args[1] in [:background]), lifted_lines)
+  for line in lifted_lines
     var_name = line.args[1] 
     # construct history variable in state
     new_state = update(env.state, Symbol(string(var_name, "History")), Dict())
@@ -56,6 +56,16 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG)
 
   # initialize scene.objects 
   env = update(env, :state, update(env.state, :scene, update(env.state.scene, :objects, [])))
+
+  # initialize lifted variables
+  env = update(env, :lifted, empty_env()) 
+  for line in lifted_lines
+    var_name = line.args[1]
+    env = update(env, :lifted, update(env.lifted, var_name, line.args[2])) 
+    if var_name in [:GRID_SIZE, :background]
+      env = update(env, var_name, line.args[2])
+    end
+  end 
 
   new_aex = AExpr(:program, reordered_lines...)
   @show new_aex
@@ -97,10 +107,15 @@ function update_state(env_)
     env_.state[key][env_.state.time] = env_[var_name]
   end
 
+  # update lifted variables 
+  for var_name in keys(env_.lifted)
+    env_ = update(env_, var_name, interpret(env_.lifted[var_name], env_)[1])
+  end
+
   # update scene.objects 
   new_scene_objects = []
   for key in keys(env_)
-    if !(key in [:state, :object_types, :on_clauses]) && ((env_[key] isa NamedTuple && (:id in keys(env_[key]))) || (env_[key] isa AbstractArray && (length(env_[key]) > 0) && (env_[key][1] isa NamedTuple)))
+    if !(key in [:state, :object_types, :on_clauses, :lifted]) && ((env_[key] isa NamedTuple && (:id in keys(env_[key]))) || (env_[key] isa AbstractArray && (length(env_[key]) > 0) && (env_[key][1] isa NamedTuple)))
       object_val = env_[key]
       if object_val isa AbstractArray 
         push!(new_scene_objects, object_val...)
@@ -120,10 +135,12 @@ function interpret_over_time(aex::AExpr, iters, user_events=[])::Environment
   new_aex, env_ = start(aex)
   if user_events == []
     for i in 1:iters
+      @show i
       env_ = step(new_aex, env_)
     end
   else
     for i in 1:iters
+      @show i
       env_ = step(new_aex, env_, user_events[i])
     end
   end

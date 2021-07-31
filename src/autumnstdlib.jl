@@ -66,16 +66,16 @@ function occurred(click, state=nothing)
   !isnothing(click)
 end
 
-function uniformChoice(freePositions, state=nothing)
+function uniformChoice(freePositions, state)
   freePositions[rand(state.rng, Categorical(ones(length(freePositions))/length(freePositions)))]
 end
 
-function uniformChoice(freePositions, n::Int, state=nothing)
+function uniformChoice(freePositions, n::Union{Int, BigInt}, state)
   map(idx -> freePositions[idx], rand(state.rng, Categorical(ones(length(freePositions))/length(freePositions)), n))
 end
 
 function min(arr, state=nothing)
-  min(arr...)
+  Base.min(arr...)
 end
 
 function range(start::Int, stop::Int, state=nothing)
@@ -482,7 +482,7 @@ end
 # ----- end left/right moveWrap ----- #
 
 function randomPositions(GRID_SIZE::Int, n::Int, state=nothing)::Array{Position}
-  nums = uniformChoice(state.rng, [0:(GRID_SIZE * GRID_SIZE - 1);], n)
+  nums = uniformChoice([0:(GRID_SIZE * GRID_SIZE - 1);], n, state)
   # println(nums)
   # println(map(num -> Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), nums))
   map(num -> Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), nums)
@@ -506,8 +506,8 @@ function distance(position::Position, object::NamedTuple, state=nothing)::Int
   distance(object.origin, position)
 end
 
-function closest(object::NamedTuple, type::DataType)::Position
-  objects_of_type = filter(obj -> (obj isa type) && (obj.alive), state.scene.objects)
+function closest(object::NamedTuple, type::Symbol, state)::Position
+  objects_of_type = filter(obj -> (obj.type == type) && (obj.alive), state.scene.objects)
   if length(objects_of_type) == 0
     object.origin
   else
