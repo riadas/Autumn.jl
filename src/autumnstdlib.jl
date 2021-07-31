@@ -276,7 +276,7 @@ function rect(pos1::Position, pos2::Position, state=nothing)
   positions
 end
 
-function unitVector(position1::Position, position2::Position, state=nothing)::Position
+function unitVector(position1::Position, position2::Position, state)::Position
   deltaX = position2.x - position1.x
   deltaY = position2.y - position1.y
   if (floor(Int, abs(sign(deltaX))) == 1 && floor(Int, abs(sign(deltaY))) == 1)
@@ -287,25 +287,25 @@ function unitVector(position1::Position, position2::Position, state=nothing)::Po
   end
 end
 
-function unitVector(object1::NamedTuple, object2::NamedTuple, state=nothing)::Position
+function unitVector(object1::NamedTuple, object2::NamedTuple, state)::Position
   position1 = object1.origin
   position2 = object2.origin
-  unitVector(position1, position2)
+  unitVector(position1, position2, state)
 end
 
-function unitVector(object::NamedTuple, position::Position, state=nothing)::Position
-  unitVector(object.origin, position)
+function unitVector(object::NamedTuple, position::Position, state)::Position
+  unitVector(object.origin, position, state)
 end
 
-function unitVector(position::Position, object::NamedTuple, state=nothing)::Position
-  unitVector(position, object.origin)
+function unitVector(position::Position, object::NamedTuple, state)::Position
+  unitVector(position, object.origin, state)
 end
 
-function unitVector(position::Position, state=nothing)::Position
-  unitVector(Position(0,0), position)
+function unitVector(position::Position, state)::Position
+  unitVector(Position(0,0), position, state)
 end 
 
-function displacement(position1::Position, position2::Position, state=nothing)::Position
+function displacement(position1::Position, position2::Position, state)::Position
   Position(floor(Int, position2.x - position1.x), floor(Int, position2.y - position1.y))
 end
 
@@ -554,27 +554,27 @@ function nextLiquid(object::NamedTuple, state)::NamedTuple
       if (length(leftHoles) == 0)
         closestHole = closest(object, rightHoles)
         if isFree(move(closestHole, Position(0, -1)), move(object.origin, Position(1, 0)), state)
-          new_object = update_nt(new_object, :origin, move(object.origin, unitVector(object, move(closestHole, Position(0, -1))), state))
+          new_object = update_nt(new_object, :origin, move(object.origin, unitVector(object, move(closestHole, Position(0, -1)), state), state))
         end
       elseif (length(rightHoles) == 0)
         closestHole = closest(object, leftHoles)
         if isFree(move(closestHole, Position(0, -1)), move(object.origin, Position(-1, 0)), state)
-          new_object = update_nt(new_object, :origin, move(object.origin, unitVector(object, move(closestHole, Position(0, -1)))))                      
+          new_object = update_nt(new_object, :origin, move(object.origin, unitVector(object, move(closestHole, Position(0, -1)), state)))                      
         end
       else
         closestLeftHole = closest(object, leftHoles)
         closestRightHole = closest(object, rightHoles)
         if distance(object.origin, closestLeftHole) > distance(object.origin, closestRightHole)
           if isFree(move(object.origin, Position(1, 0)), move(closestRightHole, Position(0, -1)), state)
-            new_object = update_nt(new_object, :origin, move(object.origin, unitVector(new_object, move(closestRightHole, Position(0, -1)))))
+            new_object = update_nt(new_object, :origin, move(object.origin, unitVector(new_object, move(closestRightHole, Position(0, -1)), state)))
           elseif isFree(move(closestLeftHole, Position(0, -1)), move(object.origin, Position(-1, 0)), state)
-            new_object = update_nt(new_object, :origin, move(object.origin, unitVector(new_object, move(closestLeftHole, Position(0, -1)))))
+            new_object = update_nt(new_object, :origin, move(object.origin, unitVector(new_object, move(closestLeftHole, Position(0, -1)), state)))
           end
         else
           if isFree(move(closestLeftHole, Position(0, -1)), move(object.origin, Position(-1, 0)), state)
-            new_object = update_nt(new_object, :origin, move(object.origin, unitVector(new_object, move(closestLeftHole, Position(0, -1)))))
+            new_object = update_nt(new_object, :origin, move(object.origin, unitVector(new_object, move(closestLeftHole, Position(0, -1)), state)))
           elseif isFree(move(object.origin, Position(1, 0)), move(closestRightHole, Position(0, -1)), state)
-            new_object = update_nt(new_object, :origin, move(object.origin, unitVector(new_object, move(closestRightHole, Position(0, -1)))))
+            new_object = update_nt(new_object, :origin, move(object.origin, unitVector(new_object, move(closestRightHole, Position(0, -1)), state)))
           end
         end
       end

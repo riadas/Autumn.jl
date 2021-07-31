@@ -50,7 +50,7 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG)
 
   # add background to scene 
   background_assignments = filter(l -> l.args[1] == :background, lifted_lines)
-  background = background_assignments != [] ? background_assignments[end] : "#ffffff00"
+  background = background_assignments != [] ? background_assignments[end].args[2] : "#ffffff00"
   env = update(env, :state, update(env.state, :scene, update(env.state.scene, :background, background)))
 
 

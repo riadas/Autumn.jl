@@ -158,7 +158,8 @@ julia_lib_to_func = Dict(:get => get,
                          :map => map,
                          :filter => filter,
                          :first => first,
-                         :last => last)
+                         :last => last,
+                         :in => in)
 isjulialib(f) = f in keys(julia_lib_to_func)
 
 function julialibapl(f, args, Γ)
@@ -375,7 +376,7 @@ function interpret_object_call(f, args, Γ)
   render = render isa AbstractArray ? render : [render]
   object_repr = update(object_repr, :render, render)
   # # # println("AFTER")
-  # # # @show Γ.state.objectsCreated
+  # # # @show Γ.state.objectsCreated 
   (object_repr, Γ)  
 end
 
@@ -544,6 +545,22 @@ function interpret_updateObj(args, Γ)
     field_string = args[2]
     new_value = args[3]
     new_obj = update(obj, Symbol(field_string), new_value)
+
+    # update render 
+    object_type = Γ[:object_types][obj.type]
+    
+    Γ3 = Γ2
+    fields = object_type[:fields]
+    for i in 1:length(fields)
+      field_name = fields[i].args[1]
+      field_value = new_obj[field_name]
+      Γ3 = update(Γ3, field_name, field_value)
+    end
+  
+    render, Γ3 = interpret(Γ.object_types[obj.type][:render], Γ3)
+    render = render isa AbstractArray ? render : [render]
+    new_obj = update(new_obj, :render, render)
+
     new_obj, Γ2
     # Γ2 = update(Γ2, :state, update(Γ2.state, :objectsCreated, Γ2.state.objectsCreated + 1))
   else
@@ -557,7 +574,7 @@ function interpret_removeObj(args, Γ)
   func = args[2]
   new_list = []
   for item in list
-    pred, Γ = interpret(AExpr(:call, func, item)) 
+    pred, Γ = interpret(AExpr(:call, func, item), Γ) 
     if pred == false 
       push!(new_list, item)
     end
