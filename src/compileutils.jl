@@ -143,7 +143,11 @@ function compilecall(expr::AExpr, data::Dict{String, Any})
   elseif !(fnName in binaryOperators) && fnName != :prev
     :($(fnName)($(map(x -> compile(x, data), expr.args[2:end])...)))
   elseif fnName == :prev
-    :($(Symbol(string(expr.args[2]) * "Prev"))($(map(compile, expr.args[3:end])...)))
+    if expr.args[2] == :obj
+      :($(fnName)($(map(x -> compile(x, data), expr.args[2:end])...)))
+    else
+      :($(Symbol(string(expr.args[2]) * "Prev"))($(map(compile, expr.args[3:end])...)))
+    end
   elseif fnName != :(==)        
     :($(fnName)($(compile(expr.args[2], data)), $(compile(expr.args[3], data))))
   else
@@ -397,6 +401,15 @@ const builtInDict = Dict([
                         end
 
                         Scene(objects::AbstractArray) = Scene(objects, "#ffffff00")
+
+                        function prev(obj::Object)
+                          prev_objects = filter(o -> o.id == obj.id, state.scene.objects)
+                          if prev_objects != []
+                            prev_objects[1]                            
+                          else
+                            obj
+                          end
+                        end
 
                         function render(scene::Scene)::Array{Cell}
                           vcat(map(obj -> render(obj), filter(obj -> obj.alive, scene.objects))...)
