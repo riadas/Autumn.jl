@@ -2,9 +2,12 @@ module InterpretUtils
 using ..AExpressions: AExpr
 using ..SExpr
 using ..AutumnStandardLibrary
+import ..AutumnStandardLibrary: getproperty
 using ..CompileUtils
-export interpret, interpret_let, interpret_call, interpret_init_next, interpret_object, interpret_object_call, interpret_on, Environment, empty_env, std_env, update, primapl, isprim, update
+export interpret, interpret_let, interpret_call, interpret_init_next, interpret_object, interpret_object_call, interpret_on, Environment, empty_env, std_env, update, primapl, isprim, update, getproperty
 import MLStyle
+
+# Base.getproperty(d::Dict, s::Symbol) = s ∈ fieldnames(Dict) ? getfield(d, s) : getindex(d, s)
 
 function sub(aex::AExpr, (x, v))
   # print("SUb")
@@ -39,12 +42,17 @@ end
 sub(aex::Symbol, (x, v)) = aex == x ? v : aex
 sub(aex, (x, v)) = aex # aex is a value
 
-const Environment = NamedTuple
-empty_env() = NamedTuple()
+const Environment = Dict
+empty_env() = Dict()
 std_env() = empty_env()
 
 "Produces new environment Γ' s.t. `Γ(x) = v` (and everything else unchanged)"
-update(Γ, x::Symbol, v) = merge(Γ, NamedTuple{(x,)}((v,)))
+# update(Γ, x::Symbol, v) = merge(Γ, NamedTuple{(x,)}((v,)))
+
+function update(Γ, x::Symbol, v)
+  Γ[x] = v 
+  Γ
+end
 
 # primitive function handling 
 prim_to_func = Dict(:+ => +,
@@ -115,7 +123,8 @@ lib_to_func = Dict(:Position => AutumnStandardLibrary.Position,
                    :updateAlive => AutumnStandardLibrary.updateAlive, 
                    :nextLiquid => AutumnStandardLibrary.nextLiquid, 
                    :nextSolid => AutumnStandardLibrary.nextSolid,
-                   :unfold => AutumnStandardLibrary.unfold
+                   :unfold => AutumnStandardLibrary.unfold,
+                   :prev => AutumnStandardLibrary.prev
                   )
 islib(f) = f in keys(lib_to_func)
 
@@ -211,9 +220,9 @@ function interpret(aex::AExpr, Γ::Environment)
                                                                       (new_arg2, Γ2) = interpret(arg2, Γ2)
                                                                       primapl(f, new_arg1, new_arg2, Γ2)
                                                                   end
+    [:call, f, args...] && if f == :prev && args[1] != :obj end => interpret(AExpr(:call, Symbol(string(f, uppercasefirst(string(args[1])))), :state), Γ)
     [:call, f, args...] && if islib(f) end                     => interpret_lib(f, args, Γ)
     [:call, f, args...] && if isjulialib(f) end                => interpret_julia_lib(f, args, Γ)
-    [:call, f, args...] && if f == :prev end                   => interpret(AExpr(:call, Symbol(string(f, uppercasefirst(string(args[1])))), :state), Γ)
     [:call, f, args...] && if f in keys(Γ[:object_types]) end  => interpret_object_call(f, args, Γ)
     [:call, f, args...]                                        => interpret_call(f, args, Γ)
 
@@ -330,7 +339,7 @@ function interpret_call(f, params, Γ::Environment)
   func_body = func[2]
 
   # construct environment 
-  Γ2 = Γ
+  Γ2 = deepcopy(Γ)
   if func_args isa AExpr 
     for i in 1:length(func_args.args)
       param_name = func_args.args[i]
@@ -358,12 +367,12 @@ function interpret_object_call(f, args, Γ)
   # # # println("BEFORE")
   # # # @show Γ.state.objectsCreated 
   origin, Γ = interpret(args[end], Γ)
-  object_repr = (origin=origin, type=f, alive=true, changed=false, id=Γ.state.objectsCreated)
+  object_repr = Dict(:origin => origin, :type => f, :alive => true, :changed => false, :id => Γ.state.objectsCreated)
 
   new_state = update(Γ.state, :objectsCreated, Γ.state.objectsCreated + 1)
   Γ = update(Γ, :state, new_state)
 
-  Γ2 = Γ
+  Γ2 = deepcopy(Γ)
   fields = Γ2.object_types[f][:fields]
   for i in 1:length(fields)
     field_name = fields[i].args[1]
@@ -448,7 +457,7 @@ function interpret_object(args, Γ)
   object_render = args[end]
 
   # construct object creation function 
-  object_tuple = (render=object_render, fields=object_fields)
+  object_tuple = Dict(:render => object_render, :fields => object_fields)
   Γ = update(Γ, :object_types, update(Γ[:object_types], object_name, object_tuple))
   (AExpr(:object, args...), Γ)
 end
@@ -514,7 +523,7 @@ function interpret_updateObj(args, Γ)
     for item in list 
       # # # println("PRE=PLS WORK")
       # # # @show Γ2.state.objectsCreated      
-      new_item, Γ2 = interpret(AExpr(:call, map_func, item), Γ2)
+      new_item, Γ2 = interpret(AExpr(:call, map_func, deepcopy(item)), Γ2)
       # # # println("PLS WORK")
       # # # @show Γ2.state.objectsCreated
       push!(new_list, new_item)
@@ -533,7 +542,7 @@ function interpret_updateObj(args, Γ)
     for item in list 
       pred, Γ2 = interpret(AExpr(:call, filter_func, item), Γ2)
       if pred == true 
-        new_item, Γ2 = interpret(AExpr(:call, map_func, item), Γ2)
+        new_item, Γ2 = interpret(AExpr(:call, map_func, deepcopy(item)), Γ2)
         push!(new_list, new_item)
       else
         push!(new_list, item)
@@ -544,7 +553,7 @@ function interpret_updateObj(args, Γ)
     obj = args[1]
     field_string = args[2]
     new_value = args[3]
-    new_obj = update(obj, Symbol(field_string), new_value)
+    new_obj = update(deepcopy(obj), Symbol(field_string), new_value)
 
     # update render 
     object_type = Γ[:object_types][obj.type]

@@ -1,7 +1,14 @@
 module AutumnStandardLibrary
 using Distributions: Categorical
+import Base: getproperty
+export getproperty
 
-update_nt(Γ, x::Symbol, v) = merge(Γ, NamedTuple{(x,)}((v,)))
+function update_dict(Γ, x::Symbol, v)
+  Γ[x] = v 
+  Γ
+end
+
+getproperty(d::Dict, s::Symbol) = s ∈ fieldnames(Dict) ? getfield(d, s) : getindex(d, s)
 
 abstract type Object end
 abstract type KeyPress end
@@ -49,7 +56,16 @@ Cell(position::Position, color::String, state) = Cell(position::Position, color:
 #   vcat(map(obj -> render(obj), filter(obj -> obj.alive, scene.objects))...)
 # end
 
-function render(obj::NamedTuple, state=nothing)::Array{Cell}
+function prev(obj::Dict, state)
+  prev_objects = filter(o -> o.id == obj.id, state.scene.objects)
+  if prev_objects != []
+    prev_objects[1]                            
+  else
+    obj
+  end
+end
+
+function render(obj::Dict, state=nothing)::Array{Cell}
   if !(:id in keys(obj))
     vcat(map(o -> render(o), filter(x -> x.alive, obj.objects))...)
   else
@@ -82,12 +98,12 @@ function range(start::Int, stop::Int, state=nothing)
   [start:stop;]
 end
 
-function isWithinBounds(obj::NamedTuple, state)::Bool
+function isWithinBounds(obj::Dict, state)::Bool
   # println(filter(cell -> !isWithinBounds(cell.position),render(obj)))
   length(filter(cell -> !isWithinBounds(cell.position, state), render(obj))) == 0
 end
 
-function clicked(click::Union{Click, Nothing}, object::NamedTuple, state)::Bool
+function clicked(click::Union{Click, Nothing}, object::Dict, state)::Bool
   if click == nothing
     false
   else
@@ -134,50 +150,52 @@ function clicked(click::Union{Click, Nothing}, pos::Position, state)::Bool
   end
 end
 
-function intersects(obj1::NamedTuple, obj2::NamedTuple, state)::Bool
+function intersects(obj1::Dict, obj2::Dict, state)::Bool
   nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, render(obj1))
   nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, render(obj2))
   length(intersect(nums1, nums2)) != 0
 end
 
-function intersects(obj1::NamedTuple, obj2::AbstractArray, state)::Bool
+function intersects(obj1::Dict, obj2::AbstractArray, state)::Bool
   nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, render(obj1))
   nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
   length(intersect(nums1, nums2)) != 0
 end
 
-function intersects(obj1::AbstractArray, obj2::AbstractArray, state)::Bool
-  nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj1)...))
-  nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
-  length(intersect(nums1, nums2)) != 0
+function intersects(obj1::AbstractArray, obj2::AbstractArray, state::Dict)::Bool
+  if (length(obj1) == 0) || (length(obj2) == 0)
+    false  
+  elseif (obj1 isa AbstractArray{<:NamedTuple}) && (obj2 isa AbstractArray{<:NamedTuple})
+    nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj1)...))
+    nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
+    length(intersect(nums1, nums2)) != 0
+  else
+    length(intersect(obj1, obj2)) != 0 
+  end
 end
 
-function intersects(list1, list2, state=nothing)::Bool
-  length(intersect(list1, list2)) != 0 
-end
-
-function intersects(object::NamedTuple, state)::Bool
+function intersects(object::Dict, state)::Bool
   objects = state.scene.objects
   intersects(object, objects, state)
 end
 
-function addObj(list::AbstractArray, obj::NamedTuple, state=nothing)
-  obj = update_nt(obj, :changed, true)
+function addObj(list::AbstractArray, obj::Dict, state=nothing)
+  obj = update_dict(obj, :changed, true)
   new_list = vcat(list, obj)
   new_list
 end
 
 function addObj(list::AbstractArray, objs::AbstractArray, state=nothing)
-  objs = map(obj -> update_nt(obj, :changed, true), objs)
+  objs = map(obj -> update_dict(obj, :changed, true), objs)
   new_list = vcat(list, objs)
   new_list
 end
 
-function removeObj(list::AbstractArray, obj::NamedTuple, state=nothing)
+function removeObj(list::AbstractArray, obj::Dict, state=nothing)
   new_list = deepcopy(list)
   for x in filter(o -> o.id == obj.id, new_list)
     index = findall(o -> o.id == x.id, new_list)[1]
-    new_list[index] = update_nt(update_nt(x, :alive, false), :changed, true)
+    new_list[index] = update_dict(update_dict(x, :alive, false), :changed, true)
     #x.alive = false 
     #x.changed = true
   end
@@ -188,22 +206,22 @@ function removeObj(list::AbstractArray, fn, state=nothing)
   new_list = deepcopy(list)
   for x in filter(obj -> fn(obj), new_list)
     index = findall(o -> o.id == x.id, new_list)[1]
-    new_list[index] = update_nt(update_nt(x, :alive, false), :changed, true)
+    new_list[index] = update_dict(update_dict(x, :alive, false), :changed, true)
     #x.alive = false 
     #x.changed = true
   end
   new_list
 end
 
-function removeObj(obj::NamedTuple, state=nothing)
+function removeObj(obj::Dict, state=nothing)
   new_obj = deepcopy(obj)
-  new_obj = update_nt(update_nt(new_obj, :alive, false), :changed, true)
+  new_obj = update_dict(update_dict(new_obj, :alive, false), :changed, true)
   # new_obj.alive = false
   # new_obj.changed = true
   # new_obj
 end
 
-function updateObj(obj::NamedTuple, field::String, value, state=nothing)
+function updateObj(obj::Dict, field::String, value, state=nothing)
   fields = fieldnames(typeof(obj))
   custom_fields = fields[5:end-1]
   origin_field = (fields[2],)
@@ -221,11 +239,11 @@ function updateObj(obj::NamedTuple, field::String, value, state=nothing)
   new_obj
 end
 
-function filter_fallback(obj::NamedTuple, state=nothing)
+function filter_fallback(obj::Dict, state=nothing)
   true
 end
 
-function updateObj(list::AbstractArray, map_fn, filter_fn, state::NamedTuple=nothing)
+function updateObj(list::AbstractArray, map_fn, filter_fn, state::Dict=nothing)
   orig_list = filter(obj -> !filter_fn(obj), list)
   filtered_list = filter(filter_fn, list)
   new_filtered_list = map(map_fn, filtered_list)
@@ -233,7 +251,7 @@ function updateObj(list::AbstractArray, map_fn, filter_fn, state::NamedTuple=not
   vcat(orig_list, new_filtered_list)
 end
 
-function updateObj(list::AbstractArray, map_fn, state::NamedTuple=nothing)
+function updateObj(list::AbstractArray, map_fn, state::Dict=nothing)
   orig_list = filter(obj -> false, list)
   filtered_list = filter(obj -> true, list)
   new_filtered_list = map(map_fn, filtered_list)
@@ -287,17 +305,17 @@ function unitVector(position1::Position, position2::Position, state)::Position
   end
 end
 
-function unitVector(object1::NamedTuple, object2::NamedTuple, state)::Position
+function unitVector(object1::Dict, object2::Dict, state)::Position
   position1 = object1.origin
   position2 = object2.origin
   unitVector(position1, position2, state)
 end
 
-function unitVector(object::NamedTuple, position::Position, state)::Position
+function unitVector(object::Dict, position::Position, state)::Position
   unitVector(object.origin, position, state)
 end
 
-function unitVector(position::Position, object::NamedTuple, state)::Position
+function unitVector(position::Position, object::Dict, state)::Position
   unitVector(position, object.origin, state)
 end
 
@@ -305,7 +323,7 @@ function unitVector(position::Position, state)::Position
   unitVector(Position(0,0), position, state)
 end 
 
-function displacement(position1::Position, position2::Position, state)::Position
+function displacement(position1::Position, position2::Position, state=nothing)::Position
   Position(floor(Int, position2.x - position1.x), floor(Int, position2.y - position1.y))
 end
 
@@ -325,11 +343,11 @@ function adjacent(cell::Cell, cells::Array{Cell}, state=nothing)
   length(filter(x -> adjacent(cell, x), cells)) != 0
 end
 
-function adjacentObjs(obj::NamedTuple, state)
+function adjacentObjs(obj::Dict, state)
   filter(o -> adjacent(o.origin, obj.origin) && (obj.id != o.id), state.scene.objects)
 end
 
-function adjacentObjsDiag(obj::NamedTuple, state)
+function adjacentObjsDiag(obj::Dict, state)
   filter(o -> adjacentDiag(o.origin, obj.origin) && (obj.id != o.id), state.scene.objects)
 end
 
@@ -338,9 +356,9 @@ function adjacentDiag(position1::Position, position2::Position, state=nothing)
                                          Position(1,1), Position(1, -1), Position(-1, 1), Position(-1, -1)]
 end
 
-function rotate(object::NamedTuple, state=nothing)::NamedTuple
+function rotate(object::Dict, state=nothing)::Dict
   new_object = deepcopy(object)
-  new_object = update_nt(new_object, :render, map(x -> Cell(rotate(x.position), x.color), new_object.render))
+  new_object = update_dict(new_object, :render, map(x -> Cell(rotate(x.position), x.color), new_object.render))
   new_object
 end
 
@@ -348,7 +366,7 @@ function rotate(position::Position, state=nothing)::Position
   Position(-position.y, position.x)
  end
 
-function rotateNoCollision(object::NamedTuple, state)::NamedTuple
+function rotateNoCollision(object::Dict, state)::Dict
   (isWithinBounds(rotate(object), state) && isFree(rotate(object), object), state) ? rotate(object) : object
 end
 
@@ -364,67 +382,67 @@ function move(cell::Cell, position::Position, state=nothing)
   Position(position.x + cell.position.x, position.y + cell.position.y)
 end
 
-function move(object::NamedTuple, position::Position, state=nothing)
+function move(object::Dict, position::Position, state=nothing)
   new_object = deepcopy(object)
-  new_object = update_nt(new_object, :origin, move(object.origin, position))
+  new_object = update_dict(new_object, :origin, move(object.origin, position))
   new_object
 end
 
-function move(object::NamedTuple, x::Int, y::Int, state=nothing)::NamedTuple
+function move(object::Dict, x::Int, y::Int, state=nothing)::Dict
   move(object, Position(x, y))                          
 end
 
 # ----- begin left/right move ----- #
 
-function moveLeft(object::NamedTuple, state=nothing)::NamedTuple
+function moveLeft(object::Dict, state=nothing)::Dict
   move(object, Position(-1, 0))                          
 end
 
-function moveRight(object::NamedTuple, state=nothing)::NamedTuple
+function moveRight(object::Dict, state=nothing)::Dict
   move(object, Position(1, 0))                          
 end
 
-function moveUp(object::NamedTuple, state=nothing)::NamedTuple
+function moveUp(object::Dict, state=nothing)::Dict
   move(object, Position(0, -1))                          
 end
 
-function moveDown(object::NamedTuple, state=nothing)::NamedTuple
+function moveDown(object::Dict, state=nothing)::Dict
   move(object, Position(0, 1))                          
 end
 
 # ----- end left/right move ----- #
 
-function moveNoCollision(object::NamedTuple, position::Position, state)::NamedTuple
+function moveNoCollision(object::Dict, position::Position, state)::Dict
   (isWithinBounds(move(object, position), state) && isFree(move(object, position.x, position.y), object, state)) ? move(object, position.x, position.y) : object 
 end
 
-function moveNoCollision(object::NamedTuple, x::Int, y::Int, state)
+function moveNoCollision(object::Dict, x::Int, y::Int, state)
   (isWithinBounds(move(object, x, y), state) && isFree(move(object, x, y), object, state)) ? move(object, x, y) : object 
 end
 
 # ----- begin left/right moveNoCollision ----- #
 
-function moveLeftNoCollision(object::NamedTuple, state)::NamedTuple
+function moveLeftNoCollision(object::Dict, state)::Dict
   (isWithinBounds(move(object, -1, 0), state) && isFree(move(object, -1, 0), object, state)) ? move(object, -1, 0) : object 
 end
 
-function moveRightNoCollision(object::NamedTuple, state)::NamedTuple
+function moveRightNoCollision(object::Dict, state)::Dict
   (isWithinBounds(move(object, 1, 0), state) && isFree(move(object, 1, 0), object, state)) ? move(object, 1, 0) : object 
 end
 
-function moveUpNoCollision(object::NamedTuple, state)::NamedTuple
+function moveUpNoCollision(object::Dict, state)::Dict
   (isWithinBounds(move(object, 0, -1), state) && isFree(move(object, 0, -1), object, state)) ? move(object, 0, -1) : object 
 end
 
-function moveDownNoCollision(object::NamedTuple, state)::NamedTuple
+function moveDownNoCollision(object::Dict, state)::Dict
   (isWithinBounds(move(object, 0, 1), state) && isFree(move(object, 0, 1), object, state)) ? move(object, 0, 1) : object 
 end
 
 # ----- end left/right moveNoCollision ----- #
 
-function moveWrap(object::NamedTuple, position::Position, state)::NamedTuple
+function moveWrap(object::Dict, position::Position, state)::Dict
   new_object = deepcopy(object)
-  new_object = update_nt(new_object, :origin, moveWrap(object.origin, position.x, position.y, state))
+  new_object = update_dict(new_object, :origin, moveWrap(object.origin, position.x, position.y, state))
   new_object
 end
 
@@ -436,9 +454,9 @@ function moveWrap(position::Position, cell::Cell, state)
   moveWrap(cell.position, position, state)
 end
 
-function moveWrap(object::NamedTuple, x::Int, y::Int, state)::NamedTuple
+function moveWrap(object::Dict, x::Int, y::Int, state)::Dict
   new_object = deepcopy(object)
-  new_object = update_nt(new_object, :origin, moveWrap(object.origin, x, y, state))
+  new_object = update_dict(new_object, :origin, moveWrap(object.origin, x, y, state))
   new_object
 end
 
@@ -455,27 +473,27 @@ end
 
 # ----- begin left/right moveWrap ----- #
 
-function moveLeftWrap(object::NamedTuple, state=nothing)::NamedTuple
+function moveLeftWrap(object::Dict, state=nothing)::Dict
   new_object = deepcopy(object)
-  new_object = update_nt(new_object, :origin, moveWrap(object.origin, -1, 0, state))
+  new_object = update_dict(new_object, :origin, moveWrap(object.origin, -1, 0, state))
   new_object
 end
   
-function moveRightWrap(object::NamedTuple, state=nothing)::NamedTuple
+function moveRightWrap(object::Dict, state=nothing)::Dict
   new_object = deepcopy(object)
-  new_object = update_nt(new_object, :origin, moveWrap(object.origin, 1, 0, state))
+  new_object = update_dict(new_object, :origin, moveWrap(object.origin, 1, 0, state))
   new_object
 end
 
-function moveUpWrap(object::NamedTuple, state=nothing)::NamedTuple
+function moveUpWrap(object::Dict, state=nothing)::Dict
   new_object = deepcopy(object)
-  new_object = update_nt(new_object, :origin, moveWrap(object.origin, 0, -1, state))
+  new_object = update_dict(new_object, :origin, moveWrap(object.origin, 0, -1, state))
   new_object
 end
 
-function moveDownWrap(object::NamedTuple, state=nothing)::NamedTuple
+function moveDownWrap(object::Dict, state=nothing)::Dict
   new_object = deepcopy(object)
-  new_object = update_nt(new_object, :origin, moveWrap(object.origin, 0, 1, state))
+  new_object = update_dict(new_object, :origin, moveWrap(object.origin, 0, 1, state))
   new_object
 end
 
@@ -492,21 +510,21 @@ function distance(position1::Position, position2::Position, state=nothing)::Int
   abs(position1.x - position2.x) + abs(position1.y - position2.y)
 end
 
-function distance(object1::NamedTuple, object2::NamedTuple, state=nothing)::Int
+function distance(object1::Dict, object2::Dict, state=nothing)::Int
   position1 = object1.origin
   position2 = object2.origin
   distance(position1, position2)
 end
 
-function distance(object::NamedTuple, position::Position, state=nothing)::Int
+function distance(object::Dict, position::Position, state=nothing)::Int
   distance(object.origin, position)
 end
 
-function distance(position::Position, object::NamedTuple, state=nothing)::Int
+function distance(position::Position, object::Dict, state=nothing)::Int
   distance(object.origin, position)
 end
 
-function closest(object::NamedTuple, type::Symbol, state)::Position
+function closest(object::Dict, type::Symbol, state)::Position
   objects_of_type = filter(obj -> (obj.type == type) && (obj.alive), state.scene.objects)
   if length(objects_of_type) == 0
     object.origin
@@ -525,24 +543,24 @@ function allPositions(GRID_SIZE::Int, state=nothing)
   map(num -> Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), nums)
 end
 
-function updateOrigin(object::NamedTuple, new_origin::Position, state=nothing)::NamedTuple
+function updateOrigin(object::Dict, new_origin::Position, state=nothing)::Dict
   new_object = deepcopy(object)
-  new_object = update_nt(new_object, :origin, new_origin)
+  new_object = update_dict(new_object, :origin, new_origin)
   new_object
 end
 
-function updateAlive(object::NamedTuple, new_alive::Bool, state=nothing)::NamedTuple
+function updateAlive(object::Dict, new_alive::Bool, state=nothing)::Dict
   new_object = deepcopy(object)
-  new_object = update_nt(new_object, :alive, new_alive)
+  new_object = update_dict(new_object, :alive, new_alive)
   new_object
 end
 
-function nextLiquid(object::NamedTuple, state)::NamedTuple 
+function nextLiquid(object::Dict, state)::Dict 
   # println("nextLiquid")
   GRID_SIZE = state.GRID_SIZEHistory[0]
   new_object = deepcopy(object)
   if object.origin.y != GRID_SIZE - 1 && isFree(move(object.origin, Position(0, 1)), state)
-    new_object = update_nt(new_object, :origin, move(object.origin, Position(0, 1)))
+    new_object = update_dict(new_object, :origin, move(object.origin, Position(0, 1)))
   else
     leftHoles = filter(pos -> (pos.y == object.origin.y + 1)
                                && (pos.x < object.origin.x)
@@ -554,27 +572,27 @@ function nextLiquid(object::NamedTuple, state)::NamedTuple
       if (length(leftHoles) == 0)
         closestHole = closest(object, rightHoles)
         if isFree(move(closestHole, Position(0, -1)), move(object.origin, Position(1, 0)), state)
-          new_object = update_nt(new_object, :origin, move(object.origin, unitVector(object, move(closestHole, Position(0, -1)), state), state))
+          new_object = update_dict(new_object, :origin, move(object.origin, unitVector(object, move(closestHole, Position(0, -1)), state), state))
         end
       elseif (length(rightHoles) == 0)
         closestHole = closest(object, leftHoles)
         if isFree(move(closestHole, Position(0, -1)), move(object.origin, Position(-1, 0)), state)
-          new_object = update_nt(new_object, :origin, move(object.origin, unitVector(object, move(closestHole, Position(0, -1)), state)))                      
+          new_object = update_dict(new_object, :origin, move(object.origin, unitVector(object, move(closestHole, Position(0, -1)), state)))                      
         end
       else
         closestLeftHole = closest(object, leftHoles)
         closestRightHole = closest(object, rightHoles)
         if distance(object.origin, closestLeftHole) > distance(object.origin, closestRightHole)
           if isFree(move(object.origin, Position(1, 0)), move(closestRightHole, Position(0, -1)), state)
-            new_object = update_nt(new_object, :origin, move(object.origin, unitVector(new_object, move(closestRightHole, Position(0, -1)), state)))
+            new_object = update_dict(new_object, :origin, move(object.origin, unitVector(new_object, move(closestRightHole, Position(0, -1)), state)))
           elseif isFree(move(closestLeftHole, Position(0, -1)), move(object.origin, Position(-1, 0)), state)
-            new_object = update_nt(new_object, :origin, move(object.origin, unitVector(new_object, move(closestLeftHole, Position(0, -1)), state)))
+            new_object = update_dict(new_object, :origin, move(object.origin, unitVector(new_object, move(closestLeftHole, Position(0, -1)), state)))
           end
         else
           if isFree(move(closestLeftHole, Position(0, -1)), move(object.origin, Position(-1, 0)), state)
-            new_object = update_nt(new_object, :origin, move(object.origin, unitVector(new_object, move(closestLeftHole, Position(0, -1)), state)))
+            new_object = update_dict(new_object, :origin, move(object.origin, unitVector(new_object, move(closestLeftHole, Position(0, -1)), state)))
           elseif isFree(move(object.origin, Position(1, 0)), move(closestRightHole, Position(0, -1)), state)
-            new_object = update_nt(new_object, :origin, move(object.origin, unitVector(new_object, move(closestRightHole, Position(0, -1)), state)))
+            new_object = update_dict(new_object, :origin, move(object.origin, unitVector(new_object, move(closestRightHole, Position(0, -1)), state)))
           end
         end
       end
@@ -583,17 +601,17 @@ function nextLiquid(object::NamedTuple, state)::NamedTuple
   new_object
 end
 
-function nextSolid(object::NamedTuple, state)::NamedTuple 
+function nextSolid(object::Dict, state)::Dict 
   # println("nextSolid")
   GRID_SIZE = state.GRID_SIZEHistory[0] 
   new_object = deepcopy(object)
   if (isWithinBounds(move(object, Position(0, 1)), state) && reduce(&, map(x -> isFree(x, object, state), map(cell -> move(cell.position, Position(0, 1)), render(object)))))
-    new_object = update_nt(new_object, :origin, move(object.origin, Position(0, 1)))
+    new_object = update_dict(new_object, :origin, move(object.origin, Position(0, 1)))
   end
   new_object
 end
 
-function closest(object::NamedTuple, positions::Array{Position}, state=nothing)::Position
+function closest(object::Dict, positions::Array{Position}, state=nothing)::Position
   closestDistance = sort(map(pos -> distance(pos, object.origin), positions))[1]
   closest = filter(pos -> distance(pos, object.origin) == closestDistance, positions)[1]
   closest
@@ -605,18 +623,18 @@ function isFree(start::Position, stop::Position, state)::Bool
   reduce(&, map(num -> isFree(Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), state), nums))
 end
 
-function isFree(start::Position, stop::Position, object::NamedTuple, state)::Bool 
+function isFree(start::Position, stop::Position, object::Dict, state)::Bool 
   GRID_SIZE = state.GRID_SIZEHistory[0]
   nums = [(GRID_SIZE * start.y + start.x):(GRID_SIZE * stop.y + stop.x);]
   reduce(&, map(num -> isFree(Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), object, state), nums))
 end
 
-function isFree(position::Position, object::NamedTuple, state)
+function isFree(position::Position, object::Dict, state)
   length(filter(cell -> cell.position.x == position.x && cell.position.y == position.y, 
   render((objects=filter(obj -> obj.id != object.id , state.scene.objects), background=state.scene.background)))) == 0
 end
 
-function isFree(object::NamedTuple, orig_object::NamedTuple, state)::Bool
+function isFree(object::Dict, orig_object::Dict, state)::Bool
   reduce(&, map(x -> isFree(x, orig_object, state), map(cell -> cell.position, render(object))))
 end
 

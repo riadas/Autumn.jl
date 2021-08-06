@@ -2,6 +2,8 @@ module Interpret
 using ..InterpretUtils
 using ..AExpressions: AExpr
 using ..SExpr
+using ..AutumnStandardLibrary
+import ..AutumnStandardLibrary: getproperty
 using Random
 export empty_env, Environment, std_env, start, step, run, interpret_program, interpret_over_time
 import MLStyle
@@ -16,14 +18,14 @@ end
 
 function start(aex::AExpr, rng=Random.GLOBAL_RNG)
   aex.head == :program || error("Must be a program aex")
-  env = (object_types=empty_env(), 
-         on_clauses=empty_env(),
-         left=false, 
-         right=false,
-         up=false,
-         down=false,
-         click=nothing, 
-         state=(time=0, objectsCreated=0, rng=rng, scene=empty_env()))
+  env = Dict(:object_types => empty_env(), 
+             :on_clauses => empty_env(),
+             :left => false, 
+             :right => false,
+             :up => false,
+             :down => false,
+             :click => nothing, 
+             :state => Dict(:time => 0, :objectsCreated => 0, :rng => rng, :scene => empty_env()))
   lines = aex.args 
 
   # reorder program lines
@@ -42,7 +44,6 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG)
     var_name = line.args[1] 
     # construct history variable in state
     new_state = update(env.state, Symbol(string(var_name, "History")), Dict())
-    env = update(env, :state, new_state)
 
     # construct prev function 
     _, env = interpret(AExpr(:assign, Symbol(string(:prev, uppercasefirst(string(var_name)))), parseautumn("""(fn () (get (.. state $(string(var_name, "History"))) (- (.. state time) 1) $(var_name)))""")), env) 
@@ -52,7 +53,6 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG)
   background_assignments = filter(l -> l.args[1] == :background, lifted_lines)
   background = background_assignments != [] ? background_assignments[end].args[2] : "#ffffff00"
   env = update(env, :state, update(env.state, :scene, update(env.state.scene, :background, background)))
-
 
   # initialize scene.objects 
   env = update(env, :state, update(env.state, :scene, update(env.state.scene, :objects, [])))
@@ -77,9 +77,9 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG)
   new_aex, env_
 end
 
-function step(aex::AExpr, env::Environment, user_events=(click=nothing, left=false, right=false, down=false, up=false))::Environment
+function step(aex::AExpr, env, user_events=Dict(:click => nothing, :left => false, :right => false, :down => false, :up => false))
   # update env with user event 
-  for user_event in keys(user_events)
+  for user_event in collect(keys(user_events))
     if !isnothing(user_events[user_event])
       env = update(env, user_event, user_events[user_event])
     end
