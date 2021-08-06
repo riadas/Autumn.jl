@@ -44,7 +44,11 @@ empty_env() = NamedTuple()
 std_env() = empty_env()
 
 "Produces new environment Γ' s.t. `Γ(x) = v` (and everything else unchanged)"
-update(@nospecialize(Γ::NamedTuple), x::Symbol, v) = merge(Γ, NamedTuple{(x,)}((v,)))
+# update(@nospecialize(Γ::NamedTuple), x::Symbol, v) = merge(Γ, NamedTuple{(x,)}((v,)))
+
+function update(@nospecialize(Γ::NamedTuple), x::Symbol, @nospecialize(v)) 
+  merge(Γ, NamedTuple{(x,)}((v,)))
+end
 
 # primitive function handling 
 prim_to_func = Dict(:+ => +,
@@ -367,7 +371,7 @@ function interpret_object_call(f, args, @nospecialize(Γ::NamedTuple))
   # # # @show Γ.state.objectsCreated 
   new_state = update(Γ.state, :objectsCreated, Γ.state.objectsCreated + 1)
   Γ = update(Γ, :state, new_state)
-  
+
   origin, Γ = interpret(args[end], Γ)
   object_repr = (origin=origin, type=f, alive=true, changed=false, id=Γ.state.objectsCreated)
 
@@ -472,7 +476,9 @@ function interpret_on(args, @nospecialize(Γ::NamedTuple))
     if update_.head == :assign
       var_name = update_.args[1]
       if !(var_name in keys(Γ2[:on_clauses]))
+        println("interpret_on pre-line")
         Γ2 = update(Γ2, :on_clauses, update(Γ2[:on_clauses], var_name, [event]))
+        println("interpret_on post-line")
       else
         Γ2 = update(Γ2, :on_clauses, update(Γ2[:on_clauses], var_name, vcat(event, Γ2[:on_clauses][var_name])))
       end
