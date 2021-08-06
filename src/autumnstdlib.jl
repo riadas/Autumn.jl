@@ -49,6 +49,15 @@ Cell(position::Position, color::String, @nospecialize(state::NamedTuple)) = Cell
 #   vcat(map(obj -> render(obj), filter(obj -> obj.alive, scene.objects))...)
 # end
 
+function prev(@nospecialize(obj::NamedTuple), @nospecialize(state))
+  prev_objects = filter(o -> o.id == obj.id, state.scene.objects)
+  if prev_objects != []
+    prev_objects[1]                            
+  else
+    obj
+  end
+end
+
 function render(@nospecialize(obj::NamedTuple), @nospecialize(state=nothing))::Array{Cell}
   if !(:id in keys(obj))
     vcat(map(o -> render(o), filter(x -> x.alive, obj.objects))...)
@@ -307,11 +316,11 @@ function unitVector(position::Position, @nospecialize(state::NamedTuple))::Posit
   unitVector(Position(0,0), position, state)
 end 
 
-function displacement(position1::Position, position2::Position, @nospecialize(state::NamedTuple))::Position
+function displacement(position1::Position, position2::Position, @nospecialize(state::NamedTuple=nothing))::Position
   Position(floor(Int, position2.x - position1.x), floor(Int, position2.y - position1.y))
 end
 
-function displacement(cell1::Cell, cell2::Cell, @nospecialize(state=nothing))::Position
+function displacement(cell1::Cell, cell2::Cell, @nospecialize(state::NamedTuple=nothing))::Position
   displacement(cell1.position, cell2.position)
 end
 
