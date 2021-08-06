@@ -9,10 +9,7 @@ import MLStyle
 function interpret_program(aex, @nospecialize(Γ::NamedTuple))
   aex.head == :program || error("Must be a program aex")
   for line in aex.args
-    println("start of line")
-    @show line
     v, Γ = interpret(line, Γ)
-    println("end of line")
   end
   return aex, Γ
 end
@@ -135,6 +132,7 @@ function update_state(@nospecialize(env_::NamedTuple))
 end
 
 function interpret_over_time(aex::AExpr, iters, user_events=[])::NamedTuple
+  @show 0
   new_aex, env_ = start(aex)
   if user_events == []
     for i in 1:iters

@@ -476,9 +476,7 @@ function interpret_on(args, @nospecialize(Γ::NamedTuple))
     if update_.head == :assign
       var_name = update_.args[1]
       if !(var_name in keys(Γ2[:on_clauses]))
-        println("interpret_on pre-line")
         Γ2 = update(Γ2, :on_clauses, update(Γ2[:on_clauses], var_name, [event]))
-        println("interpret_on post-line")
       else
         Γ2 = update(Γ2, :on_clauses, update(Γ2[:on_clauses], var_name, vcat(event, Γ2[:on_clauses][var_name])))
       end
