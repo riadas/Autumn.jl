@@ -44,7 +44,7 @@ empty_env() = NamedTuple()
 std_env() = empty_env()
 
 "Produces new environment Γ' s.t. `Γ(x) = v` (and everything else unchanged)"
-update(Γ, x::Symbol, v) = merge(Γ, NamedTuple{(x,)}((v,)))
+update(@nospecialize(Γ::NamedTuple), x::Symbol, v) = merge(Γ, NamedTuple{(x,)}((v,)))
 
 # primitive function handling 
 prim_to_func = Dict(:+ => +,
@@ -63,7 +63,15 @@ prim_to_func = Dict(:+ => +,
                     :!= => !=)
 
 isprim(f) = f in keys(prim_to_func)
-primapl(f, x...) = (prim_to_func[f](x[1:end-1]...), x[end])
+# primapl(f, x...) = (prim_to_func[f](x[1:end-1]...), x[end])
+
+function primapl(f, x, @nospecialize(Γ::NamedTuple)) 
+  prim_to_func[f](x), Γ
+end
+
+function primapl(f, x1, x2, @nospecialize(Γ::NamedTuple))
+  prim_to_func[f](x1, x2), Γ
+end
 
 lib_to_func = Dict(:Position => AutumnStandardLibrary.Position,
                    :Cell => AutumnStandardLibrary.Cell,
@@ -120,7 +128,7 @@ lib_to_func = Dict(:Position => AutumnStandardLibrary.Position,
 islib(f) = f in keys(lib_to_func)
 
 # library function handling 
-function libapl(f, args, Γ)
+function libapl(f, args, @nospecialize(Γ::NamedTuple))
   # println("libapl")
   # @show f 
   # @show args 
@@ -162,7 +170,7 @@ julia_lib_to_func = Dict(:get => get,
                          :in => in)
 isjulialib(f) = f in keys(julia_lib_to_func)
 
-function julialibapl(f, args, Γ)
+function julialibapl(f, args, @nospecialize(Γ::NamedTuple))
   # println("julialibapl")
   # @show f 
   # @show args 
@@ -175,7 +183,7 @@ function julialibapl(f, args, Γ)
   end
 end
 
-function interpret(aex::AExpr, Γ::Environment)
+function interpret(aex::AExpr, @nospecialize(Γ::NamedTuple))
   arr = [aex.head, aex.args...]
   # # # # println()
   # # # # println("Env:")
@@ -229,7 +237,7 @@ function interpret(aex::AExpr, Γ::Environment)
   t
 end
 
-function interpret(x::Symbol, Γ::Environment)
+function interpret(x::Symbol, @nospecialize(Γ::NamedTuple))
   # @show keys(Γ)
   if x == Symbol("false")
     false, Γ
@@ -248,7 +256,7 @@ function interpret(x::Symbol, Γ::Environment)
 end
 
 # if x is not an AExpr or a Symbol, it is just a value (return it)
-function interpret(x, Γ::Environment)
+function interpret(x, @nospecialize(Γ::NamedTuple))
   if x isa BigInt 
     (convert(Int, x), Γ)
   else
@@ -256,7 +264,7 @@ function interpret(x, Γ::Environment)
   end
 end 
 
-function interpret_list(args, Γ)
+function interpret_list(args, @nospecialize(Γ::NamedTuple))
   new_list = []
   for arg in args
     new_arg, Γ = interpret(arg, Γ)
@@ -265,7 +273,7 @@ function interpret_list(args, Γ)
   new_list, Γ
 end
 
-function interpret_lib(f, args, Γ)
+function interpret_lib(f, args, @nospecialize(Γ::NamedTuple))
   # println("INTERPRET_LIB")
   # @show f 
   # @show args 
@@ -278,7 +286,7 @@ function interpret_lib(f, args, Γ)
   libapl(f, new_args, Γ)
 end
 
-function interpret_julia_lib(f, args, Γ)
+function interpret_julia_lib(f, args, @nospecialize(Γ::NamedTuple))
   # @show f 
   # @show args
   new_args = []
@@ -292,7 +300,7 @@ function interpret_julia_lib(f, args, Γ)
   julialibapl(f, new_args, Γ)
 end
 
-function interpret_field(x, f, Γ::Environment)
+function interpret_field(x, f, @nospecialize(Γ::NamedTuple))
   # # println("INTERPRET_FIELD")
   # # @show keys(Γ)
   # # @show x 
@@ -305,7 +313,7 @@ function interpret_field(x, f, Γ::Environment)
   end
 end
 
-function interpret_let(args::AbstractArray, Γ::Environment)
+function interpret_let(args::AbstractArray, @nospecialize(Γ::NamedTuple))
   Γ2 = Γ
   for arg in args[1:end-1] # all lines in let except last
     v2, Γ2 = interpret(arg, Γ2)
@@ -324,7 +332,7 @@ function interpret_let(args::AbstractArray, Γ::Environment)
   end
 end
 
-function interpret_call(f, params, Γ::Environment)
+function interpret_call(f, params, @nospecialize(Γ::NamedTuple))
   func, Γ = interpret(f, Γ)
   func_args = func[1]
   func_body = func[2]
@@ -354,7 +362,7 @@ function interpret_call(f, params, Γ::Environment)
   (v, Γ)
 end
 
-function interpret_object_call(f, args, Γ)
+function interpret_object_call(f, args, @nospecialize(Γ::NamedTuple))
   # # # println("BEFORE")
   # # # @show Γ.state.objectsCreated 
   origin, Γ = interpret(args[end], Γ)
@@ -380,7 +388,7 @@ function interpret_object_call(f, args, Γ)
   (object_repr, Γ)  
 end
 
-function interpret_init_next(var_name, var_val, Γ)
+function interpret_init_next(var_name, var_val, @nospecialize(Γ::NamedTuple))
   # println("INTERPRET INIT NEXT")
   init_func = var_val.args[1]
   next_func = var_val.args[2]
@@ -442,7 +450,7 @@ function interpret_init_next(var_name, var_val, Γ)
   (AExpr(:assign, var_name, var_val), Γ2)
 end
 
-function interpret_object(args, Γ)
+function interpret_object(args, @nospecialize(Γ::NamedTuple))
   object_name = args[1]
   object_fields = args[2:end-1]
   object_render = args[end]
@@ -453,7 +461,7 @@ function interpret_object(args, Γ)
   (AExpr(:object, args...), Γ)
 end
 
-function interpret_on(args, Γ)
+function interpret_on(args, @nospecialize(Γ::NamedTuple))
   # println("INTERPRET ON")
   event = args[1]
   update_ = args[2]
@@ -499,7 +507,7 @@ function interpret_on(args, Γ)
 end
 
 # evaluate updateObj on arguments that include functions 
-function interpret_updateObj(args, Γ)
+function interpret_updateObj(args, @nospecialize(Γ::NamedTuple))
   # # println("MADE IT!")
   Γ2 = Γ
   numFunctionArgs = count(x -> x == true, map(arg -> (arg isa AbstractArray) && (length(arg) == 2) && (arg[1] isa AExpr || arg[1] isa Symbol) && (arg[2] isa AExpr || arg[2] isa Symbol), args))
@@ -568,7 +576,7 @@ function interpret_updateObj(args, Γ)
   end
 end
 
-function interpret_removeObj(args, Γ)
+function interpret_removeObj(args, @nospecialize(Γ::NamedTuple))
   # @show args
   list = args[1]
   func = args[2]
@@ -582,7 +590,7 @@ function interpret_removeObj(args, Γ)
   new_list, Γ
 end
 
-function interpret_julia_map(args, Γ)
+function interpret_julia_map(args, @nospecialize(Γ::NamedTuple))
   new_list = []
   map_func = args[1]
   list = args[2]
@@ -593,7 +601,7 @@ function interpret_julia_map(args, Γ)
   new_list, Γ
 end
 
-function interpret_julia_filter(args, Γ)
+function interpret_julia_filter(args, @nospecialize(Γ::NamedTuple))
   new_list = []
   filter_func = args[1]
   list = args[2]

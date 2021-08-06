@@ -6,7 +6,7 @@ using Random
 export empty_env, Environment, std_env, start, step, run, interpret_program, interpret_over_time
 import MLStyle
 
-function interpret_program(aex, Γ)
+function interpret_program(aex, @nospecialize(Γ::NamedTuple))
   aex.head == :program || error("Must be a program aex")
   for line in aex.args
     v, Γ = interpret(line, Γ)
@@ -77,7 +77,7 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG)
   new_aex, env_
 end
 
-function step(aex::AExpr, env::Environment, user_events=(click=nothing, left=false, right=false, down=false, up=false))::Environment
+function step(aex::AExpr, @nospecialize(env::NamedTuple), user_events=(click=nothing, left=false, right=false, down=false, up=false))::NamedTuple
   # update env with user event 
   for user_event in keys(user_events)
     if !isnothing(user_events[user_event])
@@ -94,7 +94,7 @@ function step(aex::AExpr, env::Environment, user_events=(click=nothing, left=fal
 end
 
 """Update the history variables, scene, and time fields of env_.state"""
-function update_state(env_)
+function update_state(@nospecialize(env_::NamedTuple))
   # reset user events 
   for user_event in [:left, :right, :up, :down]
     env_ = update(env_, user_event, false)
@@ -131,7 +131,7 @@ function update_state(env_)
   env_ = update(env_, :state, new_state)
 end
 
-function interpret_over_time(aex::AExpr, iters, user_events=[])::Environment
+function interpret_over_time(aex::AExpr, iters, user_events=[])::NamedTuple
   new_aex, env_ = start(aex)
   if user_events == []
     for i in 1:iters

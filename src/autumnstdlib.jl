@@ -43,7 +43,7 @@ Cell(position::Position, color::String, @nospecialize(state::NamedTuple)) = Cell
 #   background::String
 # end
 
-# Scene(@nospecialize(objects::Array{<:NamedTuple})) = Scene(objects, "#ffffff00")
+# Scene(@nospecialize(objects::AbstractArray)) = Scene(objects, "#ffffff00")
 
 # function render(scene)::Array{Cell}
 #   vcat(map(obj -> render(obj), filter(obj -> obj.alive, scene.objects))...)
@@ -97,13 +97,13 @@ function clicked(click::Union{Click, Nothing}, @nospecialize(object::NamedTuple)
   end
 end
 
-function clicked(click::Union{Click, Nothing}, @nospecialize(objects::Array{<:NamedTuple}), @nospecialize(state::NamedTuple))  
+function clicked(click::Union{Click, Nothing}, @nospecialize(objects::AbstractArray), @nospecialize(state::NamedTuple))  
   # println("LOOK AT ME")
   # println(reduce(&, map(obj -> clicked(click, obj), objects)))
   reduce(|, map(obj -> clicked(click, obj, state), objects))
 end
 
-function objClicked(click::Union{Click, Nothing}, @nospecialize(objects::Array{<:NamedTuple}), @nospecialize(state=nothing))::Union{Object, Nothing}
+function objClicked(click::Union{Click, Nothing}, @nospecialize(objects::AbstractArray), @nospecialize(state=nothing))::Union{Object, Nothing}
   println(click)
   if isnothing(click)
     nothing
@@ -140,20 +140,22 @@ function intersects(@nospecialize(obj1::NamedTuple), @nospecialize(obj2::NamedTu
   length(intersect(nums1, nums2)) != 0
 end
 
-function intersects(@nospecialize(obj1::NamedTuple), @nospecialize(obj2::Array{<:NamedTuple}), @nospecialize(state::NamedTuple))::Bool
+function intersects(@nospecialize(obj1::NamedTuple), @nospecialize(obj2::AbstractArray), @nospecialize(state::NamedTuple))::Bool
   nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, render(obj1))
   nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
   length(intersect(nums1, nums2)) != 0
 end
 
-function intersects(@nospecialize(obj1::Array{<:NamedTuple}), @nospecialize(obj2::Array{<:NamedTuple}), @nospecialize(state::NamedTuple))::Bool
-  nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj1)...))
-  nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
-  length(intersect(nums1, nums2)) != 0
-end
-
-function intersects(list1, list2, @nospecialize(state=nothing))::Bool
-  length(intersect(list1, list2)) != 0 
+function intersects(@nospecialize(obj1::AbstractArray), @nospecialize(obj2::AbstractArray), @nospecialize(state::NamedTuple))::Bool
+  if (length(obj1) == 0) || (length(obj2) == 0)
+    false  
+  elseif (obj1 isa AbstractArray{<:NamedTuple}) && (obj2 isa AbstractArray{<:NamedTuple})
+    nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj1)...))
+    nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
+    length(intersect(nums1, nums2)) != 0
+  else
+    length(intersect(obj1, obj2)) != 0 
+  end
 end
 
 function intersects(@nospecialize(object::NamedTuple), @nospecialize(state::NamedTuple))::Bool
@@ -161,19 +163,19 @@ function intersects(@nospecialize(object::NamedTuple), @nospecialize(state::Name
   intersects(object, objects, state)
 end
 
-function addObj(@nospecialize(list::Array{<:NamedTuple}), @nospecialize(obj::NamedTuple), @nospecialize(state=nothing))
+function addObj(@nospecialize(list::AbstractArray), @nospecialize(obj::NamedTuple), @nospecialize(state=nothing))
   obj = update_nt(obj, :changed, true)
   new_list = vcat(list, obj)
   new_list
 end
 
-function addObj(@nospecialize(list::Array{<:NamedTuple}), @nospecialize(objs::Array{<:NamedTuple}), @nospecialize(state=nothing))
+function addObj(@nospecialize(list::AbstractArray), @nospecialize(objs::AbstractArray), @nospecialize(state=nothing))
   objs = map(obj -> update_nt(obj, :changed, true), objs)
   new_list = vcat(list, objs)
   new_list
 end
 
-function removeObj(@nospecialize(list::Array{<:NamedTuple}), @nospecialize(obj::NamedTuple), @nospecialize(state=nothing))
+function removeObj(@nospecialize(list::AbstractArray), @nospecialize(obj::NamedTuple), @nospecialize(state=nothing))
   new_list = deepcopy(list)
   for x in filter(o -> o.id == obj.id, new_list)
     index = findall(o -> o.id == x.id, new_list)[1]
@@ -184,7 +186,7 @@ function removeObj(@nospecialize(list::Array{<:NamedTuple}), @nospecialize(obj::
   new_list
 end
 
-function removeObj(@nospecialize(list::Array{<:NamedTuple}), fn, @nospecialize(state=nothing))
+function removeObj(@nospecialize(list::AbstractArray), fn, @nospecialize(state=nothing))
   new_list = deepcopy(list)
   for x in filter(obj -> fn(obj), new_list)
     index = findall(o -> o.id == x.id, new_list)[1]
@@ -225,7 +227,7 @@ function filter_fallback(@nospecialize(obj::NamedTuple), @nospecialize(state=not
   true
 end
 
-function updateObj(@nospecialize(list::Array{<:NamedTuple}), map_fn, filter_fn, @nospecialize(state::NamedTuple=nothing))
+function updateObj(@nospecialize(list::AbstractArray), map_fn, filter_fn, @nospecialize(state::NamedTuple=nothing))
   orig_list = filter(obj -> !filter_fn(obj), list)
   filtered_list = filter(filter_fn, list)
   new_filtered_list = map(map_fn, filtered_list)
@@ -233,7 +235,7 @@ function updateObj(@nospecialize(list::Array{<:NamedTuple}), map_fn, filter_fn, 
   vcat(orig_list, new_filtered_list)
 end
 
-function updateObj(@nospecialize(list::Array{<:NamedTuple}), map_fn, @nospecialize(state::NamedTuple=nothing))
+function updateObj(@nospecialize(list::AbstractArray), map_fn, @nospecialize(state::NamedTuple=nothing))
   orig_list = filter(obj -> false, list)
   filtered_list = filter(obj -> true, list)
   new_filtered_list = map(map_fn, filtered_list)
@@ -616,7 +618,7 @@ function isFree(position::Position, @nospecialize(object::NamedTuple), @nospecia
   render((objects=filter(obj -> obj.id != object.id , state.scene.objects), background=state.scene.background)))) == 0
 end
 
-function isFree(@nospecialize(object::NamedTuple), orig_@nospecialize(object::NamedTuple), @nospecialize(state::NamedTuple))::Bool
+function isFree(@nospecialize(object::NamedTuple), @nospecialize(orig_object::NamedTuple), @nospecialize(state::NamedTuple))::Bool
   reduce(&, map(x -> isFree(x, orig_object, state), map(cell -> cell.position, render(object))))
 end
 
