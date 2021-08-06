@@ -365,11 +365,11 @@ end
 function interpret_object_call(f, args, @nospecialize(Γ::NamedTuple))
   # # # println("BEFORE")
   # # # @show Γ.state.objectsCreated 
-  origin, Γ = interpret(args[end], Γ)
-  object_repr = (origin=origin, type=f, alive=true, changed=false, id=Γ.state.objectsCreated)
-
   new_state = update(Γ.state, :objectsCreated, Γ.state.objectsCreated + 1)
   Γ = update(Γ, :state, new_state)
+  
+  origin, Γ = interpret(args[end], Γ)
+  object_repr = (origin=origin, type=f, alive=true, changed=false, id=Γ.state.objectsCreated)
 
   Γ2 = Γ
   fields = Γ2.object_types[f][:fields]
