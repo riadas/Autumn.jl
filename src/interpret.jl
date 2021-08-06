@@ -9,7 +9,10 @@ import MLStyle
 function interpret_program(aex, @nospecialize(Γ::NamedTuple))
   aex.head == :program || error("Must be a program aex")
   for line in aex.args
+    println("start of line")
+    @show line
     v, Γ = interpret(line, Γ)
+    println("end of line")
   end
   return aex, Γ
 end
