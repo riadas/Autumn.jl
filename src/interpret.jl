@@ -32,6 +32,11 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG)
   lifted_lines = filter(l -> l.head == :assign && (!(l.args[2] isa AExpr) || l.args[2].head != :initnext), lines) # GRID_SIZE and background here
   on_clause_lines = filter(l -> l.head == :on, lines)
 
+  reordered_lines_temp = vcat(grid_params_and_object_type_lines, 
+                              initnext_lines, 
+                              on_clause_lines, 
+                              lifted_lines)
+
   reordered_lines = vcat(grid_params_and_object_type_lines, 
                          on_clause_lines, 
                          initnext_lines, 
@@ -67,14 +72,14 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG)
     end
   end 
 
-  new_aex = AExpr(:program, reordered_lines...)
+  new_aex = AExpr(:program, reordered_lines_temp...) # try interpreting the init_next's before on for the first time step (init)
   @show new_aex
   aex_, env_ = interpret_program(new_aex, env)
 
   # update state (time, histories, scene)
   env_ = update_state(env_)
 
-  new_aex, env_
+  AExpr(:program, reordered_lines...), env_
 end
 
 function step(aex::AExpr, @nospecialize(env::NamedTuple), user_events=(click=nothing, left=false, right=false, down=false, up=false))::NamedTuple
@@ -132,7 +137,6 @@ function update_state(@nospecialize(env_::NamedTuple))
 end
 
 function interpret_over_time(aex::AExpr, iters, user_events=[])::NamedTuple
-  @show 0
   new_aex, env_ = start(aex)
   if user_events == []
     for i in 1:iters
