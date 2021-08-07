@@ -116,7 +116,7 @@ function clicked(click::Union{Click, Nothing}, @nospecialize(objects::AbstractAr
   end
 end
 
-function objClicked(click::Union{Click, Nothing}, @nospecialize(objects::AbstractArray), @nospecialize(state=nothing))::Union{Object, Nothing}
+function objClicked(click::Union{Click, Nothing}, @nospecialize(objects::AbstractArray), @nospecialize(state=nothing))::Union{NamedTuple, Nothing}
   println(click)
   if isnothing(click)
     nothing
@@ -537,7 +537,7 @@ function closest(@nospecialize(object::NamedTuple), type::Symbol, @nospecialize(
   end
 end
 
-function mapPositions(constructor, GRID_SIZE::Int, filterFunction, args, @nospecialize(state=nothing))::Union{Object, Array{<:Object}}
+function mapPositions(constructor, GRID_SIZE::Int, filterFunction, args, @nospecialize(state=nothing))::Union{NamedTuple, Array{<:NamedTuple}}
   map(pos -> constructor(args..., pos), filter(filterFunction, allPositions(GRID_SIZE)))
 end
 
