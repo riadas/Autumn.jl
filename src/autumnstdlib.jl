@@ -236,7 +236,7 @@ function filter_fallback(@nospecialize(obj::NamedTuple), @nospecialize(state=not
   true
 end
 
-function updateObj(@nospecialize(list::AbstractArray), map_fn, filter_fn, @nospecialize(state::NamedTuple=nothing))
+function updateObj(@nospecialize(list::AbstractArray), map_fn, filter_fn, @nospecialize(state=nothing))
   orig_list = filter(obj -> !filter_fn(obj), list)
   filtered_list = filter(filter_fn, list)
   new_filtered_list = map(map_fn, filtered_list)
@@ -244,7 +244,7 @@ function updateObj(@nospecialize(list::AbstractArray), map_fn, filter_fn, @nospe
   vcat(orig_list, new_filtered_list)
 end
 
-function updateObj(@nospecialize(list::AbstractArray), map_fn, @nospecialize(state::NamedTuple=nothing))
+function updateObj(@nospecialize(list::AbstractArray), map_fn, @nospecialize(state=nothing))
   orig_list = filter(obj -> false, list)
   filtered_list = filter(obj -> true, list)
   new_filtered_list = map(map_fn, filtered_list)
@@ -316,11 +316,11 @@ function unitVector(position::Position, @nospecialize(state::NamedTuple))::Posit
   unitVector(Position(0,0), position, state)
 end 
 
-function displacement(position1::Position, position2::Position, @nospecialize(state::NamedTuple=nothing))::Position
+function displacement(position1::Position, position2::Position, @nospecialize(state=nothing))::Position
   Position(floor(Int, position2.x - position1.x), floor(Int, position2.y - position1.y))
 end
 
-function displacement(cell1::Cell, cell2::Cell, @nospecialize(state::NamedTuple=nothing))::Position
+function displacement(cell1::Cell, cell2::Cell, @nospecialize(state=nothing))::Position
   displacement(cell1.position, cell2.position)
 end
 
