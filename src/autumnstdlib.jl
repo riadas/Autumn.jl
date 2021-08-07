@@ -97,7 +97,7 @@ function isWithinBounds(@nospecialize(obj::NamedTuple), @nospecialize(state::Nam
 end
 
 function clicked(click::Union{Click, Nothing}, @nospecialize(object::NamedTuple), @nospecialize(state::NamedTuple))::Bool
-  if click == nothing
+  if isnothing(click)
     false
   else
     GRID_SIZE = state.GRID_SIZEHistory[0]
@@ -112,7 +112,7 @@ function clicked(click::Union{Click, Nothing}, @nospecialize(objects::AbstractAr
   if isnothing(click)
     false
   else
-    reduce(|, map(obj -> clicked(click, obj, state), objects))
+    foldl(|, map(obj -> clicked(click, obj, state), objects), init=false)
   end
 end
 
