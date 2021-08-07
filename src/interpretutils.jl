@@ -319,20 +319,24 @@ end
 
 function interpret_let(args::AbstractArray, @nospecialize(Γ::NamedTuple))
   Γ2 = Γ
-  for arg in args[1:end-1] # all lines in let except last
-    v2, Γ2 = interpret(arg, Γ2)
-  end
-
-  if args[end] isa AExpr
-    if args[end].head == :assign # all assignments are global; no return value 
-      v2, Γ2 = interpret(args[end], Γ2)
-      (AExpr(:let, args...), Γ2)
-    else # return value is AExpr   
-      v2, Γ2 = interpret(args[end], Γ2)
-      (v2, Γ)
+  if length(args) > 1
+    for arg in args[1:end-1] # all lines in let except last
+      v2, Γ2 = interpret(arg, Γ2)
     end
-  else # return value is not AExpr
-    (interpret(args[end], Γ2)[1], Γ)
+  
+    if args[end] isa AExpr
+      if args[end].head == :assign # all assignments are global; no return value 
+        v2, Γ2 = interpret(args[end], Γ2)
+        (AExpr(:let, args...), Γ2)
+      else # return value is AExpr   
+        v2, Γ2 = interpret(args[end], Γ2)
+        (v2, Γ)
+      end
+    else # return value is not AExpr
+      (interpret(args[end], Γ2)[1], Γ)
+    end
+  else
+    AExpr(:let, args...), Γ2
   end
 end
 
@@ -482,13 +486,15 @@ function interpret_on(args, @nospecialize(Γ::NamedTuple))
       end
     elseif update_.head == :let 
       assignments = update_.args
-      if (assignments[end] isa AExpr) && (assignments[end].head == :assign)
-        for a in assignments 
-          var_name = a.args[1]
-          if !(var_name in keys(Γ2[:on_clauses]))
-            Γ2 = update(Γ2, :on_clauses, update(Γ2[:on_clauses], var_name, [event]))
-          else
-            Γ2 = update(Γ2, :on_clauses, update(Γ2[:on_clauses], var_name, vcat(event, Γ2[:on_clauses][var_name])))
+      if length(assignments) > 0 
+        if (assignments[end] isa AExpr) && (assignments[end].head == :assign)
+          for a in assignments 
+            var_name = a.args[1]
+            if !(var_name in keys(Γ2[:on_clauses]))
+              Γ2 = update(Γ2, :on_clauses, update(Γ2[:on_clauses], var_name, [event]))
+            else
+              Γ2 = update(Γ2, :on_clauses, update(Γ2[:on_clauses], var_name, vcat(event, Γ2[:on_clauses][var_name])))
+            end
           end
         end
       end
