@@ -220,43 +220,43 @@ function removeObj(@nospecialize(obj::NamedTuple), @nospecialize(state=nothing))
   # new_obj
 end
 
-# function updateObj(@nospecialize(obj::NamedTuple), field::String, value, @nospecialize(state=nothing))
-#   fields = fieldnames(typeof(obj))
-#   custom_fields = fields[5:end-1]
-#   origin_field = (fields[2],)
+function updateObj(@nospecialize(obj::NamedTuple), field::String, value, @nospecialize(state=nothing))
+  fields = fieldnames(typeof(obj))
+  custom_fields = fields[5:end-1]
+  origin_field = (fields[2],)
 
-#   constructor_fields = (custom_fields..., origin_field...)
-#   constructor_values = map(x -> x == Symbol(field) ? value : getproperty(obj, x), constructor_fields)
+  constructor_fields = (custom_fields..., origin_field...)
+  constructor_values = map(x -> x == Symbol(field) ? value : getproperty(obj, x), constructor_fields)
 
-#   new_obj = typeof(obj)(constructor_values...)
-#   setproperty!(new_obj, :id, obj.id)
-#   setproperty!(new_obj, :alive, obj.alive)
-#   setproperty!(new_obj, :changed, obj.changed)
+  new_obj = typeof(obj)(constructor_values...)
+  setproperty!(new_obj, :id, obj.id)
+  setproperty!(new_obj, :alive, obj.alive)
+  setproperty!(new_obj, :changed, obj.changed)
 
-#   setproperty!(new_obj, Symbol(field), value)
-#   state.objectsCreated -= 1    
-#   new_obj
-# end
+  setproperty!(new_obj, Symbol(field), value)
+  state.objectsCreated -= 1    
+  new_obj
+end
 
 function filter_fallback(@nospecialize(obj::NamedTuple), @nospecialize(state=nothing))
   true
 end
 
-# function updateObj(@nospecialize(list::AbstractArray), map_fn, filter_fn, @nospecialize(state=nothing))
-#   orig_list = filter(obj -> !filter_fn(obj), list)
-#   filtered_list = filter(filter_fn, list)
-#   new_filtered_list = map(map_fn, filtered_list)
-#   foreach(obj -> obj.changed = true, new_filtered_list)
-#   vcat(orig_list, new_filtered_list)
-# end
+function updateObj(@nospecialize(list::AbstractArray), map_fn, filter_fn, @nospecialize(state=nothing))
+  orig_list = filter(obj -> !filter_fn(obj), list)
+  filtered_list = filter(filter_fn, list)
+  new_filtered_list = map(map_fn, filtered_list)
+  foreach(obj -> obj.changed = true, new_filtered_list)
+  vcat(orig_list, new_filtered_list)
+end
 
-# function updateObj(@nospecialize(list::AbstractArray), map_fn, @nospecialize(state=nothing))
-#   orig_list = filter(obj -> false, list)
-#   filtered_list = filter(obj -> true, list)
-#   new_filtered_list = map(map_fn, filtered_list)
-#   foreach(obj -> obj.changed = true, new_filtered_list)
-#   vcat(orig_list, new_filtered_list)
-# end
+function updateObj(@nospecialize(list::AbstractArray), map_fn, @nospecialize(state=nothing))
+  orig_list = filter(obj -> false, list)
+  filtered_list = filter(obj -> true, list)
+  new_filtered_list = map(map_fn, filtered_list)
+  foreach(obj -> obj.changed = true, new_filtered_list)
+  vcat(orig_list, new_filtered_list)
+end
 
 function adjPositions(position::Position, @nospecialize(state::NamedTuple))::Array{Position}
   filter(x -> isWithinBounds(x, state), [Position(position.x, position.y + 1), Position(position.x, position.y - 1), Position(position.x + 1, position.y), Position(position.x - 1, position.y)])
