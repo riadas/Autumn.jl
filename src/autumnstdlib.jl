@@ -109,7 +109,11 @@ end
 function clicked(click::Union{Click, Nothing}, @nospecialize(objects::AbstractArray), @nospecialize(state::NamedTuple))  
   # println("LOOK AT ME")
   # println(reduce(&, map(obj -> clicked(click, obj), objects)))
-  reduce(|, map(obj -> clicked(click, obj, state), objects))
+  if isnothing(click)
+    false
+  else
+    reduce(|, map(obj -> clicked(click, obj, state), objects))
+  end
 end
 
 function objClicked(click::Union{Click, Nothing}, @nospecialize(objects::AbstractArray), @nospecialize(state=nothing))::Union{Object, Nothing}
