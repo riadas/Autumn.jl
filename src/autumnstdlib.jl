@@ -246,21 +246,21 @@ function filter_fallback(@nospecialize(obj::NamedTuple), @nospecialize(state=not
   true
 end
 
-function updateObj(@nospecialize(list::AbstractArray), map_fn, filter_fn, @nospecialize(state=nothing))
-  orig_list = filter(obj -> !filter_fn(obj), list)
-  filtered_list = filter(filter_fn, list)
-  new_filtered_list = map(map_fn, filtered_list)
-  foreach(obj -> obj.changed = true, new_filtered_list)
-  vcat(orig_list, new_filtered_list)
-end
+# function updateObj(@nospecialize(list::AbstractArray), map_fn, filter_fn, @nospecialize(state=nothing))
+#   orig_list = filter(obj -> !filter_fn(obj), list)
+#   filtered_list = filter(filter_fn, list)
+#   new_filtered_list = map(map_fn, filtered_list)
+#   foreach(obj -> obj.changed = true, new_filtered_list)
+#   vcat(orig_list, new_filtered_list)
+# end
 
-function updateObj(@nospecialize(list::AbstractArray), map_fn, @nospecialize(state=nothing))
-  orig_list = filter(obj -> false, list)
-  filtered_list = filter(obj -> true, list)
-  new_filtered_list = map(map_fn, filtered_list)
-  foreach(obj -> obj.changed = true, new_filtered_list)
-  vcat(orig_list, new_filtered_list)
-end
+# function updateObj(@nospecialize(list::AbstractArray), map_fn, @nospecialize(state=nothing))
+#   orig_list = filter(obj -> false, list)
+#   filtered_list = filter(obj -> true, list)
+#   new_filtered_list = map(map_fn, filtered_list)
+#   foreach(obj -> obj.changed = true, new_filtered_list)
+#   vcat(orig_list, new_filtered_list)
+# end
 
 function adjPositions(position::Position, @nospecialize(state::NamedTuple))::Array{Position}
   filter(x -> isWithinBounds(x, state), [Position(position.x, position.y + 1), Position(position.x, position.y - 1), Position(position.x + 1, position.y), Position(position.x - 1, position.y)])
