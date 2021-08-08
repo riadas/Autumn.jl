@@ -319,7 +319,7 @@ end
 
 function interpret_let(args::AbstractArray, @nospecialize(Γ::NamedTuple))
   Γ2 = Γ
-  if length(args) > 1
+  if length(args) > 0
     for arg in args[1:end-1] # all lines in let except last
       v2, Γ2 = interpret(arg, Γ2)
     end
