@@ -522,7 +522,7 @@ function interpret_updateObj(args, @nospecialize(Γ::NamedTuple))
   Γ2 = Γ
   numFunctionArgs = count(x -> x == true, map(arg -> (arg isa AbstractArray) && (length(arg) == 2) && (arg[1] isa AExpr || arg[1] isa Symbol) && (arg[2] isa AExpr || arg[2] isa Symbol), args))
   if numFunctionArgs == 1
-    list = args[1]
+    list, Γ2 = interpret(args[1], Γ2)
     map_func = args[2]
 
     # # @show list 
@@ -539,7 +539,7 @@ function interpret_updateObj(args, @nospecialize(Γ::NamedTuple))
     end
     new_list, Γ2
   elseif numFunctionArgs == 2
-    list = args[1]
+    list, Γ2 = interpret(args[1], Γ2)
     map_func = args[2]
     filter_func = args[3]
 
@@ -588,7 +588,7 @@ end
 
 function interpret_removeObj(args, @nospecialize(Γ::NamedTuple))
   # @show args
-  list = args[1]
+  list, Γ = interpret(args[1], Γ)
   func = args[2]
   new_list = []
   for item in list
@@ -603,7 +603,7 @@ end
 function interpret_julia_map(args, @nospecialize(Γ::NamedTuple))
   new_list = []
   map_func = args[1]
-  list = args[2]
+  list, Γ = interpret(args[2], Γ)
   for arg in list  
     new_arg, Γ = interpret(AExpr(:call, map_func, arg), Γ)
     push!(new_list, new_arg)
@@ -614,7 +614,7 @@ end
 function interpret_julia_filter(args, @nospecialize(Γ::NamedTuple))
   new_list = []
   filter_func = args[1]
-  list = args[2]
+  list, Γ = interpret(args[2], Γ)
   for arg in list
     v, Γ = interpret(AExpr(:call, filter_func, arg), Γ)
     if v == true 
