@@ -166,9 +166,13 @@ function intersects(@nospecialize(obj2::AbstractArray), @nospecialize(obj1::Name
 end
 
 function intersects(@nospecialize(obj1::AbstractArray), @nospecialize(obj2::AbstractArray), @nospecialize(state::NamedTuple))::Bool
+  # println("INTERSECTS")
+  # @show typeof(obj1) 
+  # @show typeof(obj2) 
   if (length(obj1) == 0) || (length(obj2) == 0)
     false  
-  elseif (obj1 isa AbstractArray{<:NamedTuple}) && (obj2 isa AbstractArray{<:NamedTuple})
+  elseif (obj1[1] isa NamedTuple) && (obj2[1] isa NamedTuple)
+    # println("MADE IT")
     nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj1)...))
     nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
     length(intersect(nums1, nums2)) != 0
