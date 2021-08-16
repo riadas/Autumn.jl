@@ -346,7 +346,7 @@ function adjacent(cell1::Cell, cell2::Cell, @nospecialize(state=nothing))::Bool
   adjacent(cell1.position, cell2.position)
 end
 
-function adjacent(cell::Cell, cells::Array{Cell}, @nospecialize(state=nothing))
+function adjacent(cell::Cell, cells::AbstractArray, @nospecialize(state=nothing))
   length(filter(x -> adjacent(cell, x), cells)) != 0
 end
 
@@ -374,7 +374,7 @@ function rotate(position::Position, @nospecialize(state=nothing))::Position
  end
 
 function rotateNoCollision(@nospecialize(object::NamedTuple), @nospecialize(state::NamedTuple))::NamedTuple
-  (isWithinBounds(rotate(object), state) && isFree(rotate(object), object), state) ? rotate(object) : object
+  (isWithinBounds(rotate(object), state) && isFree(rotate(object), object, state)) ? rotate(object) : object
 end
 
 function move(position1::Position, position2::Position, @nospecialize(state=nothing))

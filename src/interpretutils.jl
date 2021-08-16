@@ -172,7 +172,9 @@ julia_lib_to_func = Dict(:get => get,
                          :filter => filter,
                          :first => first,
                          :last => last,
-                         :in => in)
+                         :in => in, 
+                         :intersect => intersect,
+                         :length => length,)
 isjulialib(f) = f in keys(julia_lib_to_func)
 
 function julialibapl(f, args, @nospecialize(Γ::NamedTuple))
