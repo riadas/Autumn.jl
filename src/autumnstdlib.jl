@@ -101,8 +101,15 @@ function clicked(click::Union{Click, Nothing}, @nospecialize(object::NamedTuple)
     false
   else
     GRID_SIZE = state.GRID_SIZEHistory[0]
-    nums = map(cell -> GRID_SIZE*cell.position.y + cell.position.x, render(object))
-    (GRID_SIZE * click.y + click.x) in nums
+    if GRID_SIZE isa AbstractArray 
+      GRID_SIZE_X = GRID_SIZE[1]
+      nums = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, render(object))
+      (GRID_SIZE_X * click.y + click.x) in nums
+    else
+      nums = map(cell -> GRID_SIZE*cell.position.y + cell.position.x, render(object))
+      (GRID_SIZE * click.y + click.x) in nums
+    end
+
   end
 end
 
@@ -148,21 +155,46 @@ function clicked(click::Union{Click, Nothing}, pos::Position, @nospecialize(stat
 end
 
 function intersects(@nospecialize(obj1::NamedTuple), @nospecialize(obj2::NamedTuple), @nospecialize(state::NamedTuple))::Bool
-  nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, render(obj1))
-  nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, render(obj2))
-  length(intersect(nums1, nums2)) != 0
+  GRID_SIZE = state.GRID_SIZEHistory[0]
+  if GRID_SIZE isa AbstractArray 
+    GRID_SIZE_X = GRID_SIZE[1]
+    GRID_SIZE_Y = GRID_SIZE[2]
+    nums1 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, render(obj1))
+    nums2 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, render(obj2))
+    length(intersect(nums1, nums2)) != 0
+  else
+    nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, render(obj1))
+    nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, render(obj2))
+    length(intersect(nums1, nums2)) != 0
+  end
 end
 
 function intersects(@nospecialize(obj1::NamedTuple), @nospecialize(obj2::AbstractArray), @nospecialize(state::NamedTuple))::Bool
-  nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, render(obj1))
-  nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
-  length(intersect(nums1, nums2)) != 0
+  GRID_SIZE = state.GRID_SIZEHistory[0]
+  if GRID_SIZE isa AbstractArray 
+    GRID_SIZE_X = GRID_SIZE[1]
+    nums1 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, render(obj1))
+    nums2 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
+    length(intersect(nums1, nums2)) != 0
+  else
+    nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, render(obj1))
+    nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
+    length(intersect(nums1, nums2)) != 0
+  end
 end
 
 function intersects(@nospecialize(obj2::AbstractArray), @nospecialize(obj1::NamedTuple), @nospecialize(state::NamedTuple))::Bool
-  nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, render(obj1))
-  nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
-  length(intersect(nums1, nums2)) != 0
+  GRID_SIZE = state.GRID_SIZEHistory[0] 
+  if GRID_SIZE isa AbstractArray 
+    GRID_SIZE_X = GRID_SIZE[1]
+    nums1 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, render(obj1))
+    nums2 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
+    length(intersect(nums1, nums2)) != 0
+  else
+    nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, render(obj1))
+    nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
+    length(intersect(nums1, nums2)) != 0
+  end
 end
 
 function intersects(@nospecialize(obj1::AbstractArray), @nospecialize(obj2::AbstractArray), @nospecialize(state::NamedTuple))::Bool
@@ -173,9 +205,17 @@ function intersects(@nospecialize(obj1::AbstractArray), @nospecialize(obj2::Abst
     false  
   elseif (obj1[1] isa NamedTuple) && (obj2[1] isa NamedTuple)
     # println("MADE IT")
-    nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj1)...))
-    nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
-    length(intersect(nums1, nums2)) != 0
+    GRID_SIZE = state.GRID_SIZEHistory[0]
+    if GRID_SIZE isa AbstractArray 
+      GRID_SIZE_X = GRID_SIZE[1]
+      nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj1)...))
+      nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
+      length(intersect(nums1, nums2)) != 0
+    else
+      nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj1)...))
+      nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
+      length(intersect(nums1, nums2)) != 0
+    end
   else
     length(intersect(obj1, obj2)) != 0 
   end
@@ -271,7 +311,15 @@ function adjPositions(position::Position, @nospecialize(state::NamedTuple))::Arr
 end
 
 function isWithinBounds(position::Position, @nospecialize(state::NamedTuple))::Bool
-  (position.x >= 0) && (position.x < state.GRID_SIZEHistory[0]) && (position.y >= 0) && (position.y < state.GRID_SIZEHistory[0])                          
+  GRID_SIZE = state.GRID_SIZEHistory[0] 
+  if GRID_SIZE isa AbstractArray 
+    GRID_SIZE_X = GRID_SIZE[1]
+    GRID_SIZE_Y = GRID_SIZE[2]
+  else
+    GRID_SIZE_X = GRID_SIZE
+    GRID_SIZE_Y = GRID_SIZE
+  end
+  (position.x >= 0) && (position.x < GRID_SIZE_X) && (position.y >= 0) && (position.y < GRID_SIZE_Y)                  
 end
 
 function isFree(position::Position, @nospecialize(state::NamedTuple))::Bool
@@ -473,9 +521,16 @@ end
 
 function moveWrap(position::Position, x::Int, y::Int, @nospecialize(state::NamedTuple))::Position
   GRID_SIZE = state.GRID_SIZEHistory[0]
-  # println("hello")
-  # println(Position((position.x + x + GRID_SIZE) % GRID_SIZE, (position.y + y + GRID_SIZE) % GRID_SIZE))
-  Position((position.x + x + GRID_SIZE) % GRID_SIZE, (position.y + y + GRID_SIZE) % GRID_SIZE)
+  if GRID_SIZE isa AbstractArray 
+    GRID_SIZE_X = GRID_SIZE[1]
+    GRID_SIZE_Y = GRID_SIZE[2]
+    # println("hello")
+    # println(Position((position.x + x + GRID_SIZE) % GRID_SIZE, (position.y + y + GRID_SIZE) % GRID_SIZE))
+    Position((position.x + x + GRID_SIZE_X) % GRID_SIZE_X, (position.y + y + GRID_SIZE_Y) % GRID_SIZE_Y)
+  else
+    Position((position.x + x + GRID_SIZE) % GRID_SIZE, (position.y + y + GRID_SIZE) % GRID_SIZE)
+  end
+
 end
 
 # ----- begin left/right moveWrap ----- #
@@ -506,11 +561,16 @@ end
 
 # ----- end left/right moveWrap ----- #
 
-function randomPositions(GRID_SIZE::Int, n::Int, @nospecialize(state=nothing))::Array{Position}
-  nums = uniformChoice([0:(GRID_SIZE * GRID_SIZE - 1);], n, state)
-  # println(nums)
-  # println(map(num -> Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), nums))
-  map(num -> Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), nums)
+function randomPositions(GRID_SIZE, n::Int, @nospecialize(state=nothing))::Array{Position}
+  if GRID_SIZE isa AbstractArray 
+    GRID_SIZE_X = GRID_SIZE[1]
+    GRID_SIZE_Y = GRID_SIZE[2]
+    nums = uniformChoice([0:(GRID_SIZE_X * GRID_SIZE_Y - 1);], n, state)
+    map(num -> Position(num % GRID_SIZE_X, floor(Int, num / GRID_SIZE_X)), nums)    
+  else
+    nums = uniformChoice([0:(GRID_SIZE * GRID_SIZE - 1);], n, state)
+    map(num -> Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), nums)
+  end
 end
 
 function distance(position1::Position, position2::Position, @nospecialize(state=nothing))::Int
@@ -541,13 +601,20 @@ function closest(@nospecialize(object::NamedTuple), type::Symbol, @nospecialize(
   end
 end
 
-function mapPositions(constructor, GRID_SIZE::Int, filterFunction, args, @nospecialize(state=nothing))::Union{NamedTuple, Array{<:NamedTuple}}
+function mapPositions(constructor, GRID_SIZE, filterFunction, args, @nospecialize(state=nothing))::Union{NamedTuple, Array{<:NamedTuple}}
   map(pos -> constructor(args..., pos), filter(filterFunction, allPositions(GRID_SIZE)))
 end
 
-function allPositions(GRID_SIZE::Int, @nospecialize(state=nothing))
-  nums = [0:(GRID_SIZE * GRID_SIZE - 1);]
-  map(num -> Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), nums)
+function allPositions(GRID_SIZE, @nospecialize(state=nothing))
+  if GRID_SIZE isa AbstractArray 
+    GRID_SIZE_X = GRID_SIZE[1]
+    GRID_SIZE_Y = GRID_SIZE[2]
+    nums = [0:(GRID_SIZE_X * GRID_SIZE_Y - 1);]
+    map(num -> Position(num % GRID_SIZE_X, floor(Int, num / GRID_SIZE_X)), nums)
+  else
+    nums = [0:(GRID_SIZE * GRID_SIZE - 1);]
+    map(num -> Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), nums)
+  end
 end
 
 function updateOrigin(@nospecialize(object::NamedTuple), new_origin::Position, @nospecialize(state=nothing))::NamedTuple
@@ -565,8 +632,15 @@ end
 function nextLiquid(@nospecialize(object::NamedTuple), @nospecialize(state::NamedTuple))::NamedTuple 
   # println("nextLiquid")
   GRID_SIZE = state.GRID_SIZEHistory[0]
+  if GRID_SIZE isa AbstractArray 
+    GRID_SIZE_X = GRID_SIZE[1]
+    GRID_SIZE_Y = GRID_SIZE[2]
+  else
+    GRID_SIZE_X = GRID_SIZE
+    GRID_SIZE_Y = GRID_SIZE
+  end
   new_object = deepcopy(object)
-  if object.origin.y != GRID_SIZE - 1 && isFree(move(object.origin, Position(0, 1)), state)
+  if object.origin.y != GRID_SIZE_Y - 1 && isFree(move(object.origin, Position(0, 1)), state)
     new_object = update_nt(new_object, :origin, move(object.origin, Position(0, 1)))
   else
     leftHoles = filter(pos -> (pos.y == object.origin.y + 1)
@@ -610,7 +684,6 @@ end
 
 function nextSolid(@nospecialize(object::NamedTuple), @nospecialize(state::NamedTuple))::NamedTuple 
   # println("nextSolid")
-  GRID_SIZE = state.GRID_SIZEHistory[0] 
   new_object = deepcopy(object)
   if (isWithinBounds(move(object, Position(0, 1)), state) && reduce(&, map(x -> isFree(x, object, state), map(cell -> move(cell.position, Position(0, 1)), render(object)))))
     new_object = update_nt(new_object, :origin, move(object.origin, Position(0, 1)))
@@ -626,14 +699,28 @@ end
 
 function isFree(start::Position, stop::Position, @nospecialize(state::NamedTuple))::Bool 
   GRID_SIZE = state.GRID_SIZEHistory[0]
-  nums = [(GRID_SIZE * start.y + start.x):(GRID_SIZE * stop.y + stop.x);]
-  reduce(&, map(num -> isFree(Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), state), nums))
+  if GRID_SIZE isa AbstractArray 
+    GRID_SIZE_X = GRID_SIZE[1]
+    GRID_SIZE_Y = GRID_SIZE[2]
+  else
+    GRID_SIZE_X = GRID_SIZE
+    GRID_SIZE_Y = GRID_SIZE
+  end
+  nums = [(GRID_SIZE_X * start.y + start.x):(GRID_SIZE_X * stop.y + stop.x);]
+  reduce(&, map(num -> isFree(Position(num % GRID_SIZE_X, floor(Int, num / GRID_SIZE_X)), state), nums))
 end
 
 function isFree(start::Position, stop::Position, @nospecialize(object::NamedTuple), @nospecialize(state::NamedTuple))::Bool 
   GRID_SIZE = state.GRID_SIZEHistory[0]
-  nums = [(GRID_SIZE * start.y + start.x):(GRID_SIZE * stop.y + stop.x);]
-  reduce(&, map(num -> isFree(Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), object, state), nums))
+  if GRID_SIZE isa AbstractArray 
+    GRID_SIZE_X = GRID_SIZE[1]
+    GRID_SIZE_Y = GRID_SIZE[2]
+  else
+    GRID_SIZE_X = GRID_SIZE
+    GRID_SIZE_Y = GRID_SIZE
+  end
+  nums = [(GRID_SIZE_X * start.y + start.x):(GRID_SIZE_X * stop.y + stop.x);]
+  reduce(&, map(num -> isFree(Position(num % GRID_SIZE_X, floor(Int, num / GRID_SIZE_X)), object, state), nums))
 end
 
 function isFree(position::Position, @nospecialize(object::NamedTuple), @nospecialize(state::NamedTuple))
@@ -647,8 +734,15 @@ end
 
 function allPositions(@nospecialize(state::NamedTuple))
   GRID_SIZE = state.GRID_SIZEHistory[0]
-  nums = [1:GRID_SIZE*GRID_SIZE - 1;]
-  map(num -> Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), nums)
+  if GRID_SIZE isa AbstractArray 
+    GRID_SIZE_X = GRID_SIZE[1]
+    GRID_SIZE_Y = GRID_SIZE[2]
+  else
+    GRID_SIZE_X = GRID_SIZE
+    GRID_SIZE_Y = GRID_SIZE
+  end
+  nums = [1:GRID_SIZE_X*GRID_SIZE_Y - 1;]
+  map(num -> Position(num % GRID_SIZE_X, floor(Int, num / GRID_SIZE_X)), nums)
 end
 
 function unfold(A, @nospecialize(state=nothing))
