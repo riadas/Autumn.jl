@@ -68,7 +68,7 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG)
     var_name = line.args[1]
     env = update(env, :lifted, update(env.lifted, var_name, line.args[2])) 
     if var_name in [:GRID_SIZE, :background]
-      env = update(env, var_name, line.args[2])
+      env = update(env, var_name, interpret(line.args[2], env)[1])
     end
   end 
 
