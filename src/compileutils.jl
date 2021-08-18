@@ -433,8 +433,16 @@ const builtInDict = Dict([
                             false
                           else
                             GRID_SIZE = state.GRID_SIZEHistory[0]
-                            nums = map(cell -> GRID_SIZE*cell.position.y + cell.position.x, render(object))
-                            (GRID_SIZE * click.y + click.x) in nums
+                            if GRID_SIZE isa AbstractArray 
+                              GRID_SIZE_X = GRID_SIZE[1]
+                              GRID_SIZE_Y = GRID_SIZE[2]
+
+                              nums = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, render(object))
+                              (GRID_SIZE * click.y + click.x) in nums
+                            else
+                              nums = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, render(object))
+                              (GRID_SIZE_X * click.y + click.x) in nums
+                            end
                           end
                         end
 
@@ -477,24 +485,51 @@ const builtInDict = Dict([
 
                         function intersects(obj1::Object, obj2::Object)::Bool
                           println("INTERSECTS 1")
-                          nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, render(obj1))
-                          nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, render(obj2))
-                          length(intersect(nums1, nums2)) != 0
+                          GRID_SIZE = state.GRID_SIZEHistory[0]
+                          if GRID_SIZE isa AbstractArray 
+                            GRID_SIZE_X = GRID_SIZE[1]
+                            nums1 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, render(obj1))
+                            nums2 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, render(obj2))
+                            length(intersect(nums1, nums2)) != 0
+
+                          else
+                            nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, render(obj1))
+                            nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, render(obj2))
+                            length(intersect(nums1, nums2)) != 0
+                          end
                         end
 
                         function intersects(obj1::Object, obj2::Array{<:Object})::Bool
                           println("INTERSECTS 2")
-                          nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, render(obj1))
-                          nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
-                          println(length(intersect(nums1, nums2)) != 0)
-                          length(intersect(nums1, nums2)) != 0
+                          GRID_SIZE = state.GRID_SIZEHistory[0]
+                          if GRID_SIZE isa AbstractArray 
+                            GRID_SIZE_X = GRID_SIZE[1]
+                            nums1 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, render(obj1))
+                            nums2 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
+                            println(length(intersect(nums1, nums2)) != 0)
+                            length(intersect(nums1, nums2)) != 0
+                          else
+                            nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, render(obj1))
+                            nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
+                            println(length(intersect(nums1, nums2)) != 0)
+                            length(intersect(nums1, nums2)) != 0
+                          end
                         end
 
                         function intersects(obj1::Array{<:Object}, obj2::Array{<:Object})::Bool
-                          nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj1)...))
-                          nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
-                          println(length(intersect(nums1, nums2)) != 0)
-                          length(intersect(nums1, nums2)) != 0
+                          GRID_SIZE = state.GRID_SIZEHistory[0]
+                          if GRID_SIZE isa AbstractArray 
+                            GRID_SIZE_X = GRID_SIZE[1]
+                            nums1 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, vcat(map(render, obj1)...))
+                            nums2 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
+                            println(length(intersect(nums1, nums2)) != 0)
+                            length(intersect(nums1, nums2)) != 0
+                          else 
+                            nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj1)...))
+                            nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
+                            println(length(intersect(nums1, nums2)) != 0)
+                            length(intersect(nums1, nums2)) != 0
+                          end
                         end
 
                         function intersects(list1, list2)::Bool
@@ -578,7 +613,14 @@ const builtInDict = Dict([
                         end
 
                         function isWithinBounds(position::Position)::Bool
-                          (position.x >= 0) && (position.x < state.GRID_SIZEHistory[0]) && (position.y >= 0) && (position.y < state.GRID_SIZEHistory[0])                          
+                          GRID_SIZE = state.GRID_SIZEHistory[0] 
+                          if GRID_SIZE isa AbstractArray 
+                            GRID_SIZE_X = GRID_SIZE[1]
+                            GRID_SIZE_Y = GRID_SIZE[2]
+                            (position.x >= 0) && (position.x < GRID_SIZE_X) && (position.y >= 0) && (position.y < GRID_SIZE_Y)                          
+                          else
+                            (position.x >= 0) && (position.x < state.GRID_SIZEHistory[0]) && (position.y >= 0) && (position.y < state.GRID_SIZEHistory[0])                          
+                          end
                         end
 
                         function isFree(position::Position)::Bool
@@ -780,9 +822,15 @@ const builtInDict = Dict([
 
                         function moveWrap(position::Position, x::Int, y::Int)::Position
                           GRID_SIZE = state.GRID_SIZEHistory[0]
-                          # println("hello")
-                          # println(Position((position.x + x + GRID_SIZE) % GRID_SIZE, (position.y + y + GRID_SIZE) % GRID_SIZE))
-                          Position((position.x + x + GRID_SIZE) % GRID_SIZE, (position.y + y + GRID_SIZE) % GRID_SIZE)
+                          if GRID_SIZE isa AbstractArray  
+                            GRID_SIZE_X = GRID_SIZE[1]
+                            GRID_SIZE_Y = GRID_SIZE[2]
+                            Position((position.x + x + GRID_SIZE_X) % GRID_SIZE_X, (position.y + y + GRID_SIZE_Y) % GRID_SIZE_Y)
+                          else
+                            # println("hello")
+                            # println(Position((position.x + x + GRID_SIZE) % GRID_SIZE, (position.y + y + GRID_SIZE) % GRID_SIZE))
+                            Position((position.x + x + GRID_SIZE) % GRID_SIZE, (position.y + y + GRID_SIZE) % GRID_SIZE)
+                          end
                         end
 
                         # ----- begin left/right moveWrap ----- #
@@ -813,11 +861,20 @@ const builtInDict = Dict([
 
                         # ----- end left/right moveWrap ----- #
 
-                        function randomPositions(GRID_SIZE::Int, n::Int)::Array{Position}
-                          nums = uniformChoice(rng, [0:(GRID_SIZE * GRID_SIZE - 1);], n)
-                          # println(nums)
-                          # println(map(num -> Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), nums))
-                          map(num -> Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), nums)
+                        function randomPositions(GRID_SIZE, n::Int)::Array{Position}
+                          if GRID_SIZE isa AbstractArray 
+                            GRID_SIZE_X = GRID_SIZE[1]
+                            GRID_SIZE_Y = GRID_SIZE[2]
+                            nums = uniformChoice(rng, [0:(GRID_SIZE_X * GRID_SIZE_Y - 1);], n)
+                            # println(nums)
+                            # println(map(num -> Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), nums))
+                            map(num -> Position(num % GRID_SIZE_X, floor(Int, num / GRID_SIZE_X)), nums)
+                          else
+                            nums = uniformChoice(rng, [0:(GRID_SIZE * GRID_SIZE - 1);], n)
+                            # println(nums)
+                            # println(map(num -> Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), nums))
+                            map(num -> Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), nums)
+                          end
                         end
 
                         function distance(position1::Position, position2::Position)::Int
@@ -848,13 +905,20 @@ const builtInDict = Dict([
                           end
                         end
 
-                        function mapPositions(constructor, GRID_SIZE::Int, filterFunction, args...)::Union{Object, Array{<:Object}}
+                        function mapPositions(constructor, GRID_SIZE, filterFunction, args...)::Union{Object, Array{<:Object}}
                           map(pos -> constructor(args..., pos), filter(filterFunction, allPositions(GRID_SIZE)))
                         end
 
-                        function allPositions(GRID_SIZE::Int)
-                          nums = [0:(GRID_SIZE * GRID_SIZE - 1);]
-                          map(num -> Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), nums)
+                        function allPositions(GRID_SIZE)
+                          if GRID_SIZE isa AbstractArray 
+                            GRID_SIZE_X = GRID_SIZE[1]
+                            GRID_SIZE_Y = GRID_SIZE[2]
+                            nums = [0:(GRID_SIZE_X * GRID_SIZE_Y - 1);]
+                            map(num -> Position(num % GRID_SIZE_X, floor(Int, num / GRID_SIZE_X)), nums)
+                          else 
+                            nums = [0:(GRID_SIZE * GRID_SIZE - 1);]
+                            map(num -> Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), nums)
+                          end
                         end
 
                         function updateOrigin(object::Object, new_origin::Position)::Object
@@ -870,10 +934,17 @@ const builtInDict = Dict([
                         end
 
                         function nextLiquid(object::Object)::Object 
-                          # println("nextLiquid")
+                          # println("nextLiquid")                          
                           GRID_SIZE = state.GRID_SIZEHistory[0]
+                          if GRID_SIZE isa AbstractArray 
+                            GRID_SIZE_X = GRID_SIZE[1]
+                            GRID_SIZE_Y = GRID_SIZE[2]
+                          else
+                            GRID_SIZE_X = GRID_SIZE
+                            GRID_SIZE_Y = GRID_SIZE
+                          end
                           new_object = deepcopy(object)
-                          if object.origin.y != GRID_SIZE - 1 && isFree(move(object.origin, Position(0, 1)))
+                          if object.origin.y != GRID_SIZE_Y - 1 && isFree(move(object.origin, Position(0, 1)))
                             new_object.origin = move(object.origin, Position(0, 1))
                           else
                             leftHoles = filter(pos -> (pos.y == object.origin.y + 1)
@@ -917,7 +988,6 @@ const builtInDict = Dict([
 
                         function nextSolid(object::Object)::Object 
                           # println("nextSolid")
-                          GRID_SIZE = state.GRID_SIZEHistory[0] 
                           new_object = deepcopy(object)
                           if (isWithinBounds(move(object, Position(0, 1))) && reduce(&, map(x -> isFree(x, object), map(cell -> move(cell.position, Position(0, 1)), render(object)))))
                             new_object.origin = move(object.origin, Position(0, 1))
@@ -933,14 +1003,28 @@ const builtInDict = Dict([
 
                         function isFree(start::Position, stop::Position)::Bool 
                           GRID_SIZE = state.GRID_SIZEHistory[0]
-                          nums = [(GRID_SIZE * start.y + start.x):(GRID_SIZE * stop.y + stop.x);]
-                          reduce(&, map(num -> isFree(Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE))), nums))
+                          if GRID_SIZE isa AbstractArray 
+                            GRID_SIZE_X = GRID_SIZE[1]
+                            GRID_SIZE_Y = GRID_SIZE[2]
+                          else
+                            GRID_SIZE_X = GRID_SIZE
+                            GRID_SIZE_Y = GRID_SIZE
+                          end
+                          nums = [(GRID_SIZE_X * start.y + start.x):(GRID_SIZE_X * stop.y + stop.x);]
+                          reduce(&, map(num -> isFree(Position(num % GRID_SIZE_X, floor(Int, num / GRID_SIZE_X))), nums))
                         end
 
                         function isFree(start::Position, stop::Position, object::Object)::Bool 
                           GRID_SIZE = state.GRID_SIZEHistory[0]
-                          nums = [(GRID_SIZE * start.y + start.x):(GRID_SIZE * stop.y + stop.x);]
-                          reduce(&, map(num -> isFree(Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), object), nums))
+                          if GRID_SIZE isa AbstractArray 
+                            GRID_SIZE_X = GRID_SIZE[1]
+                            GRID_SIZE_Y = GRID_SIZE[2]
+                          else
+                            GRID_SIZE_X = GRID_SIZE
+                            GRID_SIZE_Y = GRID_SIZE
+                          end
+                          nums = [(GRID_SIZE_X * start.y + start.x):(GRID_SIZE_X * stop.y + stop.x);]
+                          reduce(&, map(num -> isFree(Position(num % GRID_SIZE_X, floor(Int, num / GRID_SIZE_X)), object), nums))
                         end
 
                         function isFree(position::Position, object::Object)
@@ -954,8 +1038,15 @@ const builtInDict = Dict([
 
                         function allPositions()
                           GRID_SIZE = state.GRID_SIZEHistory[0]
-                          nums = [1:GRID_SIZE*GRID_SIZE - 1;]
-                          map(num -> Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), nums)
+                          if GRID_SIZE isa AbstractArray 
+                            GRID_SIZE_X = GRID_SIZE[1]
+                            GRID_SIZE_Y = GRID_SIZE[2]
+                          else
+                            GRID_SIZE_X = GRID_SIZE
+                            GRID_SIZE_Y = GRID_SIZE
+                          end
+                          nums = [1:GRID_SIZE_X*GRID_SIZE_Y - 1;]
+                          map(num -> Position(num % GRID_SIZE_X, floor(Int, num / GRID_SIZE_X)), nums)
                         end
 
                         function unfold(A)

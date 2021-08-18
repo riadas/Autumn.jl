@@ -14,7 +14,7 @@ function compiletojulia(aexpr::AExpr)::Expr
   historydata = Dict([("external" => [au"""(external (: click Click))""".args[1], au"""(external (: left KeyPress))""".args[1], au"""(external (: right KeyPress))""".args[1], au"""(external (: up KeyPress))""".args[1], au"""(external (: down KeyPress))""".args[1]]), # :typedecl aexprs for all external variables
                ("initnext" => []), # :assign aexprs for all initnext variables
                ("lifted" => []), # :assign aexprs for all lifted variables
-               ("types" => Dict{Symbol, Any}([:click => :Click, :left => :KeyPress, :right => :KeyPress, :up => :KeyPress, :down => :KeyPress, :GRID_SIZE => :Int, :background => :String])), # map of global variable names (symbols) to types
+               ("types" => Dict{Symbol, Any}([:click => :Click, :left => :KeyPress, :right => :KeyPress, :up => :KeyPress, :down => :KeyPress, :background => :String])), # map of global variable names (symbols) to types
                ("on" => []),
                ("objects" => [])]) 
                
