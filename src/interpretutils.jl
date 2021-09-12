@@ -175,7 +175,9 @@ julia_lib_to_func = Dict(:get => get,
                          :in => in, 
                          :intersect => intersect,
                          :length => length,
-                         :sign => sign,)
+                         :sign => sign,
+                         :vcat => vcat, 
+                         :count => count,)
 isjulialib(f) = f in keys(julia_lib_to_func)
 
 function julialibapl(f, args, @nospecialize(Γ::NamedTuple))
@@ -213,7 +215,17 @@ function interpret(aex::AExpr, @nospecialize(Γ::NamedTuple))
                                                                     # @show x
                                                                      interpret(AExpr(:assign, x, v2), Γ_)
                                                                    end
-    [:assign, x, v]                                             => (aex, update(Γ, x, v))
+    [:assign, x, v]                                             => let
+                                                                     @show x 
+                                                                     @show v 
+                                                                     if x in fieldnames(typeof(Γ))
+                                                                      println("here") 
+                                                                      @show Γ[x]
+                                                                     end
+                                                                     @show update(Γ, x, v)[x]
+                                                                     println("returning")
+                                                                     (aex, update(Γ, x, v)) 
+                                                                   end
     [:list, args...]                                            => interpret_list(args, Γ)
     [:typedecl, args...]                                        => (aex, Γ)
     [:let, args...]                                             => interpret_let(args, Γ) 
@@ -241,6 +253,8 @@ function interpret(aex::AExpr, @nospecialize(Γ::NamedTuple))
   end
   # # # # println("FINSIH", arr)
   # # # # @show(t)
+  println("T[2]")
+  @show t[2]
   t
 end
 
@@ -505,15 +519,25 @@ function interpret_on(args, @nospecialize(Γ::NamedTuple))
       error("Could not interpret $(update_)")
     end
   else
-    # # println("ON CLAUSE")
-    # # @show event 
+    println("ON CLAUSE")
+    @show event 
     # # @show update_  
     # @show repr(event)
     e, Γ2 = interpret(event, Γ2) 
-    # @show e 
+    @show e 
+    @show update_
     if e == true
-      # # println("EVENT IS TRUE!") 
-      ex, Γ2 = interpret(update_, Γ2)
+      println("EVENT IS TRUE!") 
+      t = interpret(update_, Γ2)
+      println("WHAT ABOUT HERE")
+      @show t[2]
+      Γ3 = t[2]
+      println("hi")
+      if :xVel in fieldnames(typeof(Γ3))
+        println("hello")
+        @show Γ3[:xVel]
+      end
+      Γ2 = Γ3
     end
   end
   (AExpr(:on, args...), Γ2)

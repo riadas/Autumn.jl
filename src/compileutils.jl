@@ -440,6 +440,8 @@ const builtInDict = Dict([
                               nums = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, render(object))
                               (GRID_SIZE * click.y + click.x) in nums
                             else
+                              GRID_SIZE_X = GRID_SIZE
+                              GRID_SIZE_Y = GRID_SIZE
                               nums = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, render(object))
                               (GRID_SIZE_X * click.y + click.x) in nums
                             end
