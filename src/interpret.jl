@@ -178,6 +178,7 @@ function render_scene(scene)
   for obj in scene.objects 
     push!(observations, map(cell -> AutumnStandardLibrary.Cell(AutumnStandardLibrary.Position(obj.origin.x + cell.position.x, obj.origin.y + cell.position.y), cell.color), obj.render)...)
   end
+  observations
 end
 
 end
