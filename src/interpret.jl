@@ -170,7 +170,7 @@ function interpret_over_time_observations(aex::AExpr, iters, user_events=[])
       push!(scenes, env_.state.scene)
     end
   end
-  vcat(map(s -> render_scene(s), scenes)...)
+  map(s -> render_scene(s), scenes)
 end
 
 function render_scene(scene)
