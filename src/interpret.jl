@@ -3,7 +3,7 @@ using ..InterpretUtils
 using ..AExpressions: AExpr
 using ..SExpr
 using Random
-export empty_env, Environment, std_env, start, step, run, interpret_program, interpret_over_time
+export empty_env, Environment, std_env, start, step, run, interpret_program, interpret_over_time, interpret_over_time_observations
 import MLStyle
 
 function interpret_program(aex, @nospecialize(Γ::NamedTuple))
@@ -150,6 +150,33 @@ function interpret_over_time(aex::AExpr, iters, user_events=[])::NamedTuple
     end
   end
   env_
+end
+
+function interpret_over_time_observations(aex::AExpr, iters, user_events=[])
+  scenes = []
+  new_aex, env_ = start(aex)
+  push!(scenes, env_.state.scene)
+  if user_events == []
+    for i in 1:iters
+      # @show i
+      env_ = step(new_aex, env_)
+      push!(scenes, env_.state.scene)
+    end
+  else
+    for i in 1:iters
+      # @show i
+      env_ = step(new_aex, env_, user_events[i])
+      push!(scenes, env_.state.scene)
+    end
+  end
+  vcat(map(s -> render_scene(s), scenes)...)
+end
+
+function render_scene(scene)
+  observations = []
+  for obj in scene.objects 
+    push!(observations, map(cell -> AutumnStandardLibrary.Cell(AutumnStandardLibrary.Position(obj.origin.x + cell.position.x, obj.origin.y + cell.position.y), cell.color), obj.render)...)
+  end
 end
 
 end
