@@ -175,7 +175,7 @@ end
 
 function render_scene(scene)
   observations = []
-  for obj in scene.objects 
+  for obj in filter(x -> x.alive, scene.objects) 
     push!(observations, map(cell -> AutumnStandardLibrary.Cell(AutumnStandardLibrary.Position(obj.origin.x + cell.position.x, obj.origin.y + cell.position.y), cell.color), obj.render)...)
   end
   observations
