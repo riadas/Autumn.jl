@@ -92,7 +92,7 @@ function range(start::Int, stop::Int, @nospecialize(state=nothing))
 end
 
 function isWithinBounds(@nospecialize(obj::NamedTuple), @nospecialize(state::NamedTuple))::Bool
-  # println(filter(cell -> !isWithinBounds(cell.position),render(obj)))
+  # # println(filter(cell -> !isWithinBounds(cell.position),render(obj)))
   length(filter(cell -> !isWithinBounds(cell.position, state), render(obj))) == 0
 end
 
@@ -114,8 +114,8 @@ function clicked(click::Union{Click, Nothing}, @nospecialize(object::NamedTuple)
 end
 
 function clicked(click::Union{Click, Nothing}, @nospecialize(objects::AbstractArray), @nospecialize(state::NamedTuple))  
-  # println("LOOK AT ME")
-  # println(reduce(&, map(obj -> clicked(click, obj), objects)))
+  # # println("LOOK AT ME")
+  # # println(reduce(&, map(obj -> clicked(click, obj), objects)))
   if isnothing(click)
     false
   else
@@ -124,7 +124,7 @@ function clicked(click::Union{Click, Nothing}, @nospecialize(objects::AbstractAr
 end
 
 function objClicked(click::Union{Click, Nothing}, @nospecialize(objects::AbstractArray), @nospecialize(state=nothing))::Union{NamedTuple, Nothing}
-  println(click)
+  # # println(click)
   if isnothing(click)
     nothing
   else
@@ -198,13 +198,13 @@ function intersects(@nospecialize(obj2::AbstractArray), @nospecialize(obj1::Name
 end
 
 function intersects(@nospecialize(obj1::AbstractArray), @nospecialize(obj2::AbstractArray), @nospecialize(state::NamedTuple))::Bool
-  # println("INTERSECTS")
-  # @show typeof(obj1) 
-  # @show typeof(obj2) 
+  # # println("INTERSECTS")
+  # # @show typeof(obj1) 
+  # # @show typeof(obj2) 
   if (length(obj1) == 0) || (length(obj2) == 0)
     false  
   elseif (obj1[1] isa NamedTuple) && (obj2[1] isa NamedTuple)
-    # println("MADE IT")
+    # # println("MADE IT")
     GRID_SIZE = state.GRID_SIZEHistory[0]
     if GRID_SIZE isa AbstractArray 
       GRID_SIZE_X = GRID_SIZE[1]
@@ -524,8 +524,8 @@ function moveWrap(position::Position, x::Int, y::Int, @nospecialize(state::Named
   if GRID_SIZE isa AbstractArray 
     GRID_SIZE_X = GRID_SIZE[1]
     GRID_SIZE_Y = GRID_SIZE[2]
-    # println("hello")
-    # println(Position((position.x + x + GRID_SIZE) % GRID_SIZE, (position.y + y + GRID_SIZE) % GRID_SIZE))
+    # # println("hello")
+    # # println(Position((position.x + x + GRID_SIZE) % GRID_SIZE, (position.y + y + GRID_SIZE) % GRID_SIZE))
     Position((position.x + x + GRID_SIZE_X) % GRID_SIZE_X, (position.y + y + GRID_SIZE_Y) % GRID_SIZE_Y)
   else
     Position((position.x + x + GRID_SIZE) % GRID_SIZE, (position.y + y + GRID_SIZE) % GRID_SIZE)
@@ -630,7 +630,7 @@ function updateAlive(@nospecialize(object::NamedTuple), new_alive::Bool, @nospec
 end
 
 function nextLiquid(@nospecialize(object::NamedTuple), @nospecialize(state::NamedTuple))::NamedTuple 
-  # println("nextLiquid")
+  # # println("nextLiquid")
   GRID_SIZE = state.GRID_SIZEHistory[0]
   if GRID_SIZE isa AbstractArray 
     GRID_SIZE_X = GRID_SIZE[1]
@@ -683,7 +683,7 @@ function nextLiquid(@nospecialize(object::NamedTuple), @nospecialize(state::Name
 end
 
 function nextSolid(@nospecialize(object::NamedTuple), @nospecialize(state::NamedTuple))::NamedTuple 
-  # println("nextSolid")
+  # # println("nextSolid")
   new_object = deepcopy(object)
   if (isWithinBounds(move(object, Position(0, 1)), state) && reduce(&, map(x -> isFree(x, object, state), map(cell -> move(cell.position, Position(0, 1)), render(object)))))
     new_object = update_nt(new_object, :origin, move(object.origin, Position(0, 1)))

@@ -69,7 +69,7 @@ function sub(ϕ, subex::SubExpr, ::FunctionType)
 end
 
 function sub(ϕ, subex::SubExpr, ::Assignment)
-  # @show vars_in_scope(subex)
+  # # @show vars_in_scope(subex)
   AExpr(:assign, VariableName(), ValueExpression())
 end
 
@@ -186,7 +186,7 @@ function recursub(ϕ, aex::AExpr, stop = stopaftern(100))
       subex = choice(ϕ, nts)      # Choose a nonterminal
       newex = sub(ϕ, subex)       # find replacement for chosen NT
       aex = update(subex, newex)  # substiute replacement into aex
-      # println("#### Done\n")
+      # # println("#### Done\n")
     end
   end
   aex

@@ -104,8 +104,8 @@ end
 
 function compiletypedecl(expr::AExpr, data::Dict{String, Any}, parent::Union{AExpr, Nothing})
   if (parent !== nothing && (parent.head == :program || parent.head == :external))
-    # println(expr.args[1])
-    # println(expr.args[2])
+    # # println(expr.args[1])
+    # # println(expr.args[2])
     data["types"][expr.args[1]] = expr.args[2]
     :()
   else
@@ -114,8 +114,8 @@ function compiletypedecl(expr::AExpr, data::Dict{String, Any}, parent::Union{AEx
 end
 
 function compileexternal(expr::AExpr, data::Dict{String, Any})
-  # println("here: ")
-  # println(expr.args[1])
+  # # println("here: ")
+  # # println(expr.args[1])
   if !(expr.args[1] in data["external"])
     push!(data["external"], expr.args[1])
   end
@@ -171,10 +171,10 @@ end
 
 function compileobject(expr::AExpr, data::Dict{String, Any})
   name = expr.args[1]
-  # println("NAME")
-  # println(name)
-  # println(expr)
-  # println(expr.args)
+  # # println("NAME")
+  # # println(name)
+  # # println(expr)
+  # # println(expr.args)
   push!(data["objects"], name)
   custom_fields = map(field -> (
     :($(field.args[1])::$(compile(field.args[2], data)))
@@ -200,8 +200,8 @@ function compileobject(expr::AExpr, data::Dict{String, Any})
 end
 
 function compileon(expr::AExpr, data::Dict{String, Any})
-  # println("here")
-  # println(typeof(expr.args[1]) == AExpr ? expr.args[1].args[1] : expr.args[1])
+  # # println("here")
+  # # println(typeof(expr.args[1]) == AExpr ? expr.args[1].args[1] : expr.args[1])
   # event = compile(expr.args[1], data)
   # response = compile(expr.args[2], data)
 
@@ -424,7 +424,7 @@ const builtInDict = Dict([
                         end
 
                         function isWithinBounds(obj::Object)::Bool
-                          # println(filter(cell -> !isWithinBounds(cell.position),render(obj)))
+                          # # println(filter(cell -> !isWithinBounds(cell.position),render(obj)))
                           length(filter(cell -> !isWithinBounds(cell.position), render(obj))) == 0
                         end
 
@@ -449,13 +449,13 @@ const builtInDict = Dict([
                         end
 
                         function clicked(click::Union{Click, Nothing}, objects::AbstractArray)
-                          # println("LOOK AT ME")
-                          # println(reduce(&, map(obj -> clicked(click, obj), objects)))
+                          # # println("LOOK AT ME")
+                          # # println(reduce(&, map(obj -> clicked(click, obj), objects)))
                           reduce(|, map(obj -> clicked(click, obj), objects))
                         end
 
                         function objClicked(click::Union{Click, Nothing}, objects::AbstractArray)::Union{Object, Nothing}
-                          println(click)
+                          # println(click)
                           if isnothing(click)
                             nothing
                           else
@@ -486,7 +486,7 @@ const builtInDict = Dict([
                         end
 
                         function intersects(obj1::Object, obj2::Object)::Bool
-                          println("INTERSECTS 1")
+                          # println("INTERSECTS 1")
                           GRID_SIZE = state.GRID_SIZEHistory[0]
                           if GRID_SIZE isa AbstractArray 
                             GRID_SIZE_X = GRID_SIZE[1]
@@ -502,18 +502,18 @@ const builtInDict = Dict([
                         end
 
                         function intersects(obj1::Object, obj2::Array{<:Object})::Bool
-                          println("INTERSECTS 2")
+                          # println("INTERSECTS 2")
                           GRID_SIZE = state.GRID_SIZEHistory[0]
                           if GRID_SIZE isa AbstractArray 
                             GRID_SIZE_X = GRID_SIZE[1]
                             nums1 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, render(obj1))
                             nums2 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
-                            println(length(intersect(nums1, nums2)) != 0)
+                            # println(length(intersect(nums1, nums2)) != 0)
                             length(intersect(nums1, nums2)) != 0
                           else
                             nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, render(obj1))
                             nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
-                            println(length(intersect(nums1, nums2)) != 0)
+                            # println(length(intersect(nums1, nums2)) != 0)
                             length(intersect(nums1, nums2)) != 0
                           end
                         end
@@ -524,12 +524,12 @@ const builtInDict = Dict([
                             GRID_SIZE_X = GRID_SIZE[1]
                             nums1 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, vcat(map(render, obj1)...))
                             nums2 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
-                            println(length(intersect(nums1, nums2)) != 0)
+                            # println(length(intersect(nums1, nums2)) != 0)
                             length(intersect(nums1, nums2)) != 0
                           else 
                             nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj1)...))
                             nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
-                            println(length(intersect(nums1, nums2)) != 0)
+                            # println(length(intersect(nums1, nums2)) != 0)
                             length(intersect(nums1, nums2)) != 0
                           end
                         end
@@ -829,8 +829,8 @@ const builtInDict = Dict([
                             GRID_SIZE_Y = GRID_SIZE[2]
                             Position((position.x + x + GRID_SIZE_X) % GRID_SIZE_X, (position.y + y + GRID_SIZE_Y) % GRID_SIZE_Y)
                           else
-                            # println("hello")
-                            # println(Position((position.x + x + GRID_SIZE) % GRID_SIZE, (position.y + y + GRID_SIZE) % GRID_SIZE))
+                            # # println("hello")
+                            # # println(Position((position.x + x + GRID_SIZE) % GRID_SIZE, (position.y + y + GRID_SIZE) % GRID_SIZE))
                             Position((position.x + x + GRID_SIZE) % GRID_SIZE, (position.y + y + GRID_SIZE) % GRID_SIZE)
                           end
                         end
@@ -868,13 +868,13 @@ const builtInDict = Dict([
                             GRID_SIZE_X = GRID_SIZE[1]
                             GRID_SIZE_Y = GRID_SIZE[2]
                             nums = uniformChoice(rng, [0:(GRID_SIZE_X * GRID_SIZE_Y - 1);], n)
-                            # println(nums)
-                            # println(map(num -> Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), nums))
+                            # # println(nums)
+                            # # println(map(num -> Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), nums))
                             map(num -> Position(num % GRID_SIZE_X, floor(Int, num / GRID_SIZE_X)), nums)
                           else
                             nums = uniformChoice(rng, [0:(GRID_SIZE * GRID_SIZE - 1);], n)
-                            # println(nums)
-                            # println(map(num -> Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), nums))
+                            # # println(nums)
+                            # # println(map(num -> Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), nums))
                             map(num -> Position(num % GRID_SIZE, floor(Int, num / GRID_SIZE)), nums)
                           end
                         end
@@ -936,7 +936,7 @@ const builtInDict = Dict([
                         end
 
                         function nextLiquid(object::Object)::Object 
-                          # println("nextLiquid")                          
+                          # # println("nextLiquid")                          
                           GRID_SIZE = state.GRID_SIZEHistory[0]
                           if GRID_SIZE isa AbstractArray 
                             GRID_SIZE_X = GRID_SIZE[1]
@@ -989,7 +989,7 @@ const builtInDict = Dict([
                         end
 
                         function nextSolid(object::Object)::Object 
-                          # println("nextSolid")
+                          # # println("nextSolid")
                           new_object = deepcopy(object)
                           if (isWithinBounds(move(object, Position(0, 1))) && reduce(&, map(x -> isFree(x, object), map(cell -> move(cell.position, Position(0, 1)), render(object)))))
                             new_object.origin = move(object.origin, Position(0, 1))

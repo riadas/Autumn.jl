@@ -74,7 +74,7 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG)
   end 
 
   new_aex = AExpr(:program, reordered_lines_temp...) # try interpreting the init_next's before on for the first time step (init)
-  # @show new_aex
+  # # @show new_aex
   aex_, env_ = interpret_program(new_aex, env)
 
   # update state (time, histories, scene)
@@ -141,12 +141,12 @@ function interpret_over_time(aex::AExpr, iters, user_events=[])::NamedTuple
   new_aex, env_ = start(aex)
   if user_events == []
     for i in 1:iters
-      # @show i
+      # # @show i
       env_ = step(new_aex, env_)
     end
   else
     for i in 1:iters
-      # @show i
+      # # @show i
       env_ = step(new_aex, env_, user_events[i])
     end
   end
@@ -159,13 +159,13 @@ function interpret_over_time_observations(aex::AExpr, iters, user_events=[])
   push!(scenes, env_.state.scene)
   if user_events == []
     for i in 1:iters
-      # @show i
+      # # @show i
       env_ = step(new_aex, env_)
       push!(scenes, env_.state.scene)
     end
   else
     for i in 1:iters
-      # @show i
+      # # @show i
       env_ = step(new_aex, env_, user_events[i])
       push!(scenes, env_.state.scene)
     end

@@ -108,8 +108,8 @@ update(subexpr_, prog2)
 """
 function update(subexpr::SubExpr, newexpr)
   function subchild(expr, pos)
-    # @show pos, subexpr.pointer
-    # @show pos == subexpr.pointer
+    # # @show pos, subexpr.pointer
+    # # @show pos == subexpr.pointer
     pos == subexpr.pointer ? newexpr : expr
   end
   postwalkpos(subchild, subexpr.aex)
@@ -151,7 +151,7 @@ prog = au\"\"\"
   (= y (fn (a b c) (+ a b c))))\"\"\"
 
 subex = subexpr(prog, [2, 2, 3])
-f(x) = println(x.head)
+f(x) = # println(x.head)
 parentwalk(subex, prog)
 ```
 """
