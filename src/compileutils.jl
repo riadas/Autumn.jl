@@ -1012,7 +1012,16 @@ const builtInDict = Dict([
                             GRID_SIZE_X = GRID_SIZE
                             GRID_SIZE_Y = GRID_SIZE
                           end
-                          nums = [(GRID_SIZE_X * start.y + start.x):(GRID_SIZE_X * stop.y + stop.x);]
+                          translated_start = GRID_SIZE_X * start.y + start.x 
+                          translated_stop = GRID_SIZE_X * stop.y + stop.x
+                          if translated_start < translated_stop
+                            ordered_start = translated_start
+                            ordered_end = translated_stop
+                          else
+                            ordered_start = translated_stop
+                            ordered_end = translated_start
+                          end
+                          nums = [ordered_start:ordered_end;]
                           reduce(&, map(num -> isFree(Position(num % GRID_SIZE_X, floor(Int, num / GRID_SIZE_X))), nums))
                         end
 
@@ -1025,7 +1034,16 @@ const builtInDict = Dict([
                             GRID_SIZE_X = GRID_SIZE
                             GRID_SIZE_Y = GRID_SIZE
                           end
-                          nums = [(GRID_SIZE_X * start.y + start.x):(GRID_SIZE_X * stop.y + stop.x);]
+                          translated_start = GRID_SIZE_X * start.y + start.x 
+                          translated_stop = GRID_SIZE_X * stop.y + stop.x
+                          if translated_start < translated_stop
+                            ordered_start = translated_start
+                            ordered_end = translated_stop
+                          else
+                            ordered_start = translated_stop
+                            ordered_end = translated_start
+                          end
+                          nums = [ordered_start:ordered_end;]                        
                           reduce(&, map(num -> isFree(Position(num % GRID_SIZE_X, floor(Int, num / GRID_SIZE_X)), object), nums))
                         end
 

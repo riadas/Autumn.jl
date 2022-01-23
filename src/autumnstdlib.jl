@@ -710,9 +710,9 @@ function isFree(start::Position, stop::Position, @nospecialize(state::NamedTuple
   translated_stop = GRID_SIZE_X * stop.y + stop.x
   if translated_start < translated_stop
     ordered_start = translated_start
-    ordered_end = translated_end
+    ordered_end = translated_stop
   else
-    ordered_start = translated_end
+    ordered_start = translated_stop
     ordered_end = translated_start
   end
   nums = [ordered_start:ordered_end;]
@@ -732,9 +732,9 @@ function isFree(start::Position, stop::Position, @nospecialize(object::NamedTupl
   translated_stop = GRID_SIZE_X * stop.y + stop.x
   if translated_start < translated_stop
     ordered_start = translated_start
-    ordered_end = translated_end
+    ordered_end = translated_stop
   else
-    ordered_start = translated_end
+    ordered_start = translated_stop
     ordered_end = translated_start
   end
   nums = [ordered_start:ordered_end;]
