@@ -593,6 +593,7 @@ function interpret_updateObj(args, @nospecialize(Γ::NamedTuple))
     field_string = args[2]
     new_value = args[3]
     new_obj = update(obj, Symbol(field_string), new_value)
+    new_obj = update(new_obj, :changed, true)
 
     # update render 
     object_type = Γ[:object_types][obj.type]
@@ -625,6 +626,9 @@ function interpret_removeObj(args, @nospecialize(Γ::NamedTuple))
     pred, Γ = interpret(AExpr(:call, func, item), Γ) 
     if pred == false 
       push!(new_list, item)
+    else
+      new_item = update(update(item, :alive, false), :changed, true)
+      push!(new_list, new_item)
     end
   end
   new_list, Γ
