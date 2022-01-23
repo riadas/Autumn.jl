@@ -279,7 +279,7 @@ function updateObj(@nospecialize(obj::NamedTuple), field::String, value, @nospec
   new_obj = typeof(obj)(constructor_values...)
   setproperty!(new_obj, :id, obj.id)
   setproperty!(new_obj, :alive, obj.alive)
-  setproperty!(new_obj, :changed, obj.changed)
+  setproperty!(new_obj, :changed, true)
 
   setproperty!(new_obj, Symbol(field), value)
   state.objectsCreated -= 1    
@@ -706,7 +706,16 @@ function isFree(start::Position, stop::Position, @nospecialize(state::NamedTuple
     GRID_SIZE_X = GRID_SIZE
     GRID_SIZE_Y = GRID_SIZE
   end
-  nums = [(GRID_SIZE_X * start.y + start.x):(GRID_SIZE_X * stop.y + stop.x);]
+  translated_start = GRID_SIZE_X * start.y + start.x 
+  translated_stop = GRID_SIZE_X * stop.y + stop.x
+  if translated_start < translated_stop
+    ordered_start = translated_start
+    ordered_end = translated_end
+  else
+    ordered_start = translated_end
+    ordered_end = translated_start
+  end
+  nums = [ordered_start:ordered_end;]
   reduce(&, map(num -> isFree(Position(num % GRID_SIZE_X, floor(Int, num / GRID_SIZE_X)), state), nums))
 end
 
@@ -719,7 +728,16 @@ function isFree(start::Position, stop::Position, @nospecialize(object::NamedTupl
     GRID_SIZE_X = GRID_SIZE
     GRID_SIZE_Y = GRID_SIZE
   end
-  nums = [(GRID_SIZE_X * start.y + start.x):(GRID_SIZE_X * stop.y + stop.x);]
+  translated_start = GRID_SIZE_X * start.y + start.x 
+  translated_stop = GRID_SIZE_X * stop.y + stop.x
+  if translated_start < translated_stop
+    ordered_start = translated_start
+    ordered_end = translated_end
+  else
+    ordered_start = translated_end
+    ordered_end = translated_start
+  end
+  nums = [ordered_start:ordered_end;]
   reduce(&, map(num -> isFree(Position(num % GRID_SIZE_X, floor(Int, num / GRID_SIZE_X)), object, state), nums))
 end
 
