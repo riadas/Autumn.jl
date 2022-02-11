@@ -597,7 +597,104 @@ function closest(@nospecialize(object::NamedTuple), type::Symbol, @nospecialize(
     object.origin
   else
     min_distance = min(map(obj -> distance(object, obj), objects_of_type))
-    filter(obj -> distance(object, obj) == min_distance, objects_of_type)[1].origin
+    objects_of_min_distance = filter(obj -> distance(object, obj) == min_distance, objects_of_type)
+    sort(objects_of_min_distance)[1].origin
+  end
+end
+
+function closest(@nospecialize(object::NamedTuple), types::AbstractArray, @nospecialize(state::NamedTuple))::Position
+  objects_of_type = filter(obj -> (obj.type in types) && (obj.alive), state.scene.objects)
+  if length(objects_of_type) == 0
+    object.origin
+  else
+    min_distance = min(map(obj -> distance(object, obj), objects_of_type))
+    objects_of_min_distance = filter(obj -> distance(object, obj) == min_distance, objects_of_type)
+    sort(objects_of_min_distance)[1].origin
+  end
+end
+
+function closestRandom(@nospecialize(object::NamedTuple), types::AbstractArray, unit_size::Int, @nospecialize(state::NamedTuple))::Position
+  objects_of_type = filter(obj -> (obj.type == type) && (obj.alive), state.scene.objects)
+  if length(objects_of_type) == 0
+    Position(0, 0)
+  else
+    min_distance = min(map(obj -> distance(object, obj), objects_of_type))
+    objects_of_min_distance = filter(obj -> distance(object, obj) == min_distance, objects_of_type)
+    vec = unitVector(object, rand(objects_of_min_distance).origin)
+    scaled_vec = Position(vec.x * unit_size, vec.y * unit_size)
+    scaled_vec
+  end
+end
+
+function closestLeft(@nospecialize(object::NamedTuple), types::AbstractArray, unit_size::Int, @nospecialize(state::NamedTuple))::Position
+  objects_of_type = filter(obj -> (obj.type == type) && (obj.alive), state.scene.objects)
+  if length(objects_of_type) == 0
+    Position(0, 0)
+  else
+    min_distance = min(map(obj -> distance(object, obj), objects_of_type))
+    objects_of_min_distance = filter(obj -> distance(object, obj) == min_distance, objects_of_type)
+    negative_x_displacements = filter(x -> x < 0, map(o -> (o.origin.x - object.origin.x), objects_of_min_distance))
+    if length(negative_x_displacements) > 0
+      Position(-unit_size, 0)
+    else
+      vec = unitVector(sort(objects_of_min_distance)[1].origin)
+      scaled_vec = Position(vec.x * unit_size, vec.y * unit_size)
+      scaled_vec        
+    end
+  end
+end
+
+function closestRight(@nospecialize(object::NamedTuple), types::AbstractArray, unit_size::Int, @nospecialize(state::NamedTuple))::Position
+  objects_of_type = filter(obj -> (obj.type == type) && (obj.alive), state.scene.objects)
+  if length(objects_of_type) == 0
+    object.origin
+  else
+    min_distance = min(map(obj -> distance(object, obj), objects_of_type))
+    objects_of_min_distance = filter(obj -> distance(object, obj) == min_distance, objects_of_type)
+    positive_x_displacements = filter(x -> x > 0, map(o -> (o.origin.x - object.origin.x), objects_of_min_distance))
+    if length(positive_x_displacements) > 0
+      Position(unit_size, 0)
+    else
+      vec = unitVector(sort(objects_of_min_distance)[1].origin)
+      scaled_vec = Position(vec.x * unit_size, vec.y * unit_size)
+      scaled_vec        
+    end
+  end
+end
+
+function closestUp(@nospecialize(object::NamedTuple), types::AbstractArray, unit_size::Int, @nospecialize(state::NamedTuple))::Position
+  objects_of_type = filter(obj -> (obj.type == type) && (obj.alive), state.scene.objects)
+  if length(objects_of_type) == 0
+    object.origin
+  else
+    min_distance = min(map(obj -> distance(object, obj), objects_of_type))
+    objects_of_min_distance = filter(obj -> distance(object, obj) == min_distance, objects_of_type)
+    negative_y_displacements = filter(x -> x < 0, map(o -> (o.origin.y - object.origin.y), objects_of_min_distance))
+    if length(negative_y_displacements) > 0
+      Position(0, -unit_size)
+    else
+      vec = unitVector(sort(objects_of_min_distance)[1].origin)
+      scaled_vec = Position(vec.x * unit_size, vec.y * unit_size)
+      scaled_vec        
+    end
+  end
+end
+
+function closestDown(@nospecialize(object::NamedTuple), types::AbstractArray, unit_size::Int, @nospecialize(state::NamedTuple))::Position
+  objects_of_type = filter(obj -> (obj.type == type) && (obj.alive), state.scene.objects)
+  if length(objects_of_type) == 0
+    object.origin
+  else
+    min_distance = min(map(obj -> distance(object, obj), objects_of_type))
+    objects_of_min_distance = filter(obj -> distance(object, obj) == min_distance, objects_of_type)
+    positive_y_displacements = filter(x -> x > 0, map(o -> (o.origin.y - object.origin.y), objects_of_min_distance))
+    if length(positive_y_displacements) > 0
+      Position(0, unit_size)
+    else
+      vec = unitVector(sort(objects_of_min_distance)[1].origin)
+      scaled_vec = Position(vec.x * unit_size, vec.y * unit_size)
+      scaled_vec        
+    end
   end
 end
 
