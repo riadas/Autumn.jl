@@ -614,7 +614,7 @@ function closest(@nospecialize(object::NamedTuple), types::AbstractArray, @nospe
 end
 
 function closestRandom(@nospecialize(object::NamedTuple), types::AbstractArray, unit_size::Int, @nospecialize(state::NamedTuple))::Position
-  objects_of_type = filter(obj -> (obj.type == type) && (obj.alive), state.scene.objects)
+  objects_of_type = filter(obj -> (obj.type in types) && (obj.alive), state.scene.objects)
   if length(objects_of_type) == 0
     Position(0, 0)
   else
@@ -627,7 +627,7 @@ function closestRandom(@nospecialize(object::NamedTuple), types::AbstractArray, 
 end
 
 function closestLeft(@nospecialize(object::NamedTuple), types::AbstractArray, unit_size::Int, @nospecialize(state::NamedTuple))::Position
-  objects_of_type = filter(obj -> (obj.type == type) && (obj.alive), state.scene.objects)
+  objects_of_type = filter(obj -> (obj.type in types) && (obj.alive), state.scene.objects)
   if length(objects_of_type) == 0
     Position(0, 0)
   else
@@ -645,7 +645,7 @@ function closestLeft(@nospecialize(object::NamedTuple), types::AbstractArray, un
 end
 
 function closestRight(@nospecialize(object::NamedTuple), types::AbstractArray, unit_size::Int, @nospecialize(state::NamedTuple))::Position
-  objects_of_type = filter(obj -> (obj.type == type) && (obj.alive), state.scene.objects)
+  objects_of_type = filter(obj -> (obj.type in types) && (obj.alive), state.scene.objects)
   if length(objects_of_type) == 0
     object.origin
   else
@@ -663,7 +663,7 @@ function closestRight(@nospecialize(object::NamedTuple), types::AbstractArray, u
 end
 
 function closestUp(@nospecialize(object::NamedTuple), types::AbstractArray, unit_size::Int, @nospecialize(state::NamedTuple))::Position
-  objects_of_type = filter(obj -> (obj.type == type) && (obj.alive), state.scene.objects)
+  objects_of_type = filter(obj -> (obj.type in types) && (obj.alive), state.scene.objects)
   if length(objects_of_type) == 0
     object.origin
   else
@@ -681,7 +681,7 @@ function closestUp(@nospecialize(object::NamedTuple), types::AbstractArray, unit
 end
 
 function closestDown(@nospecialize(object::NamedTuple), types::AbstractArray, unit_size::Int, @nospecialize(state::NamedTuple))::Position
-  objects_of_type = filter(obj -> (obj.type == type) && (obj.alive), state.scene.objects)
+  objects_of_type = filter(obj -> (obj.type in types) && (obj.alive), state.scene.objects)
   if length(objects_of_type) == 0
     object.origin
   else
