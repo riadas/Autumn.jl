@@ -139,9 +139,9 @@ islib(f) = f in keys(lib_to_func)
 
 # library function handling 
 function libapl(f, args, @nospecialize(Γ::NamedTuple))
-  # # # println("libapl")
-  # # # @showf 
-  # # # @showargs 
+  println("libapl")
+  @show f 
+  @show args 
 
   if f == :clicked && (length(args) == 0)
     interpret(f, Γ)
@@ -300,9 +300,9 @@ function interpret_list(args, @nospecialize(Γ::NamedTuple))
 end
 
 function interpret_lib(f, args, @nospecialize(Γ::NamedTuple))
-  # # # println("INTERPRET_LIB")
-  # # # @showf 
-  # # # @showargs 
+  println("INTERPRET_LIB")
+  @show f 
+  @show args 
   new_args = []
   for arg in args 
     new_arg, Γ = interpret(arg, Γ)
@@ -494,11 +494,11 @@ function interpret_object(args, @nospecialize(Γ::NamedTuple))
 end
 
 function interpret_on(args, @nospecialize(Γ::NamedTuple))
-  # # # println("INTERPRET ON")
+  println("INTERPRET ON")
   event = args[1]
   update_ = args[2]
-  # # # @showevent 
-  # # # @showupdate_
+  @show event 
+  @show update_
   Γ2 = Γ
   if Γ2.state.time == 0 
     if update_.head == :assign
