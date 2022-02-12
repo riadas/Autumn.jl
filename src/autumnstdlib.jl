@@ -475,6 +475,26 @@ function moveNoCollision(@nospecialize(object::NamedTuple), x::Int, y::Int, @nos
   (isWithinBounds(move(object, x, y), state) && isFree(move(object, x, y), object, state)) ? move(object, x, y) : object 
 end
 
+function moveNoCollisionColor(@nospecialize(object::NamedTuple), position::Position, color::String, @nospecialize(state::NamedTuple))::NamedTuple
+  new_object = move(object, position) 
+  matching_color_objects = filter(obj -> intersects(new_object, obj, state) && (color in map(cell -> cell.color, render(obj, state))), state.scene.objects)
+  if matching_color_objects == []
+    new_object
+  else
+    object 
+  end
+end
+
+function moveNoCollisionColor(@nospecialize(object::NamedTuple), x::Int, y::Int, color::String, @nospecialize(state::NamedTuple))::NamedTuple
+  new_object = move(object, Position(x, y)) 
+  matching_color_objects = filter(obj -> intersects(new_object, obj, state) && (color in map(cell -> cell.color, render(obj, state))), state.scene.objects)
+  if matching_color_objects == []
+    new_object
+  else
+    object 
+  end
+end
+
 # ----- begin left/right moveNoCollision ----- #
 
 function moveLeftNoCollision(@nospecialize(object::NamedTuple), @nospecialize(state::NamedTuple))::NamedTuple
