@@ -334,7 +334,7 @@ function isFree(click::Union{Click, Nothing}, @nospecialize(state::NamedTuple)):
   end
 end
 
-function isFree(positions::AbstractArray)::Bool 
+function isFree(positions::AbstractArray, @nospecialize(state::NamedTuple))::Bool 
   foldl(&, map(pos -> isFree(pos), positions), init=true)
 end
 
