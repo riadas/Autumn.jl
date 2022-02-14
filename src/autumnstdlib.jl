@@ -334,6 +334,10 @@ function isFree(click::Union{Click, Nothing}, @nospecialize(state::NamedTuple)):
   end
 end
 
+function isFree(positions::AbstractArray)::Bool 
+  foldl(&, map(pos -> isFree(pos), positions), init=true)
+end
+
 function rect(pos1::Position, pos2::Position, @nospecialize(state=nothing))
   min_x = pos1.x 
   max_x = pos2.x 
