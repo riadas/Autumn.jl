@@ -335,7 +335,7 @@ function isFree(click::Union{Click, Nothing}, @nospecialize(state::NamedTuple)):
 end
 
 function isFree(positions::AbstractArray, @nospecialize(state::NamedTuple))::Bool 
-  foldl(&, map(pos -> isFree(pos), positions), init=true)
+  foldl(&, map(pos -> isFree(pos, state), positions), init=true)
 end
 
 function rect(pos1::Position, pos2::Position, @nospecialize(state=nothing))
