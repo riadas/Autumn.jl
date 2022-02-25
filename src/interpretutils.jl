@@ -134,7 +134,8 @@ lib_to_func = Dict(:Position => AutumnStandardLibrary.Position,
                    :nextLiquid => AutumnStandardLibrary.nextLiquid, 
                    :nextSolid => AutumnStandardLibrary.nextSolid,
                    :unfold => AutumnStandardLibrary.unfold,
-                   :prev => AutumnStandardLibrary.prev
+                   :prev => AutumnStandardLibrary.prev,
+                   :firstWithDefault => AutumnStandardLibrary.firstWithDefault,
                   )
 islib(f) = f in keys(lib_to_func)
 

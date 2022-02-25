@@ -335,7 +335,7 @@ function isFree(click::Union{Click, Nothing}, @nospecialize(state::NamedTuple)):
 end
 
 function isFree(positions::AbstractArray, @nospecialize(state::NamedTuple))::Bool 
-  foldl(&, map(pos -> isFree(pos, state), positions), init=true)
+  foldl(|, map(pos -> isFree(pos, state), positions), init=false)
 end
 
 function rect(pos1::Position, pos2::Position, @nospecialize(state=nothing))
@@ -614,6 +614,47 @@ end
 function distance(position::Position, @nospecialize(object::NamedTuple), @nospecialize(state=nothing))::Int
   distance(object.origin, position)
 end
+
+function distance(@nospecialize(object::NamedTuple), objects::AbstractArray, @nospecialize(state=nothing))::Int
+  if objects == []
+    typemax(Int)
+  else
+    distances = map(obj -> distance(object, obj), objects)
+    minimum(distances)
+  end
+end
+
+function distance(objects1::AbstractArray, objects2::AbstractArray, @nospecialize(state=nothing))::Int
+  if objects1 == [] || objects2 == []
+    typemax(Int)
+  else
+    distances = vcat(map(obj -> distance(obj, objects2), objects1)...)
+    minimum(distances)
+  end
+end
+
+
+function firstWithDefault(arr::AbstractArray) 
+  if arr == [] 
+    Position(-30, -30)
+  else 
+    first(arr)
+  end
+end
+
+# --- Surprise, Avoidgeorge 
+# added ObjType1 to old ObjType2 position that is close to old ObjType1's 
+# remove ObjType2 from this position
+"(addObj addedObjType1List (ObjType1 (first_with_default (map (--> obj (.. obj origin)) (filter (--> obj (<= (distance (prev obj) (prev addedObjType1List)) 20)) (prev addedObjType2List))))))"
+# --- post formatting: "(addObj addedObjType1List (map (--> obj (ObjType1 (.. obj origin))) (filter (--> obj (<= (distance (prev obj) (prev addedObjType1List)) 20)) (prev addedObjType2List))))"
+"(removeObj addedObjType2List (--> obj (<= (distance (prev obj) (prev addedObjType1List)) 20)))" 
+"(!= (filter (--> obj (distance (prev obj) (prev addedObjType1List))) (prev addedObjType2List)) (list))" # event space event 
+
+# --- Butterflies 
+# added ObjType1 to old ObjType*1* position that is close to old ObjType2's (i.e. doubling up? but doubling up on the future position!)
+# remove ObjType2 from this position
+"(addObj addedObjType1List (ObjType1 (first_with_default (map (--> obj (.. obj origin)) (filter (--> obj (<= (distance (prev obj) (prev addedObjType2List)) 20)) (prev addedObjType1List))))))"
+"(removeObj addedObjType2List (--> obj (<= (distance (prev obj) (prev addedObjType1List)) 20)))"
 
 function closest(@nospecialize(object::NamedTuple), type::Symbol, @nospecialize(state::NamedTuple))::Position
   objects_of_type = filter(obj -> (obj.type == type) && (obj.alive), state.scene.objects)
