@@ -634,7 +634,7 @@ function distance(objects1::AbstractArray, objects2::AbstractArray, @nospecializ
 end
 
 
-function firstWithDefault(arr::AbstractArray) 
+function firstWithDefault(arr::AbstractArray, @nospecialize(state=nothing)) 
   if arr == [] 
     Position(-30, -30)
   else 
