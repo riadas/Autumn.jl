@@ -646,7 +646,7 @@ function farthestRandom(@nospecialize(object::NamedTuple), types::AbstractArray,
   choices = [farthestLeft(object, types, unit_size, state)..., 
              farthestRight(object, types, unit_size, state)..., 
              farthestDown(object, types, unit_size, state)..., 
-             farthestUp(object, types, unit_size, state)....]
+             farthestUp(object, types, unit_size, state)...]
 
   nonzero_positions = filter(p -> p != object.position, choices)
   if nonzero_positions == [] 
