@@ -657,7 +657,7 @@ function farthestRandom(@nospecialize(object::NamedTuple), types::AbstractArray,
 end
 
 function farthestLeft(@nospecialize(object::NamedTuple), types::AbstractArray, unit_size::Int, @nospecialize(state::NamedTuple))::Position 
-  orig_position = closestLeft(object, types, unit_size, state)
+  orig_position = closestRight(object, types, unit_size, state)
   if orig_position == move(object.origin, Position(1, 0), state) 
     move(object.origin, Position(-1, 0), state)
   else
@@ -826,18 +826,31 @@ function closestUp(@nospecialize(object::NamedTuple), types::AbstractArray, unit
 end
 
 function closestDown(@nospecialize(object::NamedTuple), types::AbstractArray, unit_size::Int, @nospecialize(state::NamedTuple))::Position
+  @show object 
+  @show types 
+  @show state 
   objects_of_type = filter(obj -> (obj.type in types) && (obj.alive), state.scene.objects)
+  @show objects_of_type 
   if length(objects_of_type) == 0
     object.origin
   else
     min_distance = min(map(obj -> distance(object, obj), objects_of_type))
     objects_of_min_distance = filter(obj -> distance(object, obj) == min_distance, objects_of_type)
     positive_y_displacements = filter(x -> x > 0, map(o -> (o.origin.y - object.origin.y), objects_of_min_distance))
+
+    @show min_distance 
+    @show objects_of_min_distance 
+    @show positive_y_displacements 
+
     if length(positive_y_displacements) > 0
       Position(0, unit_size)
     else
       vec = unitVector(object, sort(objects_of_min_distance, by=o -> (o.origin.x, o.origin.y))[1].origin, state)
       scaled_vec = Position(vec.x * unit_size, vec.y * unit_size)
+
+      @show vec 
+      @show scaled_vec
+
       scaled_vec        
     end
   end
