@@ -821,11 +821,11 @@ function closestUp(@nospecialize(object::NamedTuple), types::AbstractArray, unit
 end
 
 function closestDown(@nospecialize(object::NamedTuple), types::AbstractArray, unit_size::Int, @nospecialize(state::NamedTuple))::Position
-  @show object 
-  @show types 
-  @show state 
+  # @show object 
+  # @show types 
+  # @show state 
   objects_of_type = filter(obj -> (obj.type in types) && (obj.alive), state.scene.objects)
-  @show objects_of_type 
+  # @show objects_of_type 
   if length(objects_of_type) == 0
     Position(0, 0)
   else
@@ -833,9 +833,9 @@ function closestDown(@nospecialize(object::NamedTuple), types::AbstractArray, un
     objects_of_min_distance = filter(obj -> distance(object, obj) == min_distance, objects_of_type)
     positive_y_displacements = filter(x -> x > 0, map(o -> (o.origin.y - object.origin.y), objects_of_min_distance))
 
-    @show min_distance 
-    @show objects_of_min_distance 
-    @show positive_y_displacements 
+    # @show min_distance 
+    # @show objects_of_min_distance 
+    # @show positive_y_displacements 
 
     if length(positive_y_displacements) > 0
       Position(0, unit_size)
