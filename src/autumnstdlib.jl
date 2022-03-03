@@ -662,7 +662,7 @@ function farthestLeft(@nospecialize(object::NamedTuple), types::AbstractArray, u
     move(object.origin, Position(-1, 0), state)
   else
     objects_of_type = filter(obj -> (obj.type in types) && (obj.alive), state.scene.objects)
-    if length(objectS_of_type) == 0 
+    if length(objects_of_type) == 0 
       object.origin
     else
       min_distance = min(map(obj -> distance(object, obj), objects_of_type))
@@ -682,7 +682,7 @@ function farthestRight(@nospecialize(object::NamedTuple), types::AbstractArray, 
     move(object.origin, Position(1, 0), state)
   else
     objects_of_type = filter(obj -> (obj.type in types) && (obj.alive), state.scene.objects)
-    if length(objectS_of_type) == 0 
+    if length(objects_of_type) == 0 
       object.origin
     else
       min_distance = min(map(obj -> distance(object, obj), objects_of_type))
@@ -702,7 +702,7 @@ function farthestUp(@nospecialize(object::NamedTuple), types::AbstractArray, uni
     move(object.origin, Position(0, -1), state)
   else
     objects_of_type = filter(obj -> (obj.type in types) && (obj.alive), state.scene.objects)
-    if length(objectS_of_type) == 0 
+    if length(objects_of_type) == 0 
       object.origin
     else
       min_distance = min(map(obj -> distance(object, obj), objects_of_type))
