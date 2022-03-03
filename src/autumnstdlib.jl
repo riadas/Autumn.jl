@@ -657,7 +657,7 @@ function farthestRandom(@nospecialize(object::NamedTuple), types::AbstractArray,
 end
 
 function farthestLeft(@nospecialize(object::NamedTuple), types::AbstractArray, unit_size::Int, @nospecialize(state::NamedTuple))::Position 
-  orig_position = closestLeft(object, types, state)
+  orig_position = closestLeft(object, types, unit_size, state)
   if orig_position == move(object.origin, 1, 0, state) 
     move(object.origin, -1, 0, state)
   else
@@ -677,7 +677,7 @@ function farthestLeft(@nospecialize(object::NamedTuple), types::AbstractArray, u
 end
 
 function farthestRight(@nospecialize(object::NamedTuple), types::AbstractArray, unit_size::Int, @nospecialize(state::NamedTuple))::Position
-  orig_position = closestLeft(object, types, state)
+  orig_position = closestLeft(object, types, unit_size, state)
   if orig_position == move(object.origin, -1, 0, state) 
     move(object.origin, 1, 0, state)
   else
@@ -697,7 +697,7 @@ function farthestRight(@nospecialize(object::NamedTuple), types::AbstractArray, 
 end
 
 function farthestUp(@nospecialize(object::NamedTuple), types::AbstractArray, unit_size::Int, @nospecialize(state::NamedTuple))::Position
-  orig_position = closestDown(object, types, state)
+  orig_position = closestDown(object, types, unit_size, state)
   if orig_position == move(object.origin, 0, 1, state) 
     move(object.origin, 0, -1, state)
   else
@@ -717,7 +717,7 @@ function farthestUp(@nospecialize(object::NamedTuple), types::AbstractArray, uni
 end
 
 function farthestDown(@nospecialize(object::NamedTuple), types::AbstractArray, unit_size::Int, @nospecialize(state::NamedTuple))::Position
-  orig_position = closestUp(object, types, state)
+  orig_position = closestUp(object, types, unit_size, state)
   if orig_position == move(object.origin, 0, -1, state) 
     move(object.origin, 0, 1, state)
   else
