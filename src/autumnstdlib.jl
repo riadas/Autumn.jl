@@ -658,7 +658,7 @@ end
 
 function farthestLeft(@nospecialize(object::NamedTuple), types::AbstractArray, unit_size::Int, @nospecialize(state::NamedTuple))::Position 
   orig_position = closestRight(object, types, unit_size, state)
-  if orig_position == move(object.origin, Position(1, 0), state) 
+  if orig_position == Position(unit_size, 0)
     Position(-unit_size, 0)
   else
     objects_of_type = filter(obj -> (obj.type in types) && (obj.alive), state.scene.objects)
@@ -678,7 +678,7 @@ end
 
 function farthestRight(@nospecialize(object::NamedTuple), types::AbstractArray, unit_size::Int, @nospecialize(state::NamedTuple))::Position
   orig_position = closestLeft(object, types, unit_size, state)
-  if orig_position == move(object.origin, Position(-1, 0), state) 
+  if orig_position == Position(-unit_size, 0) 
     Position(unit_size, 0)
   else
     objects_of_type = filter(obj -> (obj.type in types) && (obj.alive), state.scene.objects)
@@ -698,7 +698,7 @@ end
 
 function farthestUp(@nospecialize(object::NamedTuple), types::AbstractArray, unit_size::Int, @nospecialize(state::NamedTuple))::Position
   orig_position = closestDown(object, types, unit_size, state)
-  if orig_position == move(object.origin, Position(0, 1), state) 
+  if orig_position == Position(0, unit_size) 
     Position(0, -unit_size)
   else
     objects_of_type = filter(obj -> (obj.type in types) && (obj.alive), state.scene.objects)
@@ -718,7 +718,7 @@ end
 
 function farthestDown(@nospecialize(object::NamedTuple), types::AbstractArray, unit_size::Int, @nospecialize(state::NamedTuple))::Position
   orig_position = closestUp(object, types, unit_size, state)
-  if orig_position == move(object.origin, Position(0, -1), state) 
+  if orig_position == Position(0, -unit_size) 
     Position(0, unit_size)
   else
     objects_of_type = filter(obj -> (obj.type in types) && (obj.alive), state.scene.objects)
@@ -779,13 +779,11 @@ function closestLeft(@nospecialize(object::NamedTuple), types::AbstractArray, un
   else
     min_distance = min(map(obj -> distance(object, obj), objects_of_type))
     objects_of_min_distance = filter(obj -> distance(object, obj) == min_distance, objects_of_type)
-    negative_x_displacements = filter(x -> x < 0, map(o -> (object.origin.x - o.origin.x), objects_of_min_distance))
+    negative_x_displacements = filter(x -> x < 0, map(o -> (o.origin.x - object.origin.x), objects_of_min_distance))
     if length(negative_x_displacements) > 0
       Position(-unit_size, 0)
     else
-      vec = unitVector(object, sort(objects_of_min_distance, by=o -> (o.origin.x, o.origin.y))[1].origin, state)
-      scaled_vec = Position(vec.x * unit_size, vec.y * unit_size)
-      scaled_vec        
+      Position(0, 0)        
     end
   end
 end
@@ -797,13 +795,11 @@ function closestRight(@nospecialize(object::NamedTuple), types::AbstractArray, u
   else
     min_distance = min(map(obj -> distance(object, obj), objects_of_type))
     objects_of_min_distance = filter(obj -> distance(object, obj) == min_distance, objects_of_type)
-    positive_x_displacements = filter(x -> x > 0, map(o -> (object.origin.x - o.origin.x), objects_of_min_distance))
+    positive_x_displacements = filter(x -> x > 0, map(o -> (o.origin.x - object.origin.x), objects_of_min_distance))
     if length(positive_x_displacements) > 0
       Position(unit_size, 0)
     else
-      vec = unitVector(object, sort(objects_of_min_distance, by=o -> (o.origin.x, o.origin.y) )[1].origin, state)
-      scaled_vec = Position(vec.x * unit_size, vec.y * unit_size)
-      scaled_vec        
+      Position(0, 0)        
     end
   end
 end
@@ -815,13 +811,11 @@ function closestUp(@nospecialize(object::NamedTuple), types::AbstractArray, unit
   else
     min_distance = min(map(obj -> distance(object, obj), objects_of_type))
     objects_of_min_distance = filter(obj -> distance(object, obj) == min_distance, objects_of_type)
-    negative_y_displacements = filter(x -> x < 0, map(o -> (object.origin.y - o.origin.y), objects_of_min_distance))
+    negative_y_displacements = filter(x -> x < 0, map(o -> (o.origin.y - object.origin.y), objects_of_min_distance))
     if length(negative_y_displacements) > 0
       Position(0, -unit_size)
     else
-      vec = unitVector(object, sort(objects_of_min_distance, by=o -> (o.origin.x, o.origin.y))[1].origin, state)
-      scaled_vec = Position(vec.x * unit_size, vec.y * unit_size)
-      scaled_vec        
+      Position(0, 0)
     end
   end
 end
@@ -837,7 +831,7 @@ function closestDown(@nospecialize(object::NamedTuple), types::AbstractArray, un
   else
     min_distance = min(map(obj -> distance(object, obj), objects_of_type))
     objects_of_min_distance = filter(obj -> distance(object, obj) == min_distance, objects_of_type)
-    positive_y_displacements = filter(x -> x > 0, map(o -> (object.origin.y - o.origin.y), objects_of_min_distance))
+    positive_y_displacements = filter(x -> x > 0, map(o -> (o.origin.y - object.origin.y), objects_of_min_distance))
 
     @show min_distance 
     @show objects_of_min_distance 
@@ -846,13 +840,7 @@ function closestDown(@nospecialize(object::NamedTuple), types::AbstractArray, un
     if length(positive_y_displacements) > 0
       Position(0, unit_size)
     else
-      vec = unitVector(object, sort(objects_of_min_distance, by=o -> (o.origin.x, o.origin.y))[1].origin, state)
-      scaled_vec = Position(vec.x * unit_size, vec.y * unit_size)
-
-      @show vec 
-      @show scaled_vec
-
-      scaled_vec        
+      Position(0, 0)
     end
   end
 end
