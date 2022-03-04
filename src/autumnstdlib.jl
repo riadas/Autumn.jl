@@ -667,7 +667,7 @@ function farthestLeft(@nospecialize(object::NamedTuple), types::AbstractArray, u
     else
       min_distance = min(map(obj -> distance(object, obj), objects_of_type))
       objects_of_min_distance = filter(obj -> distance(object, obj) == min_distance, objects_of_type)
-      if objects_of_min_distance[1].origin.x == object.origin.x && isWithinBounds(move(object.origin, Position(-unit_size, 0), state), state)
+      if objects_of_min_distance[1].origin.x == object.origin.x
         Position(-unit_size, 0)
       else
         Position(0, 0)
@@ -687,7 +687,7 @@ function farthestRight(@nospecialize(object::NamedTuple), types::AbstractArray, 
     else
       min_distance = min(map(obj -> distance(object, obj), objects_of_type))
       objects_of_min_distance = filter(obj -> distance(object, obj) == min_distance, objects_of_type)
-      if objects_of_min_distance[1].origin.x == object.origin.x && isWithinBounds(move(object.origin, Position(unit_size, 0), state), state)
+      if objects_of_min_distance[1].origin.x == object.origin.x
         Position(unit_size, 0)
       else
         Position(0, 0)
@@ -707,7 +707,7 @@ function farthestUp(@nospecialize(object::NamedTuple), types::AbstractArray, uni
     else
       min_distance = min(map(obj -> distance(object, obj), objects_of_type))
       objects_of_min_distance = filter(obj -> distance(object, obj) == min_distance, objects_of_type)
-      if objects_of_min_distance[1].origin.y == object.origin.y && isWithinBounds(move(object.origin, Position(0, -unit_size), state), state)
+      if objects_of_min_distance[1].origin.y == object.origin.y
         Position(0, -unit_size)
       else
         Position(0, 0)
@@ -727,7 +727,7 @@ function farthestDown(@nospecialize(object::NamedTuple), types::AbstractArray, u
     else
       min_distance = min(map(obj -> distance(object, obj), objects_of_type))
       objects_of_min_distance = filter(obj -> distance(object, obj) == min_distance, objects_of_type)
-      if objects_of_min_distance[1].origin.y == object.origin.y && isWithinBounds(move(object.origin, Position(0, unit_size), state), state)
+      if objects_of_min_distance[1].origin.y == object.origin.y
         Position(0, unit_size)
       else
         Position(0, 0)
@@ -805,12 +805,12 @@ function closestRight(@nospecialize(object::NamedTuple), types::AbstractArray, u
 end
 
 function closestUp(@nospecialize(object::NamedTuple), types::AbstractArray, unit_size::Int, @nospecialize(state::NamedTuple))::Position
-  @show object 
-  @show types 
-  @show state   
+  # @show object 
+  # @show types 
+  # @show state   
   
   objects_of_type = filter(obj -> (obj.type in types) && (obj.alive), state.scene.objects)
-  @show objects_of_type 
+  # @show objects_of_type 
   if length(objects_of_type) == 0
     Position(0, 0)
   else
@@ -818,9 +818,9 @@ function closestUp(@nospecialize(object::NamedTuple), types::AbstractArray, unit
     objects_of_min_distance = filter(obj -> distance(object, obj) == min_distance, objects_of_type)
     negative_y_displacements = filter(x -> x < 0, map(o -> (o.origin.y - object.origin.y), objects_of_min_distance))
 
-    @show min_distance 
-    @show objects_of_min_distance 
-    @show negative_y_displacements 
+    # @show min_distance 
+    # @show objects_of_min_distance 
+    # @show negative_y_displacements 
 
     if length(negative_y_displacements) > 0
       Position(0, -unit_size)
