@@ -820,7 +820,7 @@ function closestUp(@nospecialize(object::NamedTuple), types::AbstractArray, unit
 
     @show min_distance 
     @show objects_of_min_distance 
-    @show positive_y_displacements 
+    @show negative_y_displacements 
 
     if length(negative_y_displacements) > 0
       Position(0, -unit_size)
