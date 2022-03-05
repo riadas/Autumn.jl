@@ -96,6 +96,11 @@ function isWithinBounds(@nospecialize(obj::NamedTuple), @nospecialize(state::Nam
   length(filter(cell -> !isWithinBounds(cell.position, state), render(obj))) == 0
 end
 
+function isOutsideBounds(@nospecialize(obj::NamedTuple), @nospecialize(state::NamedTuple))::Bool
+  # # println(filter(cell -> !isWithinBounds(cell.position),render(obj)))
+  length(filter(cell -> isWithinBounds(cell.position, state), render(obj))) == 0
+end
+
 function clicked(click::Union{Click, Nothing}, @nospecialize(object::NamedTuple), @nospecialize(state::NamedTuple))::Bool
   if isnothing(click)
     false
@@ -320,6 +325,10 @@ function isWithinBounds(position::Position, @nospecialize(state::NamedTuple))::B
     GRID_SIZE_Y = GRID_SIZE
   end
   (position.x >= 0) && (position.x < GRID_SIZE_X) && (position.y >= 0) && (position.y < GRID_SIZE_Y)                  
+end
+
+function isOutsideBounds(position::Position, @nospecialize(state::NamedTuple))::Bool
+  !isWithinBounds(position, state)
 end
 
 function isFree(position::Position, @nospecialize(state::NamedTuple))::Bool
