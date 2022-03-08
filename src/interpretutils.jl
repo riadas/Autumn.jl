@@ -426,7 +426,7 @@ function interpret_object_call(f, args, @nospecialize(Γ::NamedTuple))
   if length(fields) == 0 
     object_repr = update(object_repr, :render, nothing)  
   else
-    render, Γ2 = interpret(Γ.object_types[f][:render], Γ2)
+    render, Γ2 = interpret(Γ.state.object_types[f][:render], Γ2)
     render = render isa AbstractArray ? render : [render]
     object_repr = update(object_repr, :render, render)  
   end
@@ -633,7 +633,7 @@ function interpret_updateObj(args, @nospecialize(Γ::NamedTuple))
     end
 
     if length(fields) != 0 
-      render, Γ3 = interpret(Γ.object_types[obj.type][:render], Γ3)
+      render, Γ3 = interpret(Γ.state.object_types[obj.type][:render], Γ3)
       render = render isa AbstractArray ? render : [render]
       new_obj = update(new_obj, :render, render)
     end  
