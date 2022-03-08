@@ -156,29 +156,29 @@ end
 function interpret_over_time_observations(aex::AExpr, iters, user_events=[])
   scenes = []
   new_aex, env_ = start(aex)
-  push!(scenes, env_.state.scene)
+  push!(scenes, AutumnStandardLibrary.render(env_.state.scene, env_))
   if user_events == []
     for i in 1:iters
       # # @show i
       env_ = step(new_aex, env_)
-      push!(scenes, env_.state.scene)
+      push!(scenes, AutumnStandardLibrary.render(env_.state.scene, env_))
     end
   else
     for i in 1:iters
       # # @show i
       env_ = step(new_aex, env_, user_events[i])
-      push!(scenes, env_.state.scene)
+      push!(scenes, AutumnStandardLibrary.render(env_.state.scene, env_))
     end
   end
-  map(s -> render_scene(s, env_), scenes)
+  scenes
 end
 
-function render_scene(scene, env)
-  observations = []
-  for obj in filter(x -> x.alive, scene.objects) 
-    push!(observations, AutumnStandardLibrary.render(scene.objects, env)...)
-  end
-  observations
-end
+# function render_scene(scene, env)
+#   observations = []
+#   for obj in filter(x -> x.alive, scene.objects) 
+#     push!(observations, AutumnStandardLibrary.render(scene.objects, env)...)
+#   end
+#   observations
+# end
 
 end

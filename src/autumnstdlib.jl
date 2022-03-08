@@ -340,7 +340,7 @@ function isOutsideBounds(position::Position, @nospecialize(state::NamedTuple))::
 end
 
 function isFree(position::Position, @nospecialize(state::NamedTuple))::Bool
-  length(filter(cell -> cell.position.x == position.x && cell.position.y == position.y, render(state.scene))) == 0
+  length(filter(cell -> cell.position.x == position.x && cell.position.y == position.y, render(state.scene, state))) == 0
 end
 
 function isFree(click::Union{Click, Nothing}, @nospecialize(state::NamedTuple))::Bool
@@ -956,7 +956,7 @@ end
 function nextSolid(@nospecialize(object::NamedTuple), @nospecialize(state::NamedTuple))::NamedTuple 
   # # println("nextSolid")
   new_object = deepcopy(object)
-  if (isWithinBounds(move(object, Position(0, 1)), state) && reduce(&, map(x -> isFree(x, object, state), map(cell -> move(cell.position, Position(0, 1)), render(object)))))
+  if (isWithinBounds(move(object, Position(0, 1)), state) && reduce(&, map(x -> isFree(x, object, state), map(cell -> move(cell.position, Position(0, 1)), render(object, state)))))
     new_object = update_nt(new_object, :origin, move(object.origin, Position(0, 1)))
   end
   new_object
@@ -1018,7 +1018,7 @@ function isFree(position::Position, @nospecialize(object::NamedTuple), @nospecia
 end
 
 function isFree(@nospecialize(object::NamedTuple), @nospecialize(orig_object::NamedTuple), @nospecialize(state::NamedTuple))::Bool
-  reduce(&, map(x -> isFree(x, orig_object, state), map(cell -> cell.position, render(object))))
+  reduce(&, map(x -> isFree(x, orig_object, state), map(cell -> cell.position, render(object, state))))
 end
 
 function allPositions(@nospecialize(state::NamedTuple))
