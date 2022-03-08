@@ -65,7 +65,7 @@ function render(@nospecialize(obj::NamedTuple), @nospecialize(state=nothing))::A
     new_state = state
     for i in 1:length(fields)
       field_name = fields[i].args[1]
-      field_value, new_state = interpret(args[i], new_state)    
+      field_value = obj[field_name]    
       new_state = update(new_state, field_name, field_value)
     end
     
