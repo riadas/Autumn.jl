@@ -60,6 +60,9 @@ end
 
 function render(@nospecialize(obj::NamedTuple), @nospecialize(state=nothing))::Array{Cell}
   if !(:id in keys(obj))
+    @show obj 
+    @show state 
+    @show obj.objects 
     vcat(map(o -> render(o, state), filter(x -> x.alive, obj.objects))...)
   else
     if obj.alive
@@ -71,7 +74,7 @@ function render(@nospecialize(obj::NamedTuple), @nospecialize(state=nothing))::A
         field_value, new_state = interpret(args[i], new_state)    
         new_state = update(new_state, field_name, field_value)
       end
-  
+      
       render, new_state = interpret(new_state.object_types[obj.type][:render], new_state)
       map(cell -> Cell(move(cell.position, obj.origin), cell.color), render)
     else
