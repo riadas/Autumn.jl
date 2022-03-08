@@ -1010,7 +1010,7 @@ end
 
 function isFree(position::Position, @nospecialize(object::NamedTuple), @nospecialize(state::NamedTuple))
   length(filter(cell -> cell.position.x == position.x && cell.position.y == position.y, 
-  renderScene((objects=filter(obj -> obj.id != object.id , state.scene.objects), background=state.scene.background)))) == 0
+  renderScene((objects=filter(obj -> obj.id != object.id , state.scene.objects), background=state.scene.background), state))) == 0
 end
 
 function isFree(@nospecialize(object::NamedTuple), @nospecialize(orig_object::NamedTuple), @nospecialize(state::NamedTuple))::Bool
