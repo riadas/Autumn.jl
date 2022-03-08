@@ -415,7 +415,7 @@ function interpret_object_call(f, args, @nospecialize(Γ::NamedTuple))
   object_repr = (origin=origin, type=f, alive=true, changed=false, id=Γ.state.objectsCreated)
 
   Γ2 = Γ
-  fields = Γ2.object_types[f][:fields]
+  fields = Γ2.state.object_types[f][:fields]
   for i in 1:length(fields)
     field_name = fields[i].args[1]
     field_value, Γ2 = interpret(args[i], Γ2)
