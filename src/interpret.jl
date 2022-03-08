@@ -170,13 +170,13 @@ function interpret_over_time_observations(aex::AExpr, iters, user_events=[])
       push!(scenes, env_.state.scene)
     end
   end
-  map(s -> render_scene(s), scenes)
+  map(s -> render_scene(s, env_), scenes)
 end
 
-function render_scene(scene)
+function render_scene(scene, env)
   observations = []
   for obj in filter(x -> x.alive, scene.objects) 
-    push!(observations, map(cell -> AutumnStandardLibrary.Cell(AutumnStandardLibrary.Position(obj.origin.x + cell.position.x, obj.origin.y + cell.position.y), cell.color), obj.render)...)
+    push!(observations, AutumnStandardLibrary.render(scene.objects, env)...)
   end
   observations
 end

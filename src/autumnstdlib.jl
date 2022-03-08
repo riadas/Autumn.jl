@@ -60,7 +60,7 @@ end
 
 function render(@nospecialize(obj::NamedTuple), @nospecialize(state=nothing))::Array{Cell}
   if !(:id in keys(obj))
-    vcat(map(o -> render(o), filter(x -> x.alive, obj.objects))...)
+    vcat(map(o -> render(o, state), filter(x -> x.alive, obj.objects))...)
   else
     if obj.alive
       object_type = state[:object_types][obj.type]
