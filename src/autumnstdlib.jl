@@ -59,30 +59,26 @@ function prev(@nospecialize(obj::NamedTuple), @nospecialize(state))
 end
 
 function render(@nospecialize(obj::NamedTuple), @nospecialize(state=nothing))::Array{Cell}
-  if !(:id in keys(obj))
-    @show obj 
-    @show state 
-    @show obj.objects 
-    vcat(map(o -> render(o, state), filter(x -> x.alive, obj.objects))...)
-  else
-    if obj.alive
-      object_type = state[:object_types][obj.type]
-      fields = object_type[:fields]
-      new_state = state
-      for i in 1:length(fields)
-        field_name = fields[i].args[1]
-        field_value, new_state = interpret(args[i], new_state)    
-        new_state = update(new_state, field_name, field_value)
-      end
-      
-      render, new_state = interpret(new_state.object_types[obj.type][:render], new_state)
-      map(cell -> Cell(move(cell.position, obj.origin), cell.color), render)
-    else
-      []
+  if obj.alive
+    object_type = state[:object_types][obj.type]
+    fields = object_type[:fields]
+    new_state = state
+    for i in 1:length(fields)
+      field_name = fields[i].args[1]
+      field_value, new_state = interpret(args[i], new_state)    
+      new_state = update(new_state, field_name, field_value)
     end
+    
+    render, new_state = interpret(new_state.object_types[obj.type][:render], new_state)
+    map(cell -> Cell(move(cell.position, obj.origin), cell.color), render)
+  else
+    []
   end
 end
 
+function renderScene(@nospecialize(scene::NamedTuple), @nospecialize(state=nothing))
+  vcat(map(o -> render(o, state), filter(x -> x.alive, scene.objects))...)
+end
 
 function occurred(click, @nospecialize(state=nothing))
   !isnothing(click)
@@ -345,7 +341,7 @@ function isOutsideBounds(position::Position, @nospecialize(state::NamedTuple))::
 end
 
 function isFree(position::Position, @nospecialize(state::NamedTuple))::Bool
-  length(filter(cell -> cell.position.x == position.x && cell.position.y == position.y, render(state.scene, state))) == 0
+  length(filter(cell -> cell.position.x == position.x && cell.position.y == position.y, renderScene(state.scene, state))) == 0
 end
 
 function isFree(click::Union{Click, Nothing}, @nospecialize(state::NamedTuple))::Bool
@@ -1019,7 +1015,7 @@ end
 
 function isFree(position::Position, @nospecialize(object::NamedTuple), @nospecialize(state::NamedTuple))
   length(filter(cell -> cell.position.x == position.x && cell.position.y == position.y, 
-  render((objects=filter(obj -> obj.id != object.id , state.scene.objects), background=state.scene.background)))) == 0
+  renderScene((objects=filter(obj -> obj.id != object.id , state.scene.objects), background=state.scene.background)))) == 0
 end
 
 function isFree(@nospecialize(object::NamedTuple), @nospecialize(orig_object::NamedTuple), @nospecialize(state::NamedTuple))::Bool
