@@ -67,10 +67,12 @@ function render(@nospecialize(obj::NamedTuple), @nospecialize(state=nothing))::A
       fields = object_type[:fields]
       new_state = state
       for i in 1:length(fields)
+        field_name = fields[i].args[1]
+        field_value, new_state = interpret(args[i], new_state)    
         new_state = update(new_state, field_name, field_value)
       end
   
-      render, new_state = interpret(Γ.object_types[obj.type][:render], new_state)
+      render, new_state = interpret(new_state.object_types[obj.type][:render], new_state)
       map(cell -> Cell(move(cell.position, obj.origin), cell.color), render)
     else
       []
