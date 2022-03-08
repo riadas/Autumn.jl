@@ -420,12 +420,17 @@ function interpret_object_call(f, args, @nospecialize(Γ::NamedTuple))
     field_name = fields[i].args[1]
     field_value, Γ2 = interpret(args[i], Γ2)
     object_repr = update(object_repr, field_name, field_value)
-    # Γ2 = update(Γ2, field_name, field_value)
+    Γ2 = update(Γ2, field_name, field_value)
   end
 
-  # render, Γ2 = interpret(Γ.object_types[f][:render], Γ2)
-  # render = render isa AbstractArray ? render : [render]
-  # object_repr = update(object_repr, :render, render)
+  if length(fields) == 0 
+    object_repr = update(object_repr, :render, nothing)  
+  else
+    render, Γ2 = interpret(Γ.object_types[f][:render], Γ2)
+    render = render isa AbstractArray ? render : [render]
+    object_repr = update(object_repr, :render, render)  
+  end
+
   # # # # # println("AFTER")
   # # # # # @showΓ.state.objectsCreated 
   (object_repr, Γ)  
@@ -498,8 +503,13 @@ function interpret_object(args, @nospecialize(Γ::NamedTuple))
   object_fields = args[2:end-1]
   object_render = args[end]
 
-  # construct object creation function 
-  object_tuple = (render=object_render, fields=object_fields)
+  # construct object creation function
+  if length(object_fields) == 0
+    render, _ = interpret(object_render, Γ)
+    object_tuple = (render=render, fields=object_fields)
+  else
+    object_tuple = (render=object_render, fields=object_fields)
+  end
   Γ = update(Γ, :state, update(Γ[:state], :object_types, update(Γ[:state][:object_types], object_name, object_tuple)))
   (AExpr(:object, args...), Γ)
 end
@@ -611,7 +621,7 @@ function interpret_updateObj(args, @nospecialize(Γ::NamedTuple))
     new_obj = update(obj, Symbol(field_string), new_value)
     new_obj = update(new_obj, :changed, true)
 
-    # update render -- UPDATE: NOT ANYMORE!
+    # update render
     object_type = Γ.state[:object_types][obj.type]
     
     Γ3 = Γ2
@@ -619,12 +629,14 @@ function interpret_updateObj(args, @nospecialize(Γ::NamedTuple))
     for i in 1:length(fields)
       field_name = fields[i].args[1]
       field_value = new_obj[field_name]
-      # Γ3 = update(Γ3, field_name, field_value)
+      Γ3 = update(Γ3, field_name, field_value)
     end
-  
-    # render, Γ3 = interpret(Γ.object_types[obj.type][:render], Γ3)
-    # render = render isa AbstractArray ? render : [render]
-    # new_obj = update(new_obj, :render, render)
+
+    if length(fields) != 0 
+      render, Γ3 = interpret(Γ.object_types[obj.type][:render], Γ3)
+      render = render isa AbstractArray ? render : [render]
+      new_obj = update(new_obj, :render, render)
+    end  
 
     new_obj, Γ2
     # Γ2 = update(Γ2, :state, update(Γ2.state, :objectsCreated, Γ2.state.objectsCreated + 1))

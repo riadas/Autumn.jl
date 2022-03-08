@@ -60,17 +60,12 @@ end
 
 function render(@nospecialize(obj::NamedTuple), @nospecialize(state=nothing))::Array{Cell}
   if obj.alive
-    object_type = state[:object_types][obj.type]
-    fields = object_type[:fields]
-    new_state = state
-    for i in 1:length(fields)
-      field_name = fields[i].args[1]
-      field_value = obj[field_name]    
-      new_state = update(new_state, field_name, field_value)
+    if isnothing(obj.render)
+      render = state[:object_types][obj.type][:render]
+      map(cell -> Cell(move(cell.position, obj.origin), cell.color), render)
+    else
+      map(cell -> Cell(move(cell.position, obj.origin), cell.color), obj.render)
     end
-    
-    render, new_state = interpret(new_state.object_types[obj.type][:render], new_state)
-    map(cell -> Cell(move(cell.position, obj.origin), cell.color), render)
   else
     []
   end
