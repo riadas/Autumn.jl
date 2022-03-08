@@ -63,7 +63,15 @@ function render(@nospecialize(obj::NamedTuple), @nospecialize(state=nothing))::A
     vcat(map(o -> render(o), filter(x -> x.alive, obj.objects))...)
   else
     if obj.alive
-      map(cell -> Cell(move(cell.position, obj.origin), cell.color), obj.render)
+      object_type = state[:object_types][obj.type]
+      fields = object_type[:fields]
+      new_state = state
+      for i in 1:length(fields)
+        new_state = update(new_state, field_name, field_value)
+      end
+  
+      render, new_state = interpret(Γ.object_types[obj.type][:render], new_state)
+      map(cell -> Cell(move(cell.position, obj.origin), cell.color), render)
     else
       []
     end
@@ -624,7 +632,7 @@ function distance(position::Position, @nospecialize(object::NamedTuple), @nospec
   distance(object.origin, position)
 end
 
-function distance(@nospecialize(object::NamedTuple), objects::AbstractArray, @nospecialize(state=nothing))::Int
+function distance(@nospecialize(object::NamedTuple), @nospecialize(objects::AbstractArray), @nospecialize(state=nothing))::Int
   if objects == []
     typemax(Int)
   else
@@ -633,7 +641,7 @@ function distance(@nospecialize(object::NamedTuple), objects::AbstractArray, @no
   end
 end
 
-function distance(objects1::AbstractArray, objects2::AbstractArray, @nospecialize(state=nothing))::Int
+function distance(@nospecialize(objects1::AbstractArray), @nospecialize(objects2::AbstractArray), @nospecialize(state=nothing))::Int
   if objects1 == [] || objects2 == []
     typemax(Int)
   else
@@ -643,7 +651,7 @@ function distance(objects1::AbstractArray, objects2::AbstractArray, @nospecializ
 end
 
 
-function firstWithDefault(arr::AbstractArray, @nospecialize(state=nothing)) 
+function firstWithDefault(@nospecialize(arr::AbstractArray), @nospecialize(state=nothing)) 
   if arr == [] 
     Position(-30, -30)
   else 
@@ -651,7 +659,7 @@ function firstWithDefault(arr::AbstractArray, @nospecialize(state=nothing))
   end
 end
 
-function farthestRandom(@nospecialize(object::NamedTuple), types::AbstractArray, unit_size::Int, @nospecialize(state::NamedTuple))::Position
+function farthestRandom(@nospecialize(object::NamedTuple), @nospecialize(types::AbstractArray), unit_size::Int, @nospecialize(state::NamedTuple))::Position
   choices = [farthestLeft(object, types, unit_size, state)..., 
              farthestRight(object, types, unit_size, state)..., 
              farthestDown(object, types, unit_size, state)..., 
@@ -665,7 +673,7 @@ function farthestRandom(@nospecialize(object::NamedTuple), types::AbstractArray,
   end
 end
 
-function farthestLeft(@nospecialize(object::NamedTuple), types::AbstractArray, unit_size::Int, @nospecialize(state::NamedTuple))::Position 
+function farthestLeft(@nospecialize(object::NamedTuple), @nospecialize(types::AbstractArray), unit_size::Int, @nospecialize(state::NamedTuple))::Position 
   orig_position = closestRight(object, types, unit_size, state)
   if orig_position == Position(unit_size, 0)
     Position(-unit_size, 0)
@@ -685,7 +693,7 @@ function farthestLeft(@nospecialize(object::NamedTuple), types::AbstractArray, u
   end
 end
 
-function farthestRight(@nospecialize(object::NamedTuple), types::AbstractArray, unit_size::Int, @nospecialize(state::NamedTuple))::Position
+function farthestRight(@nospecialize(object::NamedTuple), @nospecialize(types::AbstractArray), unit_size::Int, @nospecialize(state::NamedTuple))::Position
   orig_position = closestLeft(object, types, unit_size, state)
   if orig_position == Position(-unit_size, 0) 
     Position(unit_size, 0)
@@ -705,7 +713,7 @@ function farthestRight(@nospecialize(object::NamedTuple), types::AbstractArray, 
   end
 end
 
-function farthestUp(@nospecialize(object::NamedTuple), types::AbstractArray, unit_size::Int, @nospecialize(state::NamedTuple))::Position
+function farthestUp(@nospecialize(object::NamedTuple), @nospecialize(types::AbstractArray), unit_size::Int, @nospecialize(state::NamedTuple))::Position
   orig_position = closestDown(object, types, unit_size, state)
   if orig_position == Position(0, unit_size) 
     Position(0, -unit_size)
@@ -725,7 +733,7 @@ function farthestUp(@nospecialize(object::NamedTuple), types::AbstractArray, uni
   end
 end
 
-function farthestDown(@nospecialize(object::NamedTuple), types::AbstractArray, unit_size::Int, @nospecialize(state::NamedTuple))::Position
+function farthestDown(@nospecialize(object::NamedTuple), @nospecialize(types::AbstractArray), unit_size::Int, @nospecialize(state::NamedTuple))::Position
   orig_position = closestUp(object, types, unit_size, state)
   if orig_position == Position(0, -unit_size) 
     Position(0, unit_size)
@@ -756,7 +764,7 @@ function closest(@nospecialize(object::NamedTuple), type::Symbol, @nospecialize(
   end
 end
 
-function closest(@nospecialize(object::NamedTuple), types::AbstractArray, @nospecialize(state::NamedTuple))::Position
+function closest(@nospecialize(object::NamedTuple), @nospecialize(types::AbstractArray), @nospecialize(state::NamedTuple))::Position
   objects_of_type = filter(obj -> (obj.type in types) && (obj.alive), state.scene.objects)
   if length(objects_of_type) == 0
     object.origin
@@ -767,7 +775,7 @@ function closest(@nospecialize(object::NamedTuple), types::AbstractArray, @nospe
   end
 end
 
-function closestRandom(@nospecialize(object::NamedTuple), types::AbstractArray, unit_size::Int, @nospecialize(state::NamedTuple))::Position
+function closestRandom(@nospecialize(object::NamedTuple), @nospecialize(types::AbstractArray), unit_size::Int, @nospecialize(state::NamedTuple))::Position
   choices = [closestLeft(object, types, unit_size, state)..., 
              closestRight(object, types, unit_size, state)..., 
              closestDown(object, types, unit_size, state)..., 
@@ -781,7 +789,7 @@ function closestRandom(@nospecialize(object::NamedTuple), types::AbstractArray, 
   end
 end
 
-function closestLeft(@nospecialize(object::NamedTuple), types::AbstractArray, unit_size::Int, @nospecialize(state::NamedTuple))::Position
+function closestLeft(@nospecialize(object::NamedTuple), @nospecialize(types::AbstractArray), unit_size::Int, @nospecialize(state::NamedTuple))::Position
   objects_of_type = filter(obj -> (obj.type in types) && (obj.alive), state.scene.objects)
   if length(objects_of_type) == 0
     Position(0, 0)
@@ -797,7 +805,7 @@ function closestLeft(@nospecialize(object::NamedTuple), types::AbstractArray, un
   end
 end
 
-function closestRight(@nospecialize(object::NamedTuple), types::AbstractArray, unit_size::Int, @nospecialize(state::NamedTuple))::Position
+function closestRight(@nospecialize(object::NamedTuple), @nospecialize(types::AbstractArray), unit_size::Int, @nospecialize(state::NamedTuple))::Position
   objects_of_type = filter(obj -> (obj.type in types) && (obj.alive), state.scene.objects)
   if length(objects_of_type) == 0
     Position(0, 0)
@@ -813,7 +821,7 @@ function closestRight(@nospecialize(object::NamedTuple), types::AbstractArray, u
   end
 end
 
-function closestUp(@nospecialize(object::NamedTuple), types::AbstractArray, unit_size::Int, @nospecialize(state::NamedTuple))::Position
+function closestUp(@nospecialize(object::NamedTuple), @nospecialize(types::AbstractArray), unit_size::Int, @nospecialize(state::NamedTuple))::Position
   # @show object 
   # @show types 
   # @show state   
@@ -839,7 +847,7 @@ function closestUp(@nospecialize(object::NamedTuple), types::AbstractArray, unit
   end
 end
 
-function closestDown(@nospecialize(object::NamedTuple), types::AbstractArray, unit_size::Int, @nospecialize(state::NamedTuple))::Position
+function closestDown(@nospecialize(object::NamedTuple), @nospecialize(types::AbstractArray), unit_size::Int, @nospecialize(state::NamedTuple))::Position
   # @show object 
   # @show types 
   # @show state 

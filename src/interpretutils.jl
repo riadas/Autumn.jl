@@ -102,8 +102,8 @@ lib_to_func = Dict(:Position => AutumnStandardLibrary.Position,
                    :adjacent => AutumnStandardLibrary.adjacent, 
                    :adjacentObjs => AutumnStandardLibrary.adjacentObjs, 
                    :adjacentObjsDiag => AutumnStandardLibrary.adjacentObjsDiag,
-                   :rotate => AutumnStandardLibrary.rotate, 
-                   :rotateNoCollision => AutumnStandardLibrary.rotateNoCollision, 
+                  #  :rotate => AutumnStandardLibrary.rotate, 
+                  #  :rotateNoCollision => AutumnStandardLibrary.rotateNoCollision, 
                    :move => AutumnStandardLibrary.move, 
                    :moveLeft => AutumnStandardLibrary.moveLeft, 
                    :moveRight => AutumnStandardLibrary.moveRight, 
@@ -419,12 +419,12 @@ function interpret_object_call(f, args, @nospecialize(Γ::NamedTuple))
     field_name = fields[i].args[1]
     field_value, Γ2 = interpret(args[i], Γ2)
     object_repr = update(object_repr, field_name, field_value)
-    Γ2 = update(Γ2, field_name, field_value)
+    # Γ2 = update(Γ2, field_name, field_value)
   end
 
-  render, Γ2 = interpret(Γ.object_types[f][:render], Γ2)
-  render = render isa AbstractArray ? render : [render]
-  object_repr = update(object_repr, :render, render)
+  # render, Γ2 = interpret(Γ.object_types[f][:render], Γ2)
+  # render = render isa AbstractArray ? render : [render]
+  # object_repr = update(object_repr, :render, render)
   # # # # # println("AFTER")
   # # # # # @showΓ.state.objectsCreated 
   (object_repr, Γ)  
@@ -610,7 +610,7 @@ function interpret_updateObj(args, @nospecialize(Γ::NamedTuple))
     new_obj = update(obj, Symbol(field_string), new_value)
     new_obj = update(new_obj, :changed, true)
 
-    # update render 
+    # update render -- UPDATE: NOT ANYMORE!
     object_type = Γ[:object_types][obj.type]
     
     Γ3 = Γ2
@@ -618,12 +618,12 @@ function interpret_updateObj(args, @nospecialize(Γ::NamedTuple))
     for i in 1:length(fields)
       field_name = fields[i].args[1]
       field_value = new_obj[field_name]
-      Γ3 = update(Γ3, field_name, field_value)
+      # Γ3 = update(Γ3, field_name, field_value)
     end
   
-    render, Γ3 = interpret(Γ.object_types[obj.type][:render], Γ3)
-    render = render isa AbstractArray ? render : [render]
-    new_obj = update(new_obj, :render, render)
+    # render, Γ3 = interpret(Γ.object_types[obj.type][:render], Γ3)
+    # render = render isa AbstractArray ? render : [render]
+    # new_obj = update(new_obj, :render, render)
 
     new_obj, Γ2
     # Γ2 = update(Γ2, :state, update(Γ2.state, :objectsCreated, Γ2.state.objectsCreated + 1))
