@@ -17,14 +17,13 @@ end
 
 function start(aex::AExpr, rng=Random.GLOBAL_RNG)
   aex.head == :program || error("Must be a program aex")
-  env = (object_types=empty_env(), 
-         on_clauses=empty_env(),
+  env = (on_clauses=empty_env(),
          left=false, 
          right=false,
          up=false,
          down=false,
          click=nothing, 
-         state=(time=0, objectsCreated=0, rng=rng, scene=empty_env()))
+         state=(time=0, objectsCreated=0, rng=rng, scene=empty_env(), object_types=empty_env()))
   lines = aex.args 
 
   # reorder program lines
@@ -121,7 +120,7 @@ function update_state(@nospecialize(env_::NamedTuple))
   # update scene.objects 
   new_scene_objects = []
   for key in keys(env_)
-    if !(key in [:state, :object_types, :on_clauses, :lifted]) && ((env_[key] isa NamedTuple && (:id in keys(env_[key]))) || (env_[key] isa AbstractArray && (length(env_[key]) > 0) && (env_[key][1] isa NamedTuple)))
+    if !(key in [:state, :on_clauses, :lifted]) && ((env_[key] isa NamedTuple && (:id in keys(env_[key]))) || (env_[key] isa AbstractArray && (length(env_[key]) > 0) && (env_[key][1] isa NamedTuple)))
       object_val = env_[key]
       if object_val isa AbstractArray 
         push!(new_scene_objects, object_val...)
