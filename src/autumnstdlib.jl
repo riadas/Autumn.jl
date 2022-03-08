@@ -97,12 +97,12 @@ end
 
 function isWithinBounds(@nospecialize(obj::NamedTuple), @nospecialize(state::NamedTuple))::Bool
   # # println(filter(cell -> !isWithinBounds(cell.position),render(obj)))
-  length(filter(cell -> !isWithinBounds(cell.position, state), render(obj))) == 0
+  length(filter(cell -> !isWithinBounds(cell.position, state), render(obj, state))) == 0
 end
 
 function isOutsideBounds(@nospecialize(obj::NamedTuple), @nospecialize(state::NamedTuple))::Bool
   # # println(filter(cell -> !isWithinBounds(cell.position),render(obj)))
-  length(filter(cell -> isWithinBounds(cell.position, state), render(obj))) == 0
+  length(filter(cell -> isWithinBounds(cell.position, state), render(obj, state))) == 0
 end
 
 function clicked(click::Union{Click, Nothing}, @nospecialize(object::NamedTuple), @nospecialize(state::NamedTuple))::Bool
@@ -112,10 +112,10 @@ function clicked(click::Union{Click, Nothing}, @nospecialize(object::NamedTuple)
     GRID_SIZE = state.GRID_SIZEHistory[0]
     if GRID_SIZE isa AbstractArray 
       GRID_SIZE_X = GRID_SIZE[1]
-      nums = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, render(object))
+      nums = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, render(object, state))
       (GRID_SIZE_X * click.y + click.x) in nums
     else
-      nums = map(cell -> GRID_SIZE*cell.position.y + cell.position.x, render(object))
+      nums = map(cell -> GRID_SIZE*cell.position.y + cell.position.x, render(object, state))
       (GRID_SIZE * click.y + click.x) in nums
     end
 
@@ -168,12 +168,12 @@ function intersects(@nospecialize(obj1::NamedTuple), @nospecialize(obj2::NamedTu
   if GRID_SIZE isa AbstractArray 
     GRID_SIZE_X = GRID_SIZE[1]
     GRID_SIZE_Y = GRID_SIZE[2]
-    nums1 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, render(obj1))
-    nums2 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, render(obj2))
+    nums1 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, render(obj1, state))
+    nums2 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, render(obj2, state))
     length(intersect(nums1, nums2)) != 0
   else
-    nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, render(obj1))
-    nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, render(obj2))
+    nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, render(obj1, state))
+    nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, render(obj2, state))
     length(intersect(nums1, nums2)) != 0
   end
 end
@@ -182,12 +182,12 @@ function intersects(@nospecialize(obj1::NamedTuple), @nospecialize(obj2::Abstrac
   GRID_SIZE = state.GRID_SIZEHistory[0]
   if GRID_SIZE isa AbstractArray 
     GRID_SIZE_X = GRID_SIZE[1]
-    nums1 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, render(obj1))
-    nums2 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
+    nums1 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, render(obj1, state))
+    nums2 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, vcat(map(o -> render(o, state), obj2)...))
     length(intersect(nums1, nums2)) != 0
   else
     nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, render(obj1))
-    nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
+    nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(o -> render(o, state), obj2)...))
     length(intersect(nums1, nums2)) != 0
   end
 end
@@ -196,12 +196,12 @@ function intersects(@nospecialize(obj2::AbstractArray), @nospecialize(obj1::Name
   GRID_SIZE = state.GRID_SIZEHistory[0] 
   if GRID_SIZE isa AbstractArray 
     GRID_SIZE_X = GRID_SIZE[1]
-    nums1 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, render(obj1))
-    nums2 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
+    nums1 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, render(obj1, state))
+    nums2 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, vcat(map(o -> render(o, state), obj2)...))
     length(intersect(nums1, nums2)) != 0
   else
-    nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, render(obj1))
-    nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(render, obj2)...))
+    nums1 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, render(obj1, state))
+    nums2 = map(cell -> state.GRID_SIZEHistory[0]*cell.position.y + cell.position.x, vcat(map(o -> render(o, state), obj2)...))
     length(intersect(nums1, nums2)) != 0
   end
 end
