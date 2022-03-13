@@ -39,11 +39,11 @@ struct Object
   alive::Bool 
   changed::Bool
   custom_fields::Dict{Symbol, Union{Int, String, Bool}}
-  render::Union{Nothing, Array{AutumnStandardLibrary.Cell}}
+  render::Union{Nothing, AbstractArray}
 end
 
 struct ObjectType
-  render::Union{Nothing, AExpr, Array{AutumnStandardLibrary.Cell}}
+  render::Union{Nothing, AExpr, AbstractArray}
   fields::Array{AExpr}
 end
 

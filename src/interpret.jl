@@ -112,7 +112,7 @@ function update_state(env_::Env)
 
   # add updated variable values to history
   for key in keys(env_.state.histories)    
-    env_.state.histories[key][env_.state.time] = deepcopy(env_.current_var_values[key])
+    env_.state.histories[key][env_.state.time] = env_.current_var_values[key]
   
     # delete earlier times stored in history, since we only use prev up to 1 level back
     if env_.state.time > 0
