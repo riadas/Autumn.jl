@@ -13,14 +13,14 @@ function test_interpret_basic_particles_1()
   (on true (= particle (Particle (Position 4 4))))
 )"""
   env = interpret_over_time(a, 3)
-  @test env.state.particleHistory[0].origin.x == 3
-  @test env.state.particleHistory[0].origin.y == 3
-  @test env.state.particleHistory[1].origin.x == 4
-  @test env.state.particleHistory[1].origin.y == 4
-  @test env.state.particleHistory[2].origin.x == 4
-  @test env.state.particleHistory[2].origin.y == 4
-  @test env.state.particleHistory[3].origin.x == 4
-  @test env.state.particleHistory[3].origin.y == 4
+  @test env.state.histories[:particle][0].origin.x == 3
+  @test env.state.histories[:particle][0].origin.y == 3
+  @test env.state.histories[:particle][1].origin.x == 4
+  @test env.state.histories[:particle][1].origin.y == 4
+  @test env.state.histories[:particle][2].origin.x == 4
+  @test env.state.histories[:particle][2].origin.y == 4
+  @test env.state.histories[:particle][3].origin.x == 4
+  @test env.state.histories[:particle][3].origin.y == 4
 end
 
 function test_interpret_basic_particles_2()
@@ -36,14 +36,14 @@ function test_interpret_basic_particles_2()
                                            (+ (.. (.. (prev particle) origin) y) 1)))))
 )"""
   env = interpret_over_time(a, 3)
-  @test env.state.particleHistory[0].origin.x == 3
-  @test env.state.particleHistory[0].origin.y == 3
-  @test env.state.particleHistory[1].origin.x == 3
-  @test env.state.particleHistory[1].origin.y == 4
-  @test env.state.particleHistory[2].origin.x == 3
-  @test env.state.particleHistory[2].origin.y == 5
-  @test env.state.particleHistory[3].origin.x == 3
-  @test env.state.particleHistory[3].origin.y == 6
+  @test env.state.histories[:particle][0].origin.x == 3
+  @test env.state.histories[:particle][0].origin.y == 3
+  @test env.state.histories[:particle][1].origin.x == 3
+  @test env.state.histories[:particle][1].origin.y == 4
+  @test env.state.histories[:particle][2].origin.x == 3
+  @test env.state.histories[:particle][2].origin.y == 5
+  @test env.state.histories[:particle][3].origin.x == 3
+  @test env.state.histories[:particle][3].origin.y == 6
 end
 
 function test_interpret_full_particles()
@@ -60,14 +60,14 @@ function test_interpret_full_particles()
   (on clicked (= particles (addObj (prev particles) (Particle (Position (.. click x) (.. click y))))))
 )"""
   env = interpret_over_time(a, 4, [ (click=Autumn.AutumnStandardLibrary.Click(5,5),), empty_env(), (click=Autumn.AutumnStandardLibrary.Click(9,9),), empty_env()])
-  @test length(env.state.particlesHistory[0]) == 0
-  @test length(env.state.particlesHistory[1]) == 1
-  @test length(env.state.particlesHistory[2]) == 1
-  @test length(env.state.particlesHistory[3]) == 2
-  @test length(env.state.particlesHistory[4]) == 2
+  @test length(env.state.histories[:particles][0]) == 0
+  @test length(env.state.histories[:particles][1]) == 1
+  @test length(env.state.histories[:particles][2]) == 1
+  @test length(env.state.histories[:particles][3]) == 2
+  @test length(env.state.histories[:particles][4]) == 2
 
-  @test env.state.particlesHistory[1][1].origin.x == 5 
-  @test env.state.particlesHistory[1][1].origin.y == 5
+  @test env.state.histories[:particles][1][1].origin.x == 5 
+  @test env.state.histories[:particles][1][1].origin.y == 5
 
 
 end
