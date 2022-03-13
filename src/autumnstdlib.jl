@@ -43,7 +43,7 @@ struct Object
 end
 
 struct ObjectType
-  render::Union{Nothing, Array{AutumnStandardLibrary.Cell}}
+  render::Union{Nothing, AExpr, Array{AutumnStandardLibrary.Cell}}
   fields::Array{AExpr}
 end
 

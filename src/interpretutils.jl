@@ -469,7 +469,7 @@ function interpret_object_call(f, args, @nospecialize(Γ::Env))
     field_value, Γ2 = interpret(args[i], Γ2)
     field_values[field_name] = field_value
     # object_repr = update(object_repr, field_name, field_value)
-    # Γ2 = update(Γ2, field_name, field_value)
+    Γ2.current_var_values[field_name] = field_value
   end
 
   if length(fields) == 0 
