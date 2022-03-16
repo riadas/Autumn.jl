@@ -419,6 +419,7 @@ function interpret_let(args::AbstractArray, @nospecialize(Γ::Env))
   end
 end
 
+# used for lambda function calls!
 function interpret_call(f, params, @nospecialize(Γ::Env))
   func, Γ = interpret(f, Γ)
   func_args = func[1]
