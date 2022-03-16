@@ -426,7 +426,7 @@ function interpret_call(f, params, @nospecialize(Γ::Env))
   func_body = func[2]
 
   # construct environment
-  old_current_var_values = deepcopy(Γ.current_var_values) 
+  old_current_var_values = copy(Γ.current_var_values) 
   Γ2 = Γ
   if func_args isa AExpr 
     for i in 1:length(func_args.args)
@@ -461,7 +461,7 @@ function interpret_object_call(f, args, @nospecialize(Γ::Env))
   origin, Γ = interpret(args[end], Γ)
   # object_repr = (origin=origin, type=f, alive=true, changed=false, id=Γ.state.objectsCreated)
 
-  old_current_var_values = deepcopy(Γ.current_var_values)
+  old_current_var_values = copy(Γ.current_var_values)
   Γ2 = Γ
   fields = Γ2.state.object_types[f].fields
   field_values = Dict()
@@ -677,7 +677,7 @@ function interpret_updateObj(args, @nospecialize(Γ::Env))
     # update render
     object_type = Γ.state.object_types[obj.type]
     
-    old_current_var_values = deepcopy(Γ.current_var_values)
+    old_current_var_values = copy(Γ.current_var_values)
     Γ3 = Γ2
     fields = object_type.fields
     for i in 1:length(fields)
