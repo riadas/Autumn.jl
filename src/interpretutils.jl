@@ -393,7 +393,11 @@ function interpret_field(x, f, @nospecialize(Γ::Env))
   # # # # @showx 
   # # # # @showf 
   val, Γ2 = interpret(x, Γ)
-  (getfield(val, f), Γ2)
+  if val isa Object 
+    (val.custom_fields[f], Γ2)
+  else
+    (getfield(val, f), Γ2)
+  end
 end
 
 function interpret_let(args::AbstractArray, @nospecialize(Γ::Env))
