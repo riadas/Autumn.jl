@@ -713,7 +713,7 @@ function distance(@nospecialize(objects1::AbstractArray), @nospecialize(objects2
 end
 
 
-function firstWithDefault(@nospecialize(arr::Array{Position}), state::Union{State, Nothing}=nothing) 
+function firstWithDefault(@nospecialize(arr::AbstractArray), state::Union{State, Nothing}=nothing) 
   if arr == [] 
     Position(-30, -30)
   else 
