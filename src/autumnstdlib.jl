@@ -722,12 +722,12 @@ function firstWithDefault(@nospecialize(arr::AbstractArray), state::Union{State,
 end
 
 function farthestRandom(object::Object, @nospecialize(types::AbstractArray), unit_size::Int, @nospecialize(state::State))::Position
-  choices = [farthestLeft(object, types, unit_size, state)..., 
-             farthestRight(object, types, unit_size, state)..., 
-             farthestDown(object, types, unit_size, state)..., 
-             farthestUp(object, types, unit_size, state)...]
+  choices = [farthestLeft(object, types, unit_size, state), 
+             farthestRight(object, types, unit_size, state), 
+             farthestDown(object, types, unit_size, state), 
+             farthestUp(object, types, unit_size, state)]
 
-  nonzero_positions = filter(p -> p != object.position, choices)
+  nonzero_positions = filter(p -> p != object.origin, choices)
   if nonzero_positions == [] 
     Position(0, 0)
   else
