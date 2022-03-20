@@ -690,7 +690,7 @@ function interpret_updateObj(args, @nospecialize(Γ::Env))
     fields = object_type.fields
     for i in 1:length(fields)
       field_name = fields[i].args[1]
-      field_value = getfield(new_obj, field_name)
+      field_value = new_obj.custom_fields[field_name]
       Γ3.current_var_values[field_name] = field_value
     end
 
