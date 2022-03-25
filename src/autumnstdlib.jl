@@ -272,9 +272,6 @@ function intersects(@nospecialize(obj2::AbstractArray), @nospecialize(obj1::Obje
 end
 
 function intersects(@nospecialize(obj1::AbstractArray), @nospecialize(obj2::AbstractArray), @nospecialize(state::State))::Bool
-  # # println("INTERSECTS")
-  # # @show typeof(obj1) 
-  # # @show typeof(obj2) 
   if (length(obj1) == 0) || (length(obj2) == 0)
     false  
   elseif (obj1[1] isa Object) && (obj2[1] isa Object)

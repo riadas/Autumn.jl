@@ -79,6 +79,8 @@ function update(Γ::Object, x::Symbol, v)::Object
     Γ = @set Γ.custom_fields = v
   elseif x == :render
     Γ = @set Γ.render = v
+  else 
+    Γ.custom_fields[x] = v
   end
   Γ
 end
@@ -290,7 +292,7 @@ function interpret(aex::AExpr, @nospecialize(Γ::Env))
     [:call, f, args...] && if f == :prev && args != [:obj] end        => interpret(AExpr(:call, Symbol(string(f, uppercasefirst(string(args[1])))), :state), Γ)
     [:call, f, args...] && if islib(f) end                            => interpret_lib(f, args, Γ)
     [:call, f, args...] && if isjulialib(f) end                       => interpret_julia_lib(f, args, Γ)
-    [:call, f, args...] && if f in keys(Γ.state.object_types) end   => interpret_object_call(f, args, Γ)
+    [:call, f, args...] && if f in keys(Γ.state.object_types) end     => interpret_object_call(f, args, Γ)
     [:call, f, args...]                                               => interpret_call(f, args, Γ)
      
     [:field, x, fieldname]                                            => interpret_field(x, fieldname, Γ)
