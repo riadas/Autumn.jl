@@ -80,6 +80,8 @@ function update(Γ::Object, x::Symbol, v)::Object
   elseif x == :render
     Γ = @set Γ.render = v
   else 
+    println("yeet")
+    Γ = deepcopy(Γ)
     Γ.custom_fields[x] = v
   end
   Γ

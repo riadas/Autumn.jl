@@ -89,6 +89,9 @@ function update_nt(object::Object, x::Symbol, v)
     object = @set object.custom_fields = v
   elseif x == :render
     object = @set object.render = v
+  else
+    object = deepcopy(object)
+    object.custom_fields[x] = v
   end
   object
 end
