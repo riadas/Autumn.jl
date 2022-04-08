@@ -80,7 +80,7 @@ function update(Γ::Object, x::Symbol, v)::Object
   elseif x == :render
     Γ = @set Γ.render = v
   else 
-    println("yeet")
+    # println("yeet")
     Γ = deepcopy(Γ)
     Γ.custom_fields[x] = v
   end
@@ -484,7 +484,8 @@ function interpret_object_call(f, args, @nospecialize(Γ::Env))
     # object_repr = update(object_repr, field_name, field_value)
     Γ2.current_var_values[field_name] = field_value
   end
-
+  # @show f
+  # @show field_values 
   if length(fields) == 0 
     object_repr = Object(Γ.state.objectsCreated, origin, f, true, false, field_values, nothing)  
   else
