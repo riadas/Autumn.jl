@@ -729,8 +729,8 @@ function farthestRandom(object::Object, @nospecialize(types::AbstractArray), uni
 
   nonzero_positions = filter(p -> p != Position(0, 0), choices)
 
-  println("farthestRandom")
-  @show nonzero_positions 
+  # println("farthestRandom")
+  # @show nonzero_positions 
 
   if nonzero_positions == [] 
     Position(0, 0)
@@ -849,8 +849,8 @@ function closestRandom(object::Object, @nospecialize(types::AbstractArray), unit
 
   nonzero_positions = filter(p -> p != Position(0, 0), choices)
 
-  println("closestRandom")
-  @show nonzero_positions 
+  # println("closestRandom")
+  # @show nonzero_positions 
 
   if nonzero_positions == [] 
     Position(0, 0)
