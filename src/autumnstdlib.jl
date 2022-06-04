@@ -236,7 +236,7 @@ function pushConfig(arrow::Position, @nospecialize(obj1::Object), @nospecialize(
 end
 
 function pushConfig(arrow::Position, @nospecialize(obj1::Object), @nospecialize(obj2::AbstractArray), @nospecialize(state::State))
-  moveIntersects(arrow, obj1, obj2) && isFree(move(move(obj1, arrow, state), arrow, state).origin, state)
+  moveIntersects(arrow, obj1, obj2, state) && isFree(move(move(obj1, arrow, state), arrow, state).origin, state)
 end
 
 function moveIntersects(arrow::Position, @nospecialize(obj1::Object), @nospecialize(obj2::Object), @nospecialize(state::State)) 
