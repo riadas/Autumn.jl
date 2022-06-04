@@ -232,7 +232,7 @@ function clicked(click::Union{Click, Nothing}, pos::Position, @nospecialize(stat
 end
 
 function pushConfiguration(arrow::Position, @nospecialize(obj1::Object), @nospecialize(obj2::Object), @nospecialize(state::State))
-  pushConfig(arrow, obj1, [obj2], state)
+  pushConfiguration(arrow, obj1, [obj2], state)
 end
 
 function pushConfiguration(arrow::Position, @nospecialize(obj1::Object), @nospecialize(obj2::AbstractArray), @nospecialize(state::State))
