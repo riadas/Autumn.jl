@@ -58,7 +58,7 @@ mutable struct State
   rng::AbstractRNG
   scene::Scene 
   object_types::Dict{Symbol, ObjectType}
-  histories::Dict{Symbol, Dict{Int, Union{Int, String, Bool, Object, AbstractArray}}}
+  histories::Dict{Symbol, Dict{Int, Union{Int, String, Bool, Position, Object, AbstractArray}}}
 end
 
 
@@ -229,6 +229,14 @@ function clicked(click::Union{Click, Nothing}, pos::Position, @nospecialize(stat
   else
     click.x == pos.x && click.y == pos.y                         
   end
+end
+
+function moveIntersects(arrow::Position, @nospecialize(obj1::Object), @nospecialize(obj2::Object), @nospecialize(state::State)) 
+  (arrow != Position(0, 0)) && intersects(move(obj1, arrow, state), obj2, state)
+end
+
+function moveIntersects(arrow::Position, @nospecialize(obj::Object), @nospecialize(objects::AbstractArray), @nospecialize(state::State)) 
+  (arrow != Position(0, 0)) && intersects(move(obj, arrow, state), objects, state)
 end
 
 function intersects(@nospecialize(obj1::Object), @nospecialize(obj2::Object), @nospecialize(state::State))::Bool
@@ -491,6 +499,19 @@ end
 function adjacentDiag(position1::Position, position2::Position, state::Union{State, Nothing}=nothing)
   displacement(position1, position2) in [Position(0,1), Position(1, 0), Position(0, -1), Position(-1, 0),
                                          Position(1,1), Position(1, -1), Position(-1, 1), Position(-1, -1)]
+end
+
+function adj(@nospecialize(obj1::Object), @nospecialize(obj2::Object), @nospecialize(state::State)) 
+  filter(o -> o.id == obj2.id, adjacentObjs(obj1, state)) != []
+end
+
+function adj(@nospecialize(obj1::Object), @nospecialize(obj2::AbstractArray), @nospecialize(state::State)) 
+  filter(o -> o.id in map(x -> x.id, obj2), adjacentObjs(obj1, state)) != []
+end
+
+function adj(@nospecialize(obj1::AbstractArray), @nospecialize(obj2::AbstractArray), @nospecialize(state::State)) 
+  obj1_adjacentObjs = vcat(map(x -> adjacentObjs(x, state), obj1)...)
+  intersect(map(x -> x.id, obj1_adjacentObjs), map(x -> x.id, obj2)) != []  
 end
 
 function rotate(object::Object, state::Union{State, Nothing}=nothing)::Object
