@@ -484,8 +484,8 @@ function displacement(cell1::Cell, cell2::Cell, state::Union{State, Nothing}=not
   displacement(cell1.position, cell2.position)
 end
 
-function adjacent(position1::Position, position2::Position, state::Union{State, Nothing}=nothing)::Bool
-  displacement(position1, position2) in [Position(0,1), Position(1, 0), Position(0, -1), Position(-1, 0)]
+function adjacent(position1::Position, position2::Position, unitSize::Int, state::Union{State, Nothing}=nothing)::Bool
+  displacement(position1, position2) in [Position(0, unitSize), Position(unitSize, 0), Position(0, -unitSize), Position(-unitSize, 0)]
 end
 
 function adjacent(cell1::Cell, cell2::Cell, state::Union{State, Nothing}=nothing)::Bool
@@ -496,8 +496,8 @@ function adjacent(cell::Cell, cells::Array{Cell}, state::Union{State, Nothing}=n
   length(filter(x -> adjacent(cell, x), cells)) != 0
 end
 
-function adjacentObjs(obj::Object, @nospecialize(state::State))
-  filter(o -> adjacent(o.origin, obj.origin) && (obj.id != o.id), state.scene.objects)
+function adjacentObjs(obj::Object, unitSize::Int, @nospecialize(state::State))
+  filter(o -> adjacent(o.origin, obj.origin, unitSize) && (obj.id != o.id), state.scene.objects)
 end
 
 function adjacentObjsDiag(obj::Object, @nospecialize(state::State))
@@ -509,16 +509,16 @@ function adjacentDiag(position1::Position, position2::Position, state::Union{Sta
                                          Position(1,1), Position(1, -1), Position(-1, 1), Position(-1, -1)]
 end
 
-function adj(@nospecialize(obj1::Object), @nospecialize(obj2::Object), @nospecialize(state::State)) 
-  filter(o -> o.id == obj2.id, adjacentObjs(obj1, state)) != []
+function adj(@nospecialize(obj1::Object), @nospecialize(obj2::Object), unitSize::Int, @nospecialize(state::State)) 
+  filter(o -> o.id == obj2.id, adjacentObjs(obj1, unitSize, state)) != []
 end
 
-function adj(@nospecialize(obj1::Object), @nospecialize(obj2::AbstractArray), @nospecialize(state::State)) 
-  filter(o -> o.id in map(x -> x.id, obj2), adjacentObjs(obj1, state)) != []
+function adj(@nospecialize(obj1::Object), @nospecialize(obj2::AbstractArray), unitSize::Int, @nospecialize(state::State)) 
+  filter(o -> o.id in map(x -> x.id, obj2), adjacentObjs(obj1, unitSize, state)) != []
 end
 
-function adj(@nospecialize(obj1::AbstractArray), @nospecialize(obj2::AbstractArray), @nospecialize(state::State)) 
-  obj1_adjacentObjs = vcat(map(x -> adjacentObjs(x, state), obj1)...)
+function adj(@nospecialize(obj1::AbstractArray), @nospecialize(obj2::AbstractArray), unitSize::Int, @nospecialize(state::State)) 
+  obj1_adjacentObjs = vcat(map(x -> adjacentObjs(x, unitSize, state), obj1)...)
   intersect(map(x -> x.id, obj1_adjacentObjs), map(x -> x.id, obj2)) != []  
 end
 
