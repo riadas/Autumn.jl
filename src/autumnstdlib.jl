@@ -240,7 +240,7 @@ function pushConfiguration(arrow::Position, @nospecialize(obj1::Object), @nospec
 end
 
 function pushConfiguration(arrow::Position, @nospecialize(obj1::Object), @nospecialize(obj2::AbstractArray), @nospecialize(obj3::AbstractArray), @nospecialize(state::State))
-  moveIntersects(arrow, obj1, obj2, state) && (isFree(move(move(obj1, arrow, state), arrow, state).origin, state) || intersects(move(move(obj1, arrow, state), arrow, state), obj3, state))
+  moveIntersects(arrow, obj1, obj2, state) && intersects(move(move(obj1, arrow, state), arrow, state), obj3, state)
 end
 
 function moveIntersects(arrow::Position, @nospecialize(obj1::Object), @nospecialize(obj2::Object), @nospecialize(state::State)) 
