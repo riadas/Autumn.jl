@@ -79,7 +79,9 @@ function update(Γ::Object, x::Symbol, v)::Object
     Γ = @set Γ.custom_fields = v
   elseif x == :render
     Γ = @set Γ.render = v
-  else 
+  elseif x == :origin 
+    Γ = @set Γ.origin = v
+  else
     # println("yeet")
     Γ = deepcopy(Γ)
     Γ.custom_fields[x] = v
