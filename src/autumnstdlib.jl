@@ -237,7 +237,9 @@ end
 
 function pushConfiguration(arrow::Position, @nospecialize(obj1::Object), @nospecialize(obj2::AbstractArray), @nospecialize(state::State))
   println("pushConfiguration: obj1 id = $(obj1.id), time = $(state.time)")
-  moveIntersects(arrow, obj1, obj2, state) && isFree(move(move(obj1, arrow, state), arrow, state).origin, state)
+  r = moveIntersects(arrow, obj1, obj2, state) && isFree(move(move(obj1, arrow, state), arrow, state).origin, state)
+  @show r
+  r
 end
 
 function pushConfiguration(arrow::Position, @nospecialize(obj1::Object), @nospecialize(obj2::AbstractArray), @nospecialize(obj3::AbstractArray), @nospecialize(state::State))
