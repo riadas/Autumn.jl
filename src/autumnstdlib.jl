@@ -493,12 +493,12 @@ function adjacent(position1::Position, position2::Position, unitSize::Int, state
   displacement(position1, position2) in [Position(0, unitSize), Position(unitSize, 0), Position(0, -unitSize), Position(-unitSize, 0)]
 end
 
-function adjacent(cell1::Cell, cell2::Cell, state::Union{State, Nothing}=nothing)::Bool
-  adjacent(cell1.position, cell2.position)
+function adjacent(cell1::Cell, cell2::Cell, unitSize::Int, state::Union{State, Nothing}=nothing)::Bool
+  adjacent(cell1.position, cell2.position, unitSize)
 end
 
-function adjacent(cell::Cell, cells::Array{Cell}, state::Union{State, Nothing}=nothing)
-  length(filter(x -> adjacent(cell, x), cells)) != 0
+function adjacent(cell::Cell, cells::Array{Cell}, unitSize::Int, state::Union{State, Nothing}=nothing)
+  length(filter(x -> adjacent(cell, x, unitSize), cells)) != 0
 end
 
 function adjacentObjs(obj::Object, unitSize::Int, @nospecialize(state::State))
