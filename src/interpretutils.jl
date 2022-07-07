@@ -239,6 +239,8 @@ julia_lib_to_func = Dict(:get => get,
 isjulialib(f) = f in keys(julia_lib_to_func)
 
 function julialibapl(f, args, @nospecialize(Γ::Env))
+  println("JULIALIBAPL")
+  @show f 
   if !(f in [:map, :filter])
     julia_lib_to_func[f](args...), Γ
   elseif f == :map 
@@ -376,9 +378,9 @@ function interpret_lib(f, args, @nospecialize(Γ::Env))
 end
 
 function interpret_julia_lib(f, args, @nospecialize(Γ::Env))
-  # println("INTERPRET_JULIA_LIB")
-  # @show f 
-  # @show args
+  println("INTERPRET_JULIA_LIB")
+  @show f 
+  @show args
   new_args = []
   for i in 1:length(args)
     arg = args[i] 
