@@ -183,7 +183,7 @@ end
 
 function interpret_over_time_observations(aex::AExpr, iters, user_events=[], rng=Random.GLOBAL_RNG)
   scenes = []
-  new_aex, env_ = start(aex)
+  new_aex, env_ = start(aex, rng)
   push!(scenes, AutumnStandardLibrary.renderScene(env_.state.scene, env_.state))
   if user_events == []
     for i in 1:iters
