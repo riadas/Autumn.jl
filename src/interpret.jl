@@ -181,7 +181,7 @@ function interpret_over_time_variable(aex::AExpr, var_name, iters, user_events=[
   variable_values
 end
 
-function interpret_over_time_observations(aex::AExpr, iters, user_events=[])
+function interpret_over_time_observations(aex::AExpr, iters, user_events=[], rng=Random.GLOBAL_RNG)
   scenes = []
   new_aex, env_ = start(aex)
   push!(scenes, AutumnStandardLibrary.renderScene(env_.state.scene, env_.state))
