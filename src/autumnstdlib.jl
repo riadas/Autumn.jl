@@ -527,6 +527,19 @@ function adj(@nospecialize(obj1::AbstractArray), @nospecialize(obj2::AbstractArr
   intersect(map(x -> x.id, obj1_adjacentObjs), map(x -> x.id, obj2)) != []  
 end
 
+function adjCorner(@nospecialize(obj1::Object), @nospecialize(obj2::Object), unitSize::Int, @nospecialize(state::State))
+  filter(o -> o.id == obj2.id, map(obj -> !(obj.id in map(z -> z.id, adjacentObjs(obj1, unitSize, state))), adjacentObjsDiag(obj1, unitSize, state))) != []
+end
+
+function adjCorner(@nospecialize(obj1::Object), @nospecialize(obj2::AbstractArray), unitSize::Int, @nospecialize(state::State))
+  filter(o -> o.id in map(x -> x.id, obj2), map(obj -> !(obj.id in map(z -> z.id, adjacentObjs(obj1, unitSize, state))), adjacentObjsDiag(obj1, unitSize, state))) != []
+end
+
+function adjCorner(@nospecialize(obj1::AbstractArray), @nospecialize(obj2::AbstractArray), unitSize::Int, @nospecialize(state::State))
+  obj1_adjacentObjs = vcat(map(x -> map(obj -> !(obj.id in map(z -> z.id, adjacentObjs(obj1, unitSize, state))), adjacentObjsDiag(x, unitSize, state)), obj1)...)
+  intersect(map(x -> x.id, obj1_adjacentObjs), map(x -> x.id, obj2)) != []
+end
+
 function rotate(object::Object, state::Union{State, Nothing}=nothing)::Object
   new_object = deepcopy(object)
   new_object = update_nt(new_object, :render, map(x -> Cell(rotate(x.position), x.color), new_object.render))
