@@ -1,5 +1,9 @@
-import { parseau } from "./sexpr.js"
-import { interpret } from "./interpretutils.js"
+// import { parseau } from "./sexpr.js"
+// import { interpret } from "./interpretutils.js"
+
+const { parseau } = require("./sexpr.js");
+const { interpret, update } = require("./interpretutils.js");
+
 
 function interpret_program(aex, env) {
   if (aex.head != "program") {
@@ -7,6 +11,10 @@ function interpret_program(aex, env) {
   }
 
   for (line of aex.args) {
+    console.log("YOOOOOOOOO")
+    console.log(line.head)
+    console.log(env);
+    console.log(JSON.stringify(env));
     [_, env] = interpret(line, env);
   }
   return [aex, env]
@@ -37,7 +45,7 @@ function start(aex) {
 
   lines = aex.args 
 
-  grid_params_and_object_type_lines = lines.filter(l => !(l.head in ["assign", "on"]))
+  grid_params_and_object_type_lines = lines.filter(l => !(["assign", "on"].includes(l.head)))
   initnext_lines = lines.filter(l => l.head == "assign" && (typeof(l.args[1]) == "object" && l.args[1].head == "initnext"))
   lifted_lines = lines.filter(l => l.head == "assign" && (typeof(l.args[1]) != "object" || l.args[1].head != "initnext"))
   on_clause_lines = lines.filter(l => l.head == "on")
@@ -45,17 +53,20 @@ function start(aex) {
   reordered_lines = grid_params_and_object_type_lines.concat(initnext_lines).concat(on_clause_lines).concat(lifted_lines)
 
   for (line of lifted_lines) {
+    console.log("HUHHHHHHHHHHHH")
+    console.log(line)
     var_name = line.args[0] 
     // construct history variable in state
-    env.state.histories[var_name] = {}
+    env.state.histories[var_name] = {};
 
     // construct prev function 
-    [_, env] = interpret({"head" : "assign", "args" : ["prev" + var_name[0].toUpperCase() + var_name.slice(1), parseau(`(fn () (get (.. (.. state histories) ${var_name}) (- (.. state time) 1) ${var_name}))`)]}, env) 
+    var [wtf, env_] = interpret({"head" : "assign", "args" : ["prev" + var_name[0].toUpperCase() + var_name.slice(1), parseau(`(fn () (get (.. (.. state histories) ${var_name}) (- (.. state time) 1) ${var_name}))`)]}, env); 
+    env = env_;
   }
 
   // add background to scene 
   background_assignments = lifted_lines.filter(l => l.args[0] == "background")
-  background = background_assignments != [] ? background_assignments[-1].args[1] : "#ffffff00"
+  background = background_assignments.length != 0 ? background_assignments[-1].args[1] : "#ffffff00"
   env.state.scene.background = background
 
   // initialize lifted variables
@@ -63,13 +74,13 @@ function start(aex) {
   for (line of lifted_lines) {
     var_name = line.args[0]
     env.lifted[var_name] = line.args[1] 
-    if (var_name in ["GRID_SIZE", "background"]) {
+    if (["GRID_SIZE", "background"].includes(var_name)) {
       env.current_var_values[var_name] = interpret(line.args[1], env)[0]
     } 
   }
 
-  new_aex = AExpr("program", reordered_lines) // try interpreting the init_next's before on for the first time step (init)
-  [aex_, env_] = interpret_program(new_aex, env)
+  new_aex = {"head" : "program", "args" : reordered_lines} // try interpreting the init_next's before on for the first time step (init)
+  var [aex_, env_] = interpret_program(new_aex, env)
 
   // update state (time, histories, scene)
   env_ = update_state(env_)
@@ -93,7 +104,7 @@ function step(aex, env, user_events) {
   return env_
 }
 
-function update_state(env) {
+function update_state(env_) {
   // reset user events 
   for (user_event of ["left", "right", "up", "down"]) {
     env_ = update(env_, user_event, false)
@@ -112,19 +123,19 @@ function update_state(env) {
   }
 
   // update lifted variables 
-  for (var_name of env_.lifted) {
-    env_.current_var_values[var_name] = interpret(env_.lifted[var_name], env_)[1]
+  for (var_name in env_.lifted) {
+    env_.current_var_values[var_name] = interpret(env_.lifted[var_name], env_)[0]
   }
 
   // update scene.objects 
   new_scene_objects = []
   for (key in env_.current_var_values) {
-    if (typeof(env_.current_var_values[key]) == "object" && env_.current_var_values[key].id != undefined || (Array.isArray(env_.current_var_values[key]) && (length(env_.current_var_values[key]) > 0) && typeof(env_.current_var_values[key][1]) == "object" && env_.current_var_values[key][1].id != undefined)) {
+    if (typeof(env_.current_var_values[key]) == "object" && env_.current_var_values[key].id != undefined || (Array.isArray(env_.current_var_values[key]) && ((env_.current_var_values[key].length) > 0) && typeof(env_.current_var_values[key][1]) == "object" && env_.current_var_values[key][1].id != undefined)) {
       object_val = env_.current_var_values[key]
       if (Array.isArray(object_val)) { 
         new_scene_objects.push(...object_val)
       } else {
-        new_scene_objects.push(...object_val)
+        new_scene_objects.push(object_val)
       }
     }
   }
