@@ -61,7 +61,7 @@ function start(aex) {
   // initialize lifted variables
   // env = update(env, :lifted, empty_env()) 
   for (line of lifted_lines) {
-    var_name = line.args[1]
+    var_name = line.args[0]
     env.lifted[var_name] = line.args[1] 
     if (var_name in ["GRID_SIZE", "background"]) {
       env.current_var_values[var_name] = interpret(line.args[1], env)[0]
@@ -94,11 +94,63 @@ function step(aex, env, user_events) {
 }
 
 function update_state(env) {
+  // reset user events 
+  for (user_event of ["left", "right", "up", "down"]) {
+    env_ = update(env_, user_event, false)
+  }
+  env_ = update(env_, "click", null)
 
+  // add updated variable values to history
+  for (key in env_.state.histories) {   
+    env_.state.histories[key][env_.state.time] = env_.current_var_values[key]
+  
+    // delete earlier times stored in history, since we only use prev up to 1 level back
+    if (env_.state.time > 0) {
+      delete env_.state.histories[env_.state.time - 1]
+    }
+
+  }
+
+  // update lifted variables 
+  for (var_name of env_.lifted) {
+    env_.current_var_values[var_name] = interpret(env_.lifted[var_name], env_)[1]
+  }
+
+  // update scene.objects 
+  new_scene_objects = []
+  for (key in env_.current_var_values) {
+    if (typeof(env_.current_var_values[key]) == "object" && env_.current_var_values[key].id != undefined || (Array.isArray(env_.current_var_values[key]) && (length(env_.current_var_values[key]) > 0) && typeof(env_.current_var_values[key][1]) == "object" && env_.current_var_values[key][1].id != undefined)) {
+      object_val = env_.current_var_values[key]
+      if (Array.isArray(object_val)) { 
+        new_scene_objects.push(...object_val)
+      } else {
+        new_scene_objects.push(...object_val)
+      }
+    }
+  }
+  
+  env_.state.scene.objects = new_scene_objects
+
+  // update time 
+  new_state = update(env_.state, "time", env_.state.time + 1)
+  env_ = update(env_, "state", new_state)
+  return env_
 }
 
 function interpret_over_time(aex, iters, user_events=[]) {
-
+  [new_aex, env_] = start(aex)
+  if (user_events.length == 0) {
+    for (i = 0; i < iters; i++) {
+      // @show i
+      env_ = step(new_aex, env_)
+    }
+  } else {
+    for (i = 0; i < iters; i++) {
+      // @show i
+      env_ = step(new_aex, env_, user_events[i])
+    }
+  }
+  return env_
 }
 
 function interpret_over_time_variable(aex, var_name, iters, user_events=[]) {
@@ -108,3 +160,5 @@ function interpret_over_time_variable(aex, var_name, iters, user_events=[]) {
 function interpret_over_time_observations(aex, iters, user_events=[]) {
 
 }
+
+// TODO: check null usage/equality checks, check 1-index vs. 0-index, etc.
