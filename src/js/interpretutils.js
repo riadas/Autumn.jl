@@ -2,7 +2,7 @@
 // import * as AutumnStandardLibrary from "./autumnstdlib.js"
 
 const { parseau } = require("./sexpr.js");
-const { Cell, Position, moveLeft, ObjectType } = require("./autumnstdlib.js");
+const { Cell, Position, moveLeft, moveRight, ObjectType, updateObj, removeObj } = require("./autumnstdlib.js");
 
 module.exports = { interpret, update };
 
@@ -40,16 +40,25 @@ function isprim(f) {
 }
 
 function primapl_uni(f, x, env) {
-  return [prim_to_func[f](x), env]
+  var [x, env] = interpret(x, env);
+  return [prim_to_func[f](x), env];
 }
 
 function primapl(f, x, y, env) {
+  console.log("PRIMAPL");
+  console.log(x);
+  console.log(y);
+  var [x, env] = interpret(x, env);
+  var [y, env] = interpret(y, env);
   return [prim_to_func[f](x, y), env]
 }
 
 var lib_to_func = {"moveLeft" : moveLeft,
+                   "moveRight" : moveRight,
                    "Position" : Position,
                    "Cell" : Cell,
+                   "updateObj" : updateObj,
+                   "removeObj" : removeObj,
                   }
 
 function islib(f) {
@@ -57,6 +66,10 @@ function islib(f) {
 }
 
 function libapl(f, args, env) {
+  console.log("libapl");
+  console.log(f);
+  console.log(args);
+  console.log(JSON.stringify(env));
   if (f == "clicked" && args.length == 0) {
     return interpret(f, env);
   } else if (f == "clicked") {
@@ -64,11 +77,15 @@ function libapl(f, args, env) {
   } else {
     var has_function_arg = false; 
     for (arg of args) {
-      if (Array.isArray(arg) && (arg.length == 2) && (isaexpr(args[0]) || typeof(args[0]) == "string") && (isaexpr(args[1] || typeof(args[1]) == "string"))) {
-        has_function_arg = false;
+      console.log("arg");
+      console.log(JSON.stringify(arg));
+      if (Array.isArray(arg) && (arg.length == 2) && (isaexpr(arg[0]) || typeof(arg[0]) == "string") && (isaexpr(arg[1]) || typeof(arg[1]) == "string")) {
+        has_function_arg = true;
       }
     }
 
+    console.log("has_function_arg__");
+    console.log(has_function_arg);
     if (!has_function_arg && f != "updateObj") {
       return [lib_to_func[f](args.map(a => interpret(a, env)[0]), env.state), env]
     } else {
@@ -108,6 +125,9 @@ function julialibapl(f, args, env) {
     console.log(env);
     var [dict, env] = interpret(args[0], env);
     var key = args[1];
+    if (isaexpr(key)) {
+      [key, env] = interpret(key, env);
+    } 
     var [default_, env] = interpret(args[2], env);
 
     console.log("DICT");
@@ -194,6 +214,7 @@ function interpret(aex, env) {
       console.log(JSON.stringify(env));
 
       if (isprim(f)) {
+        
         if (args.length == 1) {
           return primapl_uni(f, args[0], env);
         } else {
@@ -201,8 +222,10 @@ function interpret(aex, env) {
         }
       } else if (f == "prev" && args != ["obj"]) {
         console.log("WOAH  2");
-        return interpret({"head" : "call", "args" : ["prev" + args[0][0].toUpperCase() + args[0].slice(1), ["state"]]}, env);
+        var [v, env_] = interpret({"head" : "call", "args" : ["prev" + args[0][0].toUpperCase() + args[0].slice(1), ["state"]]}, env);
+        return [JSON.parse(JSON.stringify(v)), env_]
       } else if (islib(f)) {
+        console.log("here?");
         return interpret_lib(f, args, env);
       } else if (isjslib(f)) {
         return interpret_js_lib(f, args, env);
@@ -210,7 +233,11 @@ function interpret(aex, env) {
         return interpret_object_call(f, args, env);
       } else {
         console.log("WOAH");
-        return interpret_call(f, args, env);
+        if (Array.isArray(args)) {
+          return interpret_call(f, args, env);
+        } else {
+          return interpret_call(f, [args], env);
+        }
       }
     } else if (aex.head == "field") {
       return interpret_field(aex.args[0], aex.args[1], env);
@@ -266,11 +293,17 @@ function interpret_list(args, env) {
 }
 
 function interpret_lib(f, args, env) {
+  console.log("interpret_lib");
+  console.log(f);
+  console.log(args);
+  console.log(JSON.stringify(env));
   var new_args = [];
   for (arg of args) {
     [new_arg, env] = interpret(arg, env);
     new_args.push(new_arg);
   }
+  console.log("new_args");
+  console.log(new_args);
   return libapl(f, new_args, env);
 } 
 
@@ -292,14 +325,19 @@ function interpret_field(x, f, env) {
 }
 
 function interpret_let(args, env) {
+  console.log("interpret_let");
+  console.log(args);
+  console.log(JSON.stringify(env));
   var env2 = JSON.parse(JSON.stringify(env));
   if (args.length > 0 ) {
-    for (arg of args.slice(1)) {
+    for (arg of args.slice(0, args.length - 1)) {
       var [v2, env2] = interpret(arg, env2);
     }
 
     if (isaexpr(args[args.length - 1])) {
-      if (args.head == "assign") {
+      if (args[args.length - 1].head == "assign") {
+        console.log("woo");
+        console.log(args[args.length - 1]);
         var [v2, env2] = interpret(args[args.length - 1], env2);
         return [{"head" : "let", "args" : args}, env2];
       } else {
@@ -323,6 +361,12 @@ function interpret_call(f, params, env) {
   var [func, env] = interpret(f, env);
   var func_args = func[0];
   var func_body = func[1];
+
+  console.log("func_args");
+  console.log(func_args);
+
+  console.log("func_body");
+  console.log(func_body);
 
   // construct environment 
   var old_current_var_values = JSON.parse(JSON.stringify(env.current_var_values));
@@ -402,7 +446,7 @@ function interpret_init_next(var_name, var_val, env) {
 
     env2.state.histories[var_name] = {};
 
-    var [_, env2] = interpret({"head" : "assign", "args": ["prev" + var_name[0].toUpperCase() + var_name.slice(1), parseau(`(fn (state) (get (get (.. state histories) ${var_name} -1) (- (.. state time) 1) ${var_name}))`)]}, env2); 
+    var [x, env2] = interpret({"head" : "assign", "args": ["prev" + var_name[0].toUpperCase() + var_name.slice(1), parseau(`(fn (state) (get (get (.. state histories) ${var_name} -1) (- (.. state time) 1) ${var_name}))`)]}, env2); 
   } else if (env.state.time > 0) { // variable initialized
     var [default_val, env] = interpret(next_func, env);
     env2.current_var_values[var_name] = default_val;
@@ -419,7 +463,7 @@ function interpret_object(args, env) {
   var object_render = args[args.length - 1];
 
   if (object_fields.length == 0) {
-    [render, _] = interpret(object_render, env);
+    var [render, x] = interpret(object_render, env);
     if (!Array.isArray(render)) {
       var render = [render];
     }
@@ -432,26 +476,39 @@ function interpret_object(args, env) {
 }
 
 function interpret_on(args, env) {
-  var event = args[1]
-  var update_ = args[2]
+  var event = args[0]
+  var update_ = args[1]
 
-  var [e, env] = interpret(event, env);
-  if (e) {
-    var [_, env2] = interpret(update_, env);
+  console.log("interpret_on");
+  console.log(event);
+  console.log(update_);
+  console.log(JSON.stringify(env));
+
+  if (env.state.time > 0) {
+    var [e, env] = interpret(event, env);
+    if (e) {
+      var [x, env] = interpret(update_, env);
+    }
   }
-  return [{"head" : "on", "args" : args}, env2];
+  return [{"head" : "on", "args" : args}, env];
 }
 
 function interpret_updateObj(args, env) {
   // # # println("MADE IT!")
+  console.log("interpret_updateObj");
+  console.log(args);
+  console.log(env);
   var env2 = JSON.parse(JSON.stringify(env));
   var numFunctionArgs = args.map(arg => Array.isArray(arg) && (arg.length == 2) && (isaexpr(arg[0]) || typeof(arg[0]) == "string") && (isaexpr(arg[1]) || typeof(arg[1]) == "string")).filter(x => x == true).length;
+  
+  console.log("numFunctionArgs");
+  console.log(numFunctionArgs);
   if (numFunctionArgs == 1) {
     var [list, env2] = interpret(args[0], env2);
     var map_func = args[1];
 
-    // # # # # # @showlist 
-    // # # # # # @showmap_func
+    // # # # # # @show list 
+    // # # # # # @show map_func
 
     var new_list = []
     for (item of list) { 
@@ -520,11 +577,16 @@ function interpret_updateObj(args, env) {
 }
 
 function interpret_removeObj(args, env) {
+  console.log("interpret_removeObj");
+  console.log(args);
+  console.log(JSON.stringify(env));
   var [list, env] = interpret(args[0], env);
   var func = args[1];
   var new_list = [];
   for (item of list) {
-    var [pred, env] = interpret({call, func, item}, env);
+    var [pred, env] = interpret({"head" : "call", "args" : [func, item]}, env);
+    console.log("pred");
+    console.log(pred);
     if (!pred) {
       new_list.push(item);
     } else {
@@ -536,6 +598,9 @@ function interpret_removeObj(args, env) {
 }
 
 function interpret_js_map(args, env) {
+  console.log("INTERPRET_JS_MAP");
+  console.log(args);
+  console.log(env);
   var new_list = [];
   var map_func = args[0];
   var [list, env] = interpret(args[1], env);

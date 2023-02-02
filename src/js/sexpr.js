@@ -29,6 +29,8 @@ function s_to_a(sexpr) {
       return {"head" : "lambda", "args" : [s_to_a(sexpr[1]), s_to_a(sexpr[2])]};
     } else if (sexpr[0] == "..") {
       return {"head" : "field", "args" : [s_to_a(sexpr[1]), s_to_a(sexpr[2])]};
+    } else if (sexpr[0] == "list") {
+      return {"head" : "list", "args" : sexpr.slice(1).map(elt => s_to_a(elt))};
     } else if (sexpr[0] == "on") {
       return {"head" : "on", "args" : [s_to_a(sexpr[1]), s_to_a(sexpr[2])]};
     } else if (sexpr[0] == "object") {
@@ -36,7 +38,7 @@ function s_to_a(sexpr) {
     } else if (sexpr.length > 1) {
       return {"head" : "call", "args" : [s_to_a(sexpr[0]), sexpr.slice(1).map(s => s_to_a(s))]};
     } else {
-      return {"head" : "list", "args" : sexpr.map(elt => s_to_a(elt))};
+      return {"head" : "list", "args" : sexpr.slice(1).map(elt => s_to_a(elt))};
     } 
   } else if (!isNaN(sexpr)) {
     return parseInt(sexpr);

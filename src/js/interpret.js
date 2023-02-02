@@ -113,7 +113,7 @@ function update_state(env_) {
 
   // add updated variable values to history
   for (key in env_.state.histories) {   
-    env_.state.histories[key][env_.state.time] = env_.current_var_values[key]
+    env_.state.histories[key][env_.state.time] = JSON.parse(JSON.stringify(env_.current_var_values[key]))
   
     // delete earlier times stored in history, since we only use prev up to 1 level back
     if (env_.state.time > 0) {
@@ -173,3 +173,55 @@ function interpret_over_time_observations(aex, iters, user_events=[]) {
 }
 
 // TODO: check null usage/equality checks, check 1-index vs. 0-index, etc.
+
+
+// tests (TODO: move to test folder)
+function test_particle() {
+  var program_str = `(program
+                       (= GRID_SIZE 16)
+                       (object Particle (Cell 0 0 "blue"))
+                       (: particle Particle)
+                       (= particle (initnext (Particle (Position 8 8)) (moveLeft (prev particle))))
+                       (on right (= particle (moveRight (prev particle))))
+                     )`
+  var aex = parseau(program_str);
+
+  var [aex_, env_] = start(aex);
+
+  for (let i = 0; i < 5; i++) {
+    if (i % 3 == 1) {
+      var user_event = {"left" : false, "right" : true, "up" : false, "down" : false, "click" : null}
+    } else {
+      var user_event = {"left" : false, "right" : false, "up" : false, "down" : false, "click" : null}
+    }
+    // console.log(i);
+    env_ = step(aex_, env_, user_event);
+  }
+  // console.log(env_.state.histories.particle);
+  return [`0`, `1`, `2`, `3`, `4`, `5`].map(i => env_.state.histories.particle[i].origin);
+}
+
+function test_particle_list() {
+  var program_str = `(program
+                       (= GRID_SIZE 16)
+                       (object Particle (Cell 0 0 "blue"))
+                       (: particles (List Particle))
+                       (= particles (initnext (list (Particle (Position 8 8)) (Particle (Position 10 10))) (updateObj (prev particles) (--> obj (moveLeft obj)))))
+                       (on right (let ((= particles (updateObj (prev particles) (--> obj (moveRight obj)))))))
+                     )`
+  var aex = parseau(program_str);
+
+  var [aex_, env_] = start(aex);
+
+  for (let i = 0; i < 5; i++) {
+    if (i % 3 == 1) {
+      var user_event = {"left" : false, "right" : true, "up" : false, "down" : false, "click" : null}
+    } else {
+      var user_event = {"left" : false, "right" : false, "up" : false, "down" : false, "click" : null}
+    }
+    // console.log(i);
+    env_ = step(aex_, env_, user_event);
+  }
+  // console.log(env_.state.histories.particle);
+  return [`0`, `1`, `2`, `3`, `4`, `5`].map(i => [env_.state.histories.particles[i][0].origin, env_.state.histories.particles[i][1].origin]);
+}
