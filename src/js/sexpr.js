@@ -3,8 +3,8 @@ module.exports = { parseau };
 
 // Construct Autumn Expression (AExpr) from program string
 function parseau(program_str) {
-  sexpr = parse(program_str);
-  aexpr = s_to_a(sexpr); 
+  var sexpr = parse(program_str);
+  var aexpr = s_to_a(sexpr); 
   return aexpr;
 }
 

@@ -17,7 +17,7 @@ function Position(args, state) {
 function moveLeft(args, state) {
   console.log("MOVELEFT");
   console.log(args);
-  obj = args[0];
+  var obj = args[0];
   obj.origin.x = obj.origin.x - 1;
   return obj;
 }

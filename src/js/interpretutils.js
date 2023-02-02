@@ -7,7 +7,7 @@ const { Cell, Position, moveLeft, ObjectType } = require("./autumnstdlib.js");
 module.exports = { interpret, update };
 
 function update(env, x, v) {
-  new_env = JSON.parse(JSON.stringify(env))
+  var new_env = JSON.parse(JSON.stringify(env))
   new_env[x] = v;
   return new_env;
 }
@@ -20,20 +20,20 @@ function isobject(aex) {
   return (typeof(aex) == "object" && aex.id != undefined)
 }
 
-prim_to_func = {"+" : function(x, y) {return x + y;},
-                "-" : function(x, y) {return x - y;},
-                "*" : function(x, y) {return x * y;},
-                "/" : function(x, y) {return x / y;},
-                "&" : function(x, y) {return x && y;},
-                "!" : function(x) {return !x;},
-                "|" : function(x, y) {return x || y;},
-                ">" : function(x, y) {return x > y;},
-                "<" : function(x, y) {return x < y;},
-                "<=" : function(x, y) {return x <= y;},
-                "==" : function(x, y) {return x == y;},
-                "%" : function(x, y) {return x % y;},
-                "!=" : function(x, y) {return x != y},  
-}
+var prim_to_func = {"+" : function(x, y) {return x + y;},
+                   "-" : function(x, y) {return x - y;},
+                   "*" : function(x, y) {return x * y;},
+                   "/" : function(x, y) {return x / y;},
+                   "&" : function(x, y) {return x && y;},
+                   "!" : function(x) {return !x;},
+                   "|" : function(x, y) {return x || y;},
+                   ">" : function(x, y) {return x > y;},
+                   "<" : function(x, y) {return x < y;},
+                   "<=" : function(x, y) {return x <= y;},
+                   "==" : function(x, y) {return x == y;},
+                   "%" : function(x, y) {return x % y;},
+                   "!=" : function(x, y) {return x != y},  
+                  }
 
 function isprim(f) {
   return (f in prim_to_func);
@@ -47,10 +47,10 @@ function primapl(f, x, y, env) {
   return [prim_to_func[f](x, y), env]
 }
 
-lib_to_func = {"moveLeft" : moveLeft,
-               "Position" : Position,
-               "Cell" : Cell,
-              }
+var lib_to_func = {"moveLeft" : moveLeft,
+                   "Position" : Position,
+                   "Cell" : Cell,
+                  }
 
 function islib(f) {
   return (f in lib_to_func);
@@ -62,7 +62,7 @@ function libapl(f, args, env) {
   } else if (f == "clicked") {
     return [lib_to_func[f]([interpret("click", env)[0], ...args], env.state), env]
   } else {
-    has_function_arg = false; 
+    var has_function_arg = false; 
     for (arg of args) {
       if (Array.isArray(arg) && (arg.length == 2) && (isaexpr(args[0]) || typeof(args[0]) == "string") && (isaexpr(args[1] || typeof(args[1]) == "string"))) {
         has_function_arg = false;
@@ -123,27 +123,27 @@ function julialibapl(f, args, env) {
   } else if (f == "filter") {
     return interpret_js_filter(args, env);
   } else if (f == "first") {
-    [l, env] = interpret(args[0], env);
+    var [l, env] = interpret(args[0], env);
     return [l[0], env];
   } else if (f == "last") {
-    [l, env] = interpret(args[0], env);
+    var [l, env] = interpret(args[0], env);
     return [l[l.length - 1], env];
   } else if (f == "in") {
-    elt, env = interpret(args[0], env);
-    l, env = interpret(args[1], env);
+    var [elt, env] = interpret(args[0], env);
+    var [l, env] = interpret(args[1], env);
     return [l.includes(elt), env];
   } else if (f == "intersect") {
-    l1, env = interpret(args[0], env);
-    l2, env = interpret(args[1], env);
+    var [l1, env] = interpret(args[0], env);
+    var [l2, env] = interpret(args[1], env);
     return [l1.filter(elt => l2.includes(elt)), env];
   } else if (f == "length") {
-    l, env = interpret(args[0], env);
+    var [l, env] = interpret(args[0], env);
     return [l.length, env];
   } else if (f == "sign") {
-    v, env = interpret(args[0], env);
+    var [v, env] = interpret(args[0], env);
     return [v >= 0 ? 1 : -1, env];
   } else if (f == "vcat") {
-    ls = args.map(l => interpret(l, env)[0]);
+    var ls = args.map(l => interpret(l, env)[0]);
     return [[].concat(...ls), env];
   } else if (f == "count") {
     return interpret_js_count(args, env);
@@ -156,19 +156,19 @@ function interpret(aex, env) {
   if (isaexpr(aex)) {
     console.log(aex.head)
     if (aex.head == "if") {
-      [c, t, e] = aex.args; 
-      v, env2 = interpret(c, env);
+      var [c, t, e] = aex.args; 
+      var [v, env2] = interpret(c, env);
       if (v) {
         return interpret(t, env2);
       } else {
         return interpret(e, env2);
       }
     } else if (aex.head == "assign") {
-      [x, v] = aex.args 
+      var [x, v] = aex.args 
       if (v.head == "initnext") {
         return interpret_init_next(x, v, env);
       } else if (isaexpr(v) || typeof(v) == "string") {
-        [v2, env] = interpret(v, env);
+        var [v2, env] = interpret(v, env);
         return interpret({"head" : "assign", "args" : [x, v2]}, env);
       } else {
         env.current_var_values[x] = interpret(v, env)[0];
@@ -186,8 +186,8 @@ function interpret(aex, env) {
     } else if (aex.head == "fn") {
       return [aex.args, env];
     } else if (aex.head == "call") {
-      f = aex.args[0];
-      args = aex.args[1];
+      var f = aex.args[0];
+      var args = aex.args[1];
 
       console.log(f);
       console.log(args);
@@ -257,16 +257,16 @@ function interpret(aex, env) {
 }
 
 function interpret_list(args, env) {
-  new_list = [];
+  var new_list = [];
   for (arg of args) {
-    [new_arg, env] = interpret(arg, env);
+    var [new_arg, env] = interpret(arg, env);
     new_list.push(new_arg);
   }
   return [new_list, env];
 }
 
 function interpret_lib(f, args, env) {
-  new_args = [];
+  var new_args = [];
   for (arg of args) {
     [new_arg, env] = interpret(arg, env);
     new_args.push(new_arg);
@@ -279,7 +279,7 @@ function interpret_js_lib(f, args, env) {
 }
 
 function interpret_field(x, f, env) {
-  [val, env2] = interpret(x, env);
+  var [val, env2] = interpret(x, env);
   if (isobject(val)) {
     if (["id", "origin", "type", "alive", "changed", "render"].includes(f)) {
       return [val[f], env2];
@@ -292,18 +292,18 @@ function interpret_field(x, f, env) {
 }
 
 function interpret_let(args, env) {
-  env2 = JSON.parse(JSON.stringify(env));
+  var env2 = JSON.parse(JSON.stringify(env));
   if (args.length > 0 ) {
     for (arg of args.slice(1)) {
-      v2, env2 = interpret(arg, env2);
+      var [v2, env2] = interpret(arg, env2);
     }
 
     if (isaexpr(args[args.length - 1])) {
       if (args.head == "assign") {
-        v2, env2 = interpret(args[args.length - 1], env2);
+        var [v2, env2] = interpret(args[args.length - 1], env2);
         return [{"head" : "let", "args" : args}, env2];
       } else {
-        v2, env2 = interpret(args[args.length - 1], env2);
+        var [v2, env2] = interpret(args[args.length - 1], env2);
         return [v2, env];
       }
     } else {
@@ -321,30 +321,30 @@ function interpret_call(f, params, env) {
   console.log(params)
   console.log(env)
   var [func, env] = interpret(f, env);
-  func_args = func[0];
-  func_body = func[1];
+  var func_args = func[0];
+  var func_body = func[1];
 
   // construct environment 
-  old_current_var_values = JSON.parse(JSON.stringify(env.current_var_values));
-  env2 = JSON.parse(JSON.stringify(env))
+  var old_current_var_values = JSON.parse(JSON.stringify(env.current_var_values));
+  var env2 = JSON.parse(JSON.stringify(env))
   if (isaexpr(func_args)) {
     for (i = 0; i < func_args.args.length; i++) {
-      param_name = func_args.args[i];
-      [param_val, env2] = interpret(params[0], env2);
+      var param_name = func_args.args[i];
+      var [param_val, env2] = interpret(params[0], env2);
       env2.current_var_values[param_name] = param_val;
     }
   } else if (typeof(func_args) == "string") {
-    param_name = func_args; 
+    var param_name = func_args; 
     [param_val, env2] = interpret(params[0], env2);
     env2.current_var_values[param_name] = param_val;
   } else {
     throw new Error(`Could not interpret ${func_args}`);
   }
 
-  [v, env2] = interpret(func_body, env2);
+  var [v, env2] = interpret(func_body, env2);
 
   // return value and original environment, except with state updated
-  env = update(env, "state", update(env.state, "objectsCreated", env2.state.objectsCreated));
+  var env = update(env, "state", update(env.state, "objectsCreated", env2.state.objectsCreated));
   env.current_var_values = old_current_var_values;
   return [v, env];
 }
@@ -354,8 +354,8 @@ function interpret_object_call(f, args, env) {
   console.log(f);
   console.log(JSON.stringify(args));
   console.log(JSON.stringify(env));
-  new_state = update(env.state, "objectsCreated", env.state.objectsCreated + 1);
-  env = update(env, "state", new_state);
+  var new_state = update(env.state, "objectsCreated", env.state.objectsCreated + 1);
+  var env = update(env, "state", new_state);
 
   var [origin, env] = interpret(args[args.length - 1], env);
 
@@ -363,13 +363,13 @@ function interpret_object_call(f, args, env) {
   console.log(origin);
   // object_repr = (origin=origin, type=f, alive=true, id=Γ.state.objectsCreated)
 
-  old_current_var_values = JSON.parse(JSON.stringify(env.current_var_values));
-  env2 = env;
-  fields = env2.state.object_types[f].fields;
-  field_values = {}
+  var old_current_var_values = JSON.parse(JSON.stringify(env.current_var_values));
+  var env2 = env;
+  var fields = env2.state.object_types[f].fields;
+  var field_values = {}
   for (i = 0; i < fields.length; i++) {
-    field_name = fields[i].args[0];
-    [field_value, env2] = interpret(args[i], env2);
+    var field_name = fields[i].args[0];
+    var [field_value, env2] = interpret(args[i], env2);
     field_values[field_name] = field_value;
     // object_repr = update(object_repr, field_name, field_value)
     env2.current_var_values[field_name] = field_value
@@ -377,23 +377,23 @@ function interpret_object_call(f, args, env) {
   }
 
   if (fields.length == 0) { 
-    object_repr = {"id" : env.state.objectsCreated, "origin" : origin, "type" : f, "alive" : true, "custom_fields" : field_values, "render" : null} 
+    var object_repr = {"id" : env.state.objectsCreated, "origin" : origin, "type" : f, "alive" : true, "custom_fields" : field_values, "render" : null} 
   } else {
-    render, env2 = interpret(env.state.object_types[f].render, env2)
-    render = Array.isArray(render) ? render : [render]
-    object_repr = {"id" : env.state.objectsCreated, "origin" : origin, "type" : f, "alive" : true, "custom_fields" : field_values, "render" : render}
+    var [render, env2] = interpret(env.state.object_types[f].render, env2)
+    var render = Array.isArray(render) ? render : [render]
+    var object_repr = {"id" : env.state.objectsCreated, "origin" : origin, "type" : f, "alive" : true, "custom_fields" : field_values, "render" : render}
   }
   env.current_var_values = old_current_var_values
   return [object_repr, env];
 }
 
 function interpret_init_next(var_name, var_val, env) {
-  init_func = var_val.args[0];
-  next_func = var_val.args[1];
+  var init_func = var_val.args[0];
+  var next_func = var_val.args[1];
   console.log(JSON.stringify(env));
-  env2 = JSON.parse(JSON.stringify(env));
+  var env2 = JSON.parse(JSON.stringify(env));
   if (!(var_name in env2.current_var_values)) { // variable not initialized; use init clause
-    [var_val, env2] = interpret(init_func, env2);
+    var [var_val, env2] = interpret(init_func, env2);
 
     console.log("var_val");
     console.log(var_val);
@@ -414,71 +414,71 @@ function interpret_object(args, env) {
   console.log("INTERPRET_OBJECT");
   console.log(JSON.stringify(args));
   console.log(JSON.stringify(env));
-  object_name = args[0];
-  object_fields = args.slice(1,-1);
-  object_render = args[args.length - 1];
+  var object_name = args[0];
+  var object_fields = args.slice(1,-1);
+  var object_render = args[args.length - 1];
 
   if (object_fields.length == 0) {
     [render, _] = interpret(object_render, env);
     if (!Array.isArray(render)) {
-      render = [render];
+      var render = [render];
     }
-    object_tuple = ObjectType(render, object_fields);
+    var object_tuple = ObjectType(render, object_fields);
   } else {
-    object_tuple = ObjectType(object_render, object_fields);
+    var object_tuple = ObjectType(object_render, object_fields);
   }
   env.state.object_types[object_name] = object_tuple;
   return [{"head" : "object", "args" : args}, env];
 }
 
 function interpret_on(args, env) {
-  event = args[1]
-  update_ = args[2]
+  var event = args[1]
+  var update_ = args[2]
 
-  [e, env] = interpret(event, env);
+  var [e, env] = interpret(event, env);
   if (e) {
-    [_, env2] = interpret(update_, env);
+    var [_, env2] = interpret(update_, env);
   }
   return [{"head" : "on", "args" : args}, env2];
 }
 
 function interpret_updateObj(args, env) {
   // # # println("MADE IT!")
-  env2 = JSON.parse(JSON.stringify(env));
-  numFunctionArgs = args.map(arg => Array.isArray(arg) && (arg.length == 2) && (isaexpr(arg[0]) || typeof(arg[0]) == "string") && (isaexpr(arg[1]) || typeof(arg[1]) == "string")).filter(x => x == true).length;
+  var env2 = JSON.parse(JSON.stringify(env));
+  var numFunctionArgs = args.map(arg => Array.isArray(arg) && (arg.length == 2) && (isaexpr(arg[0]) || typeof(arg[0]) == "string") && (isaexpr(arg[1]) || typeof(arg[1]) == "string")).filter(x => x == true).length;
   if (numFunctionArgs == 1) {
-    list, env2 = interpret(args[0], env2);
-    map_func = args[1];
+    var [list, env2] = interpret(args[0], env2);
+    var map_func = args[1];
 
     // # # # # # @showlist 
     // # # # # # @showmap_func
 
-    new_list = []
+    var new_list = []
     for (item of list) { 
       // # # # # # # println("PRE=PLS WORK")
       // # # # # # # @showΓ2.state.objectsCreated      
-      new_item, env2 = interpret({"head" : "call", "args" : [map_func, item]}, env2);
+      var [new_item, env2] = interpret({"head" : "call", "args" : [map_func, item]}, env2);
       // # # # # # # println("PLS WORK")
       // # # # # # # @showΓ2.state.objectsCreated
       new_list.push(new_item);
     }
     return [new_list, env2];
    } else if (numFunctionArgs == 2) {
-    list, env2 = interpret(args[0], env2);
-    map_func = args[1];
-    filter_func = args[2];
+    var [list, env2] = interpret(args[0], env2);
+    var map_func = args[1];
+    var filter_func = args[2];
 
     // # # @show list 
     // # # @show map_func
 
 
-    new_list = [];
+    var new_list = [];
     for (item of list) { 
-      [pred, env2] = interpret({"head" : "call", "args" : [filter_func, item]}, env2);
+      var [pred, env2] = interpret({"head" : "call", "args" : [filter_func, item]}, env2);
       if (pred == true) { 
         // # # println("PRED TRUE!")
         // # # @show item 
-        [new_item, env2] = interpret({"head" : "call", "args" : [map_func, item]}, env2);
+        var [new_item, env2] = interpret({"head" : "call", "args" : [map_func, item]}, env2);
         new_list.push(new_item);
       } else {
         // # # println("PRED FALSE!")
@@ -489,27 +489,27 @@ function interpret_updateObj(args, env) {
     // # # @show new_list 
     return [new_list, env2];
   } else if (numFunctionArgs == 0) {
-    obj = args[0];
-    field_string = args[1];
-    new_value = args[2];
-    new_obj = update(obj, field_string, new_value);
+    var obj = args[0];
+    var field_string = args[1];
+    var new_value = args[2];
+    var new_obj = update(obj, field_string, new_value);
 
     // # update render
-    object_type = env.state.object_types[obj.type];
+    var object_type = env.state.object_types[obj.type];
     
-    old_current_var_values = copy(env.current_var_values);
-    env3 = JSON.parse(JSON.stringify(env2));
-    fields = object_type.fields;
+    var old_current_var_values = copy(env.current_var_values);
+    var env3 = JSON.parse(JSON.stringify(env2));
+    var fields = object_type.fields;
     for (i = 0; i < fields.length; i++) {
-      field_name = fields[i].args[0];
-      field_value = new_obj.custom_fields[field_name];
+      var field_name = fields[i].args[0];
+      var field_value = new_obj.custom_fields[field_name];
       env3.current_var_values[field_name] = field_value;
     }
 
     if (fields.length != 0) { 
-      render, env3 = interpret(env.state.object_types[obj.type].render, env3);
-      render = Array.isArray(render) ? render : [render];
-      new_obj = update(new_obj, "render", render);
+      var [render, env3] = interpret(env.state.object_types[obj.type].render, env3);
+      var render = Array.isArray(render) ? render : [render];
+      var new_obj = update(new_obj, "render", render);
     }
     env2.current_var_values = old_current_var_values;
     return [new_obj, env2];
@@ -520,15 +520,15 @@ function interpret_updateObj(args, env) {
 }
 
 function interpret_removeObj(args, env) {
-  list, env = interpret(args[0], env);
-  func = args[1];
-  new_list = [];
+  var [list, env] = interpret(args[0], env);
+  var func = args[1];
+  var new_list = [];
   for (item of list) {
-    pred, env = interpret({call, func, item}, env);
+    var [pred, env] = interpret({call, func, item}, env);
     if (!pred) {
       new_list.push(item);
     } else {
-      new_item = update(item, "alive", false);
+      var new_item = update(item, "alive", false);
       new_list.push(new_item);
     }
   }
@@ -536,22 +536,22 @@ function interpret_removeObj(args, env) {
 }
 
 function interpret_js_map(args, env) {
-  new_list = [];
-  map_func = args[0];
-  list, env = interpret(args[1], env);
+  var new_list = [];
+  var map_func = args[0];
+  var [list, env] = interpret(args[1], env);
   for (arg of list) { 
-    new_arg, env = interpret({"head" : "call", "args" : [map_func, arg]}, env)
+    var [new_arg, env] = interpret({"head" : "call", "args" : [map_func, arg]}, env)
     new_list.push(new_arg);
   }
   return [new_list, env]
 }
 
 function interpret_js_filter(args, env) {
-  new_list = [];
-  filter_func = args[0];
-  list, env = interpret(args[1], env);
+  var new_list = [];
+  var filter_func = args[0];
+  var [list, env] = interpret(args[1], env);
   for (arg of list) {
-    v, env = interpret({"head" : "call", "args" : [filter_func, arg]}, env)
+    var [v, env] = interpret({"head" : "call", "args" : [filter_func, arg]}, env)
     if (v == true) { 
       new_list.push(interpret(arg, env)[0])
     }
@@ -560,11 +560,11 @@ function interpret_js_filter(args, env) {
 }
 
 function interpret_js_count(args, env) {
-  new_list = [];
-  filter_func = args[0];
-  list, env = interpret(args[1], env);
+  var new_list = [];
+  var filter_func = args[0];
+  var [list, env] = interpret(args[1], env);
   for (arg of list) {
-    v, env = interpret({"head" : "call", "args" : [filter_func, arg]}, env)
+    var [v, env] = interpret({"head" : "call", "args" : [filter_func, arg]}, env)
     if (v == true) { 
       new_list.push(interpret(arg, env)[0])
     }
