@@ -34,7 +34,7 @@ function s_to_a(sexpr) {
     } else if (sexpr[0] == "on") {
       return {"head" : "on", "args" : [s_to_a(sexpr[1]), s_to_a(sexpr[2])]};
     } else if (sexpr[0] == "object") {
-      return {"head" : "object", "args" : [s_to_a(sexpr[1]), s_to_a(sexpr[2])]};
+      return {"head" : "object", "args" : sexpr.slice(1).map(elt => s_to_a(elt))};
     } else if (sexpr.length > 1) {
       return {"head" : "call", "args" : [s_to_a(sexpr[0]), sexpr.slice(1).map(s => s_to_a(s))]};
     } else {

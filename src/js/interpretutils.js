@@ -2,7 +2,7 @@
 // import * as AutumnStandardLibrary from "./autumnstdlib.js"
 
 const { parseau } = require("./sexpr.js");
-const { Cell, Position, moveLeft, moveRight, ObjectType, updateObj, removeObj } = require("./autumnstdlib.js");
+const { Cell, Position, moveLeft, moveRight, moveUp, moveDown, ObjectType, updateObj, removeObj, occurred, addObj, uniformChoice, closest, unitVector, randomPositions, move, intersects, allPositions } = require("./autumnstdlib.js");
 
 module.exports = { interpret, update };
 
@@ -13,11 +13,11 @@ function update(env, x, v) {
 }
 
 function isaexpr(aex) {
-  return (typeof(aex) == "object" && aex.head != undefined)
+  return (aex != null && typeof(aex) == "object" && aex.head != undefined)
 }
 
 function isobject(aex) {
-  return (typeof(aex) == "object" && aex.id != undefined)
+  return (aex != null && typeof(aex) == "object" && aex.id != undefined)
 }
 
 var prim_to_func = {"+" : function(x, y) {return x + y;},
@@ -50,7 +50,11 @@ function primapl(f, x, y, env) {
   console.log(y);
   var [x, env] = interpret(x, env);
   var [y, env] = interpret(y, env);
-  return [prim_to_func[f](x, y), env]
+  if (f == "==" || f == "!=") {
+    return [prim_to_func[f](JSON.stringify(x), JSON.stringify(y)), env]
+  } else {
+    return [prim_to_func[f](x, y), env]
+  }
 }
 
 var lib_to_func = {"moveLeft" : moveLeft,
@@ -59,6 +63,17 @@ var lib_to_func = {"moveLeft" : moveLeft,
                    "Cell" : Cell,
                    "updateObj" : updateObj,
                    "removeObj" : removeObj,
+                   "addObj" : addObj,
+                   "moveUp" : moveUp,
+                   "moveDown" : moveDown,
+                   "occurred" : occurred, 
+                   "uniformChoice" : uniformChoice,
+                   "closest" : closest, 
+                   "unitVector" : unitVector, 
+                   "randomPositions" : randomPositions,
+                   "move" : move,
+                   "intersects" : intersects,
+                   "allPositions" : allPositions,
                   }
 
 function islib(f) {
@@ -117,7 +132,7 @@ function isjslib(f) {
   return (js_lib_to_func.has(f));
 }
 
-function julialibapl(f, args, env) {
+function jslibapl(f, args, env) {
   if (f == "get") {
     console.log("GET ME")
     console.log(f);
@@ -209,6 +224,10 @@ function interpret(aex, env) {
       var f = aex.args[0];
       var args = aex.args[1];
 
+      if (!Array.isArray(args)) {
+        args = [args];
+      }
+
       console.log(f);
       console.log(args);
       console.log(JSON.stringify(env));
@@ -275,7 +294,7 @@ function interpret(aex, env) {
       throw new Error(`Could not interpret ${x}`);
     }
   } else {
-    if (typeof(aex) == "object") {
+    if (aex != null && typeof(aex) == "object") {
       return [aex.valueOf(), env];
     } else {
       return [aex, env];
@@ -284,11 +303,15 @@ function interpret(aex, env) {
 }
 
 function interpret_list(args, env) {
+  console.log("INTERPRET_LIST");
+  console.log(args);
   var new_list = [];
   for (arg of args) {
     var [new_arg, env] = interpret(arg, env);
     new_list.push(new_arg);
   }
+  console.log("new_list");
+  console.log(new_list);
   return [new_list, env];
 }
 
@@ -308,7 +331,7 @@ function interpret_lib(f, args, env) {
 } 
 
 function interpret_js_lib(f, args, env) {
-  return julialibapl(f, args, env);
+  return jslibapl(f, args, env);
 }
 
 function interpret_field(x, f, env) {
@@ -416,18 +439,18 @@ function interpret_object_call(f, args, env) {
     var [field_value, env2] = interpret(args[i], env2);
     field_values[field_name] = field_value;
     // object_repr = update(object_repr, field_name, field_value)
-    env2.current_var_values[field_name] = field_value
+    env2.current_var_values[field_name] = field_value;
 
   }
 
   if (fields.length == 0) { 
-    var object_repr = {"id" : env.state.objectsCreated, "origin" : origin, "type" : f, "alive" : true, "custom_fields" : field_values, "render" : null} 
+    var object_repr = {"id" : env.state.objectsCreated, "origin" : origin, "type" : f, "alive" : true, "custom_fields" : field_values, "render" : null} ;
   } else {
-    var [render, env2] = interpret(env.state.object_types[f].render, env2)
-    var render = Array.isArray(render) ? render : [render]
-    var object_repr = {"id" : env.state.objectsCreated, "origin" : origin, "type" : f, "alive" : true, "custom_fields" : field_values, "render" : render}
+    var [render, env2] = interpret(env.state.object_types[f].render, env2);
+    var render = Array.isArray(render) ? render : [render];
+    var object_repr = {"id" : env.state.objectsCreated, "origin" : origin, "type" : f, "alive" : true, "custom_fields" : field_values, "render" : render};
   }
-  env.current_var_values = old_current_var_values
+  env.current_var_values = old_current_var_values;
   return [object_repr, env];
 }
 
@@ -547,14 +570,16 @@ function interpret_updateObj(args, env) {
     return [new_list, env2];
   } else if (numFunctionArgs == 0) {
     var obj = args[0];
-    var field_string = args[1];
+    var field_string = JSON.stringify(args[1]).slice(8, -2);
     var new_value = args[2];
-    var new_obj = update(obj, field_string, new_value);
+
+    obj.custom_fields = update(obj.custom_fields, field_string, new_value);
+    var new_obj = obj;
 
     // # update render
     var object_type = env.state.object_types[obj.type];
     
-    var old_current_var_values = copy(env.current_var_values);
+    var old_current_var_values = JSON.parse(JSON.stringify(env.current_var_values));
     var env3 = JSON.parse(JSON.stringify(env2));
     var fields = object_type.fields;
     for (i = 0; i < fields.length; i++) {

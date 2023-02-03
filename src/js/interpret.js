@@ -112,12 +112,18 @@ function update_state(env_) {
   var env_ = update(env_, "click", null)
 
   // add updated variable values to history
-  for (key in env_.state.histories) {   
-    env_.state.histories[key][env_.state.time] = JSON.parse(JSON.stringify(env_.current_var_values[key]))
+  for (key in env_.state.histories) {
+    var val = env_.current_var_values[key];
+    if (Array.isArray(val)) { 
+      if (val.length > 0 && val[0].id != undefined) {
+        val = env_.current_var_values[key].filter(obj => obj.alive);
+      }
+    }   
+    env_.state.histories[key][env_.state.time] = JSON.parse(JSON.stringify(val))
   
     // delete earlier times stored in history, since we only use prev up to 1 level back
     if (env_.state.time > 0) {
-      delete env_.state.histories[env_.state.time - 1]
+      // delete env_.state.histories[key][(env_.state.time - 1).toString()];
     }
 
   }
@@ -130,7 +136,7 @@ function update_state(env_) {
   // update scene.objects 
   var new_scene_objects = []
   for (key in env_.current_var_values) {
-    if (typeof(env_.current_var_values[key]) == "object" && env_.current_var_values[key].id != undefined || (Array.isArray(env_.current_var_values[key]) && ((env_.current_var_values[key].length) > 0) && typeof(env_.current_var_values[key][1]) == "object" && env_.current_var_values[key][1].id != undefined)) {
+    if (typeof(env_.current_var_values[key]) == "object" && env_.current_var_values[key].id != undefined || (Array.isArray(env_.current_var_values[key]) && ((env_.current_var_values[key].length) > 0) && typeof(env_.current_var_values[key][0]) == "object" && env_.current_var_values[key][0].id != undefined)) {
       var object_val = env_.current_var_values[key]
       if (Array.isArray(object_val)) { 
         new_scene_objects.push(...object_val)
@@ -225,3 +231,139 @@ function test_particle_list() {
   // console.log(env_.state.histories.particle);
   return [`0`, `1`, `2`, `3`, `4`, `5`].map(i => [env_.state.histories.particles[i][0].origin, env_.state.histories.particles[i][1].origin]);
 }
+
+function test_particle_actual() {
+  var program_str = `(program
+                      (= GRID_SIZE 16)
+                      
+                      (object Particle (Cell 0 0 "blue"))
+                      
+                      (: particles (List Particle))
+                      (= particles 
+                        (initnext (list) 
+                                  (updateObj (prev particles) (--> obj (uniformChoice (list (moveLeft obj) (moveRight obj) (moveDown obj) (moveUp obj)) ))))) 
+                      
+                      (on clicked (= particles (addObj particles (Particle (Position (.. click x) (.. click y))))))
+                      )`
+  var aex = parseau(program_str);
+
+  var [aex_, env_] = start(aex);
+
+  for (let i = 0; i < 5; i++) {
+    if (i % 3 == 1) {
+      var user_event = {"left" : false, "right" : false, "up" : false, "down" : false, "click" : {"x" : Math.floor(15 * Math.random()), "y" : Math.floor(15 * Math.random())}}
+    } else {
+      var user_event = {"left" : false, "right" : false, "up" : false, "down" : false, "click" : null}
+    }
+    // console.log(i);
+    env_ = step(aex_, env_, user_event);
+  }
+  // console.log(env_.state.histories.particle);
+  return [`0`, `1`, `2`, `3`, `4`, `5`].map(i => [env_.state.histories.particles[i].map(o => [o.origin.x, o.origin.y])]);
+}
+
+function test_ants_actual() {
+  var program_str = `(program
+                      (= GRID_SIZE 16)
+                      
+                      (object Ant (Cell 0 0 "gray"))
+                      (object Food (Cell 0 0 "red"))
+                      
+                      (: ants (List Ant))
+                      (= ants (initnext (list (Ant (Position 5 5)) (Ant (Position 1 14))) (prev ants)))
+                      
+                      (: foods (List Food))
+                      (= foods (initnext (list) (prev foods)))
+                      
+                      (on true (= ants (updateObj (prev ants) (--> obj (move obj (unitVector obj (closest obj Food)))))))
+                      (on true (= foods (updateObj (prev foods) (--> obj (if (intersects obj (prev ants))
+                                                       then (removeObj obj)
+                                                       else obj)))))
+
+                      (on clicked (= foods (addObj foods (map Food (randomPositions GRID_SIZE 2)))))
+
+                      )`
+  var aex = parseau(program_str);
+
+  var [aex_, env_] = start(aex);
+
+  for (let i = 0; i < 60; i++) {
+    if (i == 1) {
+      var user_event = {"left" : false, "right" : false, "up" : false, "down" : false, "click" : {"x" : Math.floor(15 * Math.random()), "y" : Math.floor(15 * Math.random())}}
+    } else {
+      var user_event = {"left" : false, "right" : false, "up" : false, "down" : false, "click" : null}
+    }
+    // console.log(i);
+    env_ = step(aex_, env_, user_event);
+  }
+  // console.log(env_.state.histories.particle);
+  return env_;
+  // return [`0`, `1`, `2`, `3`, `4`, `5`].map(i => [env_.state.histories.particles[i].map(o => [o.origin.x, o.origin.y])]);
+}
+
+function test_lights_actual() {
+  var program_str = `(program
+                      (= GRID_SIZE 10)
+                      
+                      (object Light (: on Bool) (Cell 0 0 (if on then "yellow" else "white")))
+                      
+                      (: lights (List Light))
+                      (= lights (initnext (map (--> pos (Light false pos)) (filter (--> pos (== (.. pos x) (.. pos y))) (allPositions GRID_SIZE))) 
+                                          (prev lights)))
+                      
+                      (on clicked (= lights (updateObj lights (--> obj (updateObj obj "on" (! (.. obj on)))))))
+
+                      )`
+  var aex = parseau(program_str);
+
+  var [aex_, env_] = start(aex);
+
+  for (let i = 0; i < 5; i++) {
+    if (i % 3 == 1) {
+      var user_event = {"left" : false, "right" : false, "up" : false, "down" : false, "click" : {"x" : Math.floor(15 * Math.random()), "y" : Math.floor(15 * Math.random())}}
+    } else {
+      var user_event = {"left" : false, "right" : false, "up" : false, "down" : false, "click" : null}
+    }
+    // console.log(i);
+    env_ = step(aex_, env_, user_event);
+  }
+  // console.log(env_.state.histories.particle);
+  return env_;
+// return [`0`, `1`, `2`, `3`, `4`, `5`].map(i => [env_.state.histories.particles[i].map(o => [o.origin.x, o.origin.y])]);
+}
+
+function test_paint_actual() {
+  var program_str = `(program
+    (= GRID_SIZE 16)
+    
+    (object Particle (: color String) (Cell 0 0 color))
+    
+    (: particles (List Particle))
+    (= particles (initnext (list) (prev particles)))
+    
+    (: currColor String)
+    (= currColor (initnext "red" (prev currColor)))
+    
+    (on clicked (= particles (addObj (prev particles) (Particle currColor (Position (.. click x) (.. click y))))))
+    (on (& up (== (prev currColor) "red")) (= currColor "gold"))
+    (on (& up (== (prev currColor) "gold")) (= currColor "green"))
+    (on (& up (== (prev currColor) "green")) (= currColor "blue"))
+    (on (& up (== (prev currColor) "blue")) (= currColor "purple"))
+    (on (& up (== (prev currColor) "purple")) (= currColor "red"))
+    )`
+  var aex = parseau(program_str);
+
+  var [aex_, env_] = start(aex);
+
+  for (let i = 0; i < 5; i++) {
+    if (i % 3 == 1) {
+      var user_event = {"left" : false, "right" : false, "up" : false, "down" : false, "click" : {"x" : Math.floor(15 * Math.random()), "y" : Math.floor(15 * Math.random())}}
+    } else {
+      var user_event = {"left" : false, "right" : false, "up" : true, "down" : false, "click" : null}
+    }
+    // console.log(i);
+    env_ = step(aex_, env_, user_event);
+  }
+  // console.log(env_.state.histories.particle);
+  return env_;
+// return [`0`, `1`, `2`, `3`, `4`, `5`].map(i => [env_.state.histories.particles[i].map(o => [o.origin.x, o.origin.y])]);

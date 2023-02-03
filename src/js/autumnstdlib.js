@@ -1,4 +1,4 @@
-module.exports = { Cell, Position, moveLeft, moveRight, moveUp, moveDown, ObjectType, updateObj, removeObj };
+module.exports = { Cell, Position, moveLeft, moveRight, moveUp, moveDown, ObjectType, updateObj, removeObj, uniformChoice, addObj, occurred, unitVector, closest, randomPositions, move, intersects, allPositions };
 
 function ObjectType(render, fields) {
   console.log("OBJECT_TYPE");
@@ -14,16 +14,23 @@ function Position(args, state=null) {
 }
 
 function Cell(args, state=null) {
-  var [x, y, color] = args;
-  console.log("CELL")
-  console.log([x, y, color])
-  return {"position" : {"x" : x, "y" : y}, "color" : color };
+  if (args.length == 3) {
+    var [x, y, color] = args;
+    console.log("CELL")
+    console.log([x, y, color])
+    return {"position" : {"x" : x, "y" : y}, "color" : color };
+  } else {
+    var [position, color] = args;
+    console.log("CELL")
+    console.log([position, color])
+    return {"position" : {"x" : position.x, "y" : position.y}, "color" : color };
+  }
 }
 
 function moveLeft(args, state=null) {
   console.log("MOVELEFT");
   console.log(args);
-  var obj = args[0];
+  var obj = JSON.parse(JSON.stringify(args[0]));
   obj.origin.x = obj.origin.x - 1;
   return obj;
 }
@@ -31,7 +38,7 @@ function moveLeft(args, state=null) {
 function moveRight(args, state=null) {
   console.log("MOVERIGHT");
   console.log(args);
-  var obj = args[0];
+  var obj = JSON.parse(JSON.stringify(args[0]));
   obj.origin.x = obj.origin.x + 1;
   return obj;
 }
@@ -39,16 +46,16 @@ function moveRight(args, state=null) {
 function moveUp(args, state=null) {
   console.log("MOVEUP");
   console.log(args);
-  var obj = args[0];
-  obj.origin.x = obj.origin.y - 1;
+  var obj = JSON.parse(JSON.stringify(args[0]));
+  obj.origin.y = obj.origin.y - 1;
   return obj;
 }
 
 function moveDown(args, state=null) {
   console.log("MOVEDOWN");
   console.log(args);
-  var obj = args[0];
-  obj.origin.x = obj.origin.y + 1;
+  var obj = JSON.parse(JSON.stringify(args[0]));
+  obj.origin.y = obj.origin.y + 1;
   return obj;
 }
 
@@ -56,9 +63,9 @@ function prev(args, state=null) {
   var obj = args[0];
   var prev_objects = state.scene.objects.filter(o => o.id == obj.id);
   if (prev_objects.length != 0) {
-    return prev_objects[0];
+    return JSON.parse(JSON.stringify(prev_objects[0]));
   } else {
-    return obj;
+    return JSON.parse(JSON.stringify(obj));
   }
 }
 
@@ -66,10 +73,12 @@ function render(args, state=null) {
   var obj = args[0];
   if (obj.alive) {
     if (obj.render == null) {
-      render_ =state.object_types[obj.type].render;
-      return render_.map(cell => Cell([move(cell.position, obj.origin), cell.color]));
+      render_ = state.object_types[obj.type].render;
+      console.log("render_");
+      console.log(render_);
+      return render_.map(cell => Cell([move([cell.position, obj.origin]), cell.color]));
     } else {
-      return obj.render.map(cell => Cell([move(cell.position, obj.origin), cell.color]));
+      return obj.render.map(cell => Cell([move([cell.position, obj.origin]), cell.color]));
     }
   } else {
     return [];
@@ -87,18 +96,42 @@ function occurred(args, state=null) {
 }
 
 function uniformChoice(args, state=null) {
+  console.log("UNIFORMCHOICE");
   var freePositions = args[0];
-  return freePositions[Math.floor(Math.random()*freePositions.length)];
+  console.log("freePositions");
+  console.log(freePositions);
+  if (args.length == 1) {
+    return freePositions[Math.floor(Math.random()*freePositions.length)];
+  } else {
+    var n = args[1];
+    var vals = [];
+    for (let i = 0; i < n; i++) {
+      vals.push(freePositions[Math.floor(Math.random()*freePositions.length)]);
+    }
+    return vals;
+  }
 }
 
 function isWithinBounds(args, state=null) {
-  var obj = args[0];
-  return render(obj, state).filter(cell => !isWithinBounds(cell.position, state)).length == 0;
+  if (args[0].id != undefined) {
+    var obj = args[0];
+    return render(obj, state).filter(cell => !isWithinBounds([cell.position], state)).length == 0;
+  } else {
+    var position = args[0];
+    var GRID_SIZE = state.histories.GRID_SIZE['0']; 
+    if (Array.isArray(GRID_SIZE)) { 
+      var [GRID_SIZE_X, GRID_SIZE_Y] = GRID_SIZE;
+    } else {
+      var GRID_SIZE_X = GRID_SIZE;
+      var GRID_SIZE_Y = GRID_SIZE;
+    }
+    return (position.x >= 0) && (position.x < GRID_SIZE_X) && (position.y >= 0) && (position.y < GRID_SIZE_Y);
+  }
 }
 
 function isOutsideBounds(args, state=null) {
   var obj = args[0];
-  return render(obj, state).filter(cell => isWithinBounds(cell.position, state)).length == 0;
+  return render(obj, state).filter(cell => isWithinBounds([cell.position], state)).length == 0;
 }
 
 function clicked(args, state=null) {
@@ -163,7 +196,7 @@ function objClicked(args, state=null) {
     if (clicked_objects.length == 0) {
       return null;
     } else {
-      return clicked_objects[0];
+      return JSON.parse(JSON.stringify(clicked_objects[0]));
     }
   }
 }
@@ -177,6 +210,8 @@ function objClicked(args, state=null) {
 // }
 
 function intersects(args, state=null) {
+  console.log("INTERSECTS");
+  console.log(args);
   if (args.length == 2) {
     var [obj1, obj2] = args;
 
@@ -201,10 +236,27 @@ function intersects(args, state=null) {
         var [GRID_SIZE_X, GRID_SIZE_Y] = GRID_SIZE;
         var nums1 = render([obj1], state).map(cell => GRID_SIZE_X*cell.position.y + cell.position.x);
         var nums2 = unfold([obj2.map(o => render([o], state))]).map(cell => GRID_SIZE_X*cell.position.y + cell.position.x);
+        
         return nums1.filter(n => nums2.includes(n)).length != 0;
       } else {
+        console.log(JSON.stringify(obj1));
+        console.log(JSON.stringify(obj2));
+
+        console.log("GRID_SIZE");
+        console.log(GRID_SIZE);
+        console.log("HUH");
+        console.log(render([obj1], state));
+        console.log("HUH END");
+        console.log(unfold([obj2.map(o => render([o], state))]));
+        console.log("HUH END 2");
         var nums1 = render([obj1], state).map(cell => GRID_SIZE*cell.position.y + cell.position.x);
         var nums2 = unfold([obj2.map(o => render([o], state))]).map(cell => GRID_SIZE*cell.position.y + cell.position.x);
+        
+        console.log("nums1");
+        console.log(nums1);
+        console.log("nums2");
+        console.log(nums2);
+        
         return nums1.filter(n => nums2.includes(n)).length != 0;
       }
 
@@ -248,16 +300,16 @@ function addObj(args, state=null) {
   var [arr, obj] = args; 
   var new_arr = JSON.parse(JSON.stringify(arr));
   if (!Array.isArray(obj)) {
-    new_arr.push(obj);
+    new_arr.push(JSON.parse(JSON.stringify(obj)));
   } else {
-    new_arr.push(...obj);
+    new_arr.push(...JSON.parse(JSON.stringify(obj)));
   }
   return new_arr;
 }
 
 function removeObj(args, state=null) {
   if (args.length == 2) {
-    var [arr, x] = args; 
+    var [arr, x] = JSON.parse(JSON.stringify(args)); 
     if (x.id != undefined) { // x is n object
       arr.filter(elt => elt.id == x.id).foreach(x => x.alive = false);
     } else {
@@ -265,7 +317,7 @@ function removeObj(args, state=null) {
     }
     return arr;
   } else {
-    var obj = args[0];
+    var obj = JSON.parse(JSON.stringify(args[0]));
     obj.alive = false;
     return obj;
   }
@@ -306,16 +358,18 @@ function rect(args, state=null) {
 }
 
 function unitVector(args, state=null) {
+  console.log("UNITVECTOR");
+  console.log(args);
   if (args.length == 2) {
     var [a, b] = args;
     if (a.id == undefined && b.id == undefined) {
-      var deltaX = position2.x - position1.x;
-      var deltaY = position2.y - position1.y;
-      if (Math.floor(Math.absolute(Math.sign(deltaX))) == 1 && Math.floor(Math.absolute(Math.sign(deltaY))) == 1) {
-        return Position([sign(deltaX), 0])
+      var deltaX = b.x - a.x;
+      var deltaY = b.y - a.y;
+      if (Math.floor(Math.abs(Math.sign(deltaX))) == 1 && Math.floor(Math.abs(Math.sign(deltaY))) == 1) {
+        return Position([Math.sign(deltaX), 0])
         // uniformChoice(rng, [Position(sign(deltaX), 0), Position(0, sign(deltaY))])
       } else {
-        return Position([sign(deltaX), sign(deltaY)])  
+        return Position([Math.sign(deltaX), Math.sign(deltaY)])  
       }
     } else if (a.id != undefined && b.id == undefined) {
       return unitVector([a.origin, b]);
@@ -326,7 +380,7 @@ function unitVector(args, state=null) {
     }
   } else {
     var position = args[0];
-    return unitVector([Position([0, 0], position)]);
+    return unitVector([Position([0, 0]), position]);
   }
 }
 
@@ -343,7 +397,7 @@ function adjacent(args, state=null) {
     var [position1, position2, unitSize] = args;
     return [Position([0, 1]), Position([0, -1]), Position([1, 0]), Position([-1, 0])].map(p => JSON.stringify(p)).includes(JSON.stringify(displacement([position1, position2])));
   } else if (Array.isArray(args[1])) { // cell/array of cells version
-    var [cell1, cells, unitSize];
+    var [cell1, cells, unitSize] = args;
     return cells.filter(x => adjacent([cell, x, unitSize])).length != 0;
   } else { // cell/cell version
     var [cell1, cell2, unitSize] = args;
@@ -352,13 +406,13 @@ function adjacent(args, state=null) {
 }
 
 function adjacentObjs(args, state=null) {
-  var [obj, unitSize] = args;
-  return state.scene.objects.filter(o => adjacent([o.origin, obj.origin, unitSize]) && (obj.id != o.id))
+  var [obj, unitSize] = JSON.parse(JSON.stringify(args));
+  return JSON.parse(JSON.stringify(state.scene.objects.filter(o => adjacent([o.origin, obj.origin, unitSize]) && (obj.id != o.id))))
 }
 
 function adjacentObjsDiag(args, state=null) {
   var obj = args[0];
-  return state.scene.objects.filter(o => adjacentDiag(o.origin, obj.origin) && (obj.id != o.id));
+  return JSON.parse(JSON.stringify(state.scene.objects.filter(o => adjacentDiag([o.origin, obj.origin]) && (obj.id != o.id))));
 }
 
 function adjacentDiag(args, state=null) {
@@ -396,9 +450,16 @@ function intersect(arr1, arr2) {
 // }
 
 function move(args, state=null) {
+  console.log("MOVE");
+  console.log(args);
   if (args.length == 2) {
     var [a, b] = args;
-    if (a.color == undefined && b.color == undefined) { // position, position
+    if (a.id != undefined) {
+      a.origin = move([a.origin, b]);
+      console.log("a");
+      console.log(a);
+      return JSON.parse(JSON.stringify(a));
+    } else if (a.color == undefined && b.color == undefined) { // position, position
       return Position([a.x + b.x, a.y + b.y]);
     } else if (a.color == undefined && b.color != undefined) { // position, cell
       return Position([a.x + b.position.x, a.y + b.position.y]);
@@ -406,17 +467,17 @@ function move(args, state=null) {
       return Position([a.position.x + b.x, a.position.y + b.y]);    
     }
   } else { // args.length == 3
-    var [object, x, y] = args;
+    var [object, x, y] = JSON.parse(JSON.stringify(args));
     return move([object, Position([x, y])]);
   }
 }
 
 function moveNoCollision(args, state=null) {
   if (args.length == 2) {
-    var [object, position] = args;
+    var [object, position] = JSON.parse(JSON.stringify(args));
     return (isWithinBounds([move([object, position])], state) && isFree([move([object, position.x, position.y]), object], state)) ? move([object, position.x, position.y]) : object; 
   } else {
-    var [object, x, y] = args;
+    var [object, x, y] = JSON.parse(JSON.stringify(args));
     return (isWithinBounds([move([object, x, y])], state) && isFree([move([object, x, y]), object], state)) ? move([object, x, y]) : object;
   }
 }
@@ -430,22 +491,22 @@ function moveNoCollision(args, state=null) {
 // }
 
 function moveLeftNoCollision(args, state=null) {
-  var object = args[0];
+  var object = JSON.parse(JSON.stringify(args[0]));
   return (isWithinBounds([move([object, -1, 0])], state) && isFree([move([object, -1, 0]), object], state)) ? move([object, -1, 0]) : object;
 }
 
 function moveRightNoCollision(args, state=null) {
-  var object = args[0];
+  var object = JSON.parse(JSON.stringify(args[0]));
   return (isWithinBounds([move([object, 1, 0])], state) && isFree([move([object, 1, 0]), object], state)) ? move([object, 1, 0]) : object
 }
 
 function moveUpNoCollision(args, state=null) {
-  var object = args[0];
+  var object = JSON.parse(JSON.stringify(args[0]));
   return (isWithinBounds([move([object, 0, -1])], state) && isFree([move([object, 0, -1]), object], state)) ? move([object, 0, -1]) : object;
 }
 
 function moveDownNoCollision(args, state=null) {
-  var object = args[0];
+  var object = JSON.parse(JSON.stringify(args[0]));
   return (isWithinBounds([move([object, 0, 1])], state) && isFree([move([object, 0, 1]), object], state)) ? move([object, 0, 1]) : object;
 }
 
@@ -470,6 +531,8 @@ function moveDownNoCollision(args, state=null) {
 // }
 
 function randomPositions(args, state=null) {
+  console.log("RANDOMPOSITIONS");
+  console.log(args);
   var [GRID_SIZE, n] = args;
   if (Array.isArray(GRID_SIZE)) {
     var [GRID_SIZE_X, GRID_SIZE_Y] = GRID_SIZE;
@@ -485,7 +548,7 @@ function distance(args, state=null) {
   if (!Array.isArray(args[0]) && !Array.isArray(args[1])) {
     if (args[0].id == undefined && args[1].id == undefined) { // position, position
       var [position1, position2] = args;
-      return Math.absolute(position1.x - position2.x) + Math.absolute(position1.y - position2.y);
+      return Math.abs(position1.x - position2.x) + Math.abs(position1.y - position2.y);
     } else if (args[0].id != undefined && args[1].id != undefined) { // object, object
       var [object1, object2] = args;
       var position1 = object1.origin;
@@ -503,7 +566,7 @@ function distance(args, state=null) {
     if (objects.length == 0) {
       return Number.MAX_SAFE_INTEGER;
     } else {
-      var distances = objects.map(obj => distance(object, obj));
+      var distances = objects.map(obj => distance([object, obj]));
       return Math.min(...distances);
     }
   } else { // both args are arrays (arr obj, arr obj)
@@ -511,7 +574,7 @@ function distance(args, state=null) {
     if (objects1.length == 0 && objects2.length == 0) {
       return Number.MAX_SAFE_INTEGER;
     } else {
-      var distances = unfold(objects1.map(obj => distance(obj, objects2)));
+      var distances = unfold([objects1.map(obj => distance([obj, objects2]))]);
       return Math.min(...distances);
     }
   }
@@ -542,7 +605,52 @@ function distance(args, state=null) {
 // }
 
 function closest(args, state=null) {
+  console.log("CLOSEST");
+  console.log(args);
+  console.log("huh");
+  var GRID_SIZE = state.histories.GRID_SIZE['0'];
+  if (Array.isArray(GRID_SIZE)) {
+    GRID_SIZE = GRID_SIZE[0];
+  }
+  if (Array.isArray(args[1])) {
+    var [object, arr] = args;
+    if (arr.length == 0) {
+      return object.origin;
+    }
+    
+    if (arr[0].x != undefined) { // array of positions
+      var [object, positions] = JSON.parse(JSON.stringify(args));
+      var distances = positions.map(pos => distance([pos, object.origin]));
+      distances.sort();
+      var closestDistance = distances[0];
+      var closest = positions.filter(pos => distance([pos, object.origin]) == closestDistance)[0];
+      return closest;
+    } else { // array of types
+      var [object, types] = args;
+      var objects_of_type = state.scene.objects.filter(obj => (types.includes(obj.type)) && (obj.alive))
+      if (objects_of_type.length == 0) {
+        return object.origin;
+      } else {
+        var min_distance = Math.min(...objects_of_type.map(obj => distance([object, obj])));
+        var objects_of_min_distance = JSON.parse(JSON.stringify(objects_of_type.filter(obj => distance([object, obj]) == min_distance)));
+        objects_of_min_distance.sort((o1, o2) => o1.origin.y * GRID_SIZE + o1.origin.x < o2.origin.y * GRID_SIZE + o2.origin.x ? -1 : 1);
+        return objects_of_min_distance[0].origin;      
+      }
+    }
+  } else { // obj, type
+    var [object, type] = args;
+    var objects_of_type = state.scene.objects.filter(obj => (obj.type == type) && (obj.alive))
+    if (objects_of_type.length == 0) {
+      return object.origin;
+    } else {
+      console.log("hullo");
 
+      var min_distance = Math.min(...objects_of_type.map(obj => distance([object, obj])));
+      var objects_of_min_distance = JSON.parse(JSON.stringify(objects_of_type.filter(obj => distance([object, obj]) == min_distance)));
+      objects_of_min_distance.sort((o1, o2) => o1.origin.y * GRID_SIZE + o1.origin.x < o2.origin.y * GRID_SIZE + o2.origin.x ? -1 : 1);
+      return objects_of_min_distance[0].origin;      
+    }
+  }
 }
 
 // function closestRandom(args, state=null) {
@@ -569,10 +677,6 @@ function mapPositions(args, state=null) {
 
 }
 
-function allPositions(args, state=null) {
-
-}
-
 // function updateOrigin(args, state=null) {
 
 // }
@@ -590,14 +694,18 @@ function nextSolid(args, state=null) {
 }
 
 function allPositions(args, state=null) {
-  var GRID_SIZE = state.histories.GRID_SIZE['0'];
+  var GRID_SIZE = args[0];
+  console.log("GRID_SIZE");
+  console.log(GRID_SIZE);
   if (Array.isArray(GRID_SIZE)) {
     var [GRID_SIZE_X, GRID_SIZE_Y] = GRID_SIZE;
   } else {
     var [GRID_SIZE_X, GRID_SIZE_Y] = [GRID_SIZE, GRID_SIZE];
   }
+  console.log(GRID_SIZE_X);
+  console.log(GRID_SIZE_Y);
   var nums = Array.from(Array(GRID_SIZE_X*GRID_SIZE_Y - 1).keys()).map(x => x + 1);
-  return nums.map(n => Position(num % GRID_SIZE_X, Math.floor(num / GRID_SIZE_X), state));
+  return nums.map(num => Position([num % GRID_SIZE_X, Math.floor(num / GRID_SIZE_X)], state));
 }
 
 function unfold(args, state=null) {
