@@ -1,5 +1,3 @@
-module.exports = { Cell, Position, moveLeft, moveRight, moveUp, moveDown, ObjectType, updateObj, removeObj, uniformChoice, addObj, occurred, unitVector, closest, randomPositions, move, intersects, allPositions };
-
 function ObjectType(render, fields) {
   console.log("OBJECT_TYPE");
   console.log({"render" : render, "fields" : fields});
@@ -135,23 +133,23 @@ function isOutsideBounds(args, state=null) {
 }
 
 function clicked(args, state=null) {
+  console.log("clicked woo");
+  console.log(args);
+  console.log(JSON.stringify(args));
+  console.log(state);
+  console.log(JSON.stringify(state));
   if (args.length == 2) {
     if (Array.isArray(args[1])) { // clicked array of objects
       var [click, objects] = args;
       if (click == null) {
         return false;
       } else {
-        var GRID_SIZE = state.histories.GRID_SIZE['0'];
-        if (Array.isArray(GRID_SIZE)) {
-          var GRID_SIZE_X = GRID_SIZE[0]
-          var nums = objects.map(object => render([object], state).map(cell => GRID_SIZE_X*cell.position.y + cell.position.x));
-          return nums.includes(GRID_SIZE_X * click.y + click.x);
-        } else {
-          nums = objects.map(object => render([object], state).map(cell => GRID_SIZE*cell.position.y + cell.position.x));
-          return nums.include(GRID_SIZE * click.y + click.x)
-        }
+        console.log("clicked sad");
+        console.log("ret_val");
+        console.log(objects.map(obj => clicked([click, obj], state)).reduce((a, b) => a || b, false));
+        console.log("huh");
+        return objects.map(obj => clicked([click, obj], state)).reduce((a, b) => a || b, false);
       }
-
     } else if (args[1].id != undefined) { // clicked(click, object)
 
       var [click, object] = args;
@@ -165,7 +163,7 @@ function clicked(args, state=null) {
           return nums.includes(GRID_SIZE_X * click.y + click.x);
         } else {
           nums = render([object], state).map(cell => GRID_SIZE*cell.position.y + cell.position.x)
-          return nums.include(GRID_SIZE * click.y + click.x)
+          return nums.includes(GRID_SIZE * click.y + click.x)
         }
       }
 
@@ -337,7 +335,74 @@ function adjPositions(args, state=null) {
 }
 
 function isFree(args, state=null) {
+  if (args.length == 1) {
+    if (Array.isArray(args[0])) {
+      var positions = args[0];
+      return positions.map(pos => isFree([pos], state)).reduce((a,b) => a || b, false);
+    } else {
+      if (args[0] == null) {
+        return false;
+      } else {
+        var position = args[0];
+        return renderScene([state.scene], state).filter(cell => cell.position.x == position.x && cell.position.y == position.y).length == 0;
+      }
+    }
+  } else if (args.length == 2) {
+    if (args[0].id == undefined && args[1].id == undefined) { // position, position
+      var [start, stop] = args;
+      var GRID_SIZE = state.histories.GRID_SIZE['0'];
+      if (Array.isArray(GRID_SIZE)) { 
+        var GRID_SIZE_X = GRID_SIZE[0];
+        var GRID_SIZE_Y = GRID_SIZE[1];
+      } else {
+        var GRID_SIZE_X = GRID_SIZE;
+        var GRID_SIZE_Y = GRID_SIZE;
+      }
+      var translated_start = GRID_SIZE_X * start.y + start.x; 
+      var translated_stop = GRID_SIZE_X * stop.y + stop.x;
+      if (translated_start < translated_stop) {
+        var ordered_start = translated_start;
+        var ordered_end = translated_stop;
+      } else {
+        var ordered_start = translated_stop;
+        var ordered_end = translated_start;
+      }
+      var nums = Array.from(Array(ordered_end - ordered_start + 1).keys()).map(x => x + ordered_start); // [ordered_start:ordered_end;]
+      return nums.map(num => isFree([Position([num % GRID_SIZE_X, Math.floor(Int, num / GRID_SIZE_X)])], state)).reduce((a, b) => (a && b), true);
+    } else if (args[0].id != undefined && args[1].id != undefined) { // object, object
+      var [object, orig_object] = args;
+      return render([object], state).map(cell => cell.position).map(x => isFree([x, orig_object], state)).reduce((a, b) => (a && b), true);
+    } else { // position, object
+      return renderScene([Scene(state.scene.objects.filter(obj => obj.id != object.id), state.scene.background)], state).filter(cell => cell.position.x == position.x && cell.position.y == position.y).length == 0;
+    }
 
+  } else if (args.length == 3) {
+    var [start, stop, object] = args;
+    var GRID_SIZE = state.histories.GRID_SIZE['0'];
+    if (Array.isArray(GRID_SIZE)) { 
+      var GRID_SIZE_X = GRID_SIZE[0];
+      var GRID_SIZE_Y = GRID_SIZE[1];
+    } else {
+      var GRID_SIZE_X = GRID_SIZE;
+      var GRID_SIZE_Y = GRID_SIZE;
+    }
+    var translated_start = GRID_SIZE_X * start.y + start.x; 
+    var translated_stop = GRID_SIZE_X * stop.y + stop.x;
+    if (translated_start < translated_stop) {
+      var ordered_start = translated_start;
+      var ordered_end = translated_stop;
+    } else {
+      var ordered_start = translated_stop;
+      var ordered_end = translated_start;
+    }
+    var nums = Array.from(Array(ordered_end - ordered_start + 1).keys()).map(x => x + ordered_start); // [ordered_start:ordered_end;]
+    return nums.map(num => isFree([Position([num % GRID_SIZE_X, Math.floor(Int, num / GRID_SIZE_X)]), object], state)).reduce((a, b) => (a && b), true);
+  }
+}
+
+// helper
+function Scene(objects, background) {
+  return {"objects" : objects, "background" : background };
 }
 
 function rect(args, state=null) {
@@ -674,7 +739,8 @@ function closest(args, state=null) {
 // }
 
 function mapPositions(args, state=null) {
-
+  var [constructor, GRID_SIZE, filterFunction, args_] = args;
+  return allPositions([GRID_SIZE]).filter(pos => filterFunction(pos)).map(x => constructor(x));
 }
 
 // function updateOrigin(args, state=null) {
@@ -686,11 +752,60 @@ function mapPositions(args, state=null) {
 // }
 
 function nextLiquid(args, state=null) {
-
+  // # # println("nextLiquid")
+  var GRID_SIZE = state.histories.GRID_SIZE[0];
+  if (Array.isArray(GRID_SIZE)) { 
+    var GRID_SIZE_X = GRID_SIZE[0]
+    var GRID_SIZE_Y = GRID_SIZE[1]
+  } else {
+    var GRID_SIZE_X = GRID_SIZE;
+    var GRID_SIZE_Y = GRID_SIZE;
+  }
+  var new_object = JSON.parse(JSON.stringify(object));
+  if (object.origin.y != GRID_SIZE_Y - 1 && isFree([move([object.origin, Position(0, 1)])], state)) {
+    new_object.origin = move(object.origin, Position([0, 1]));
+  } else {
+    var leftHoles = allPositions([GRID_SIZE], state).filter(pos => (pos.y == object.origin.y + 1)
+                                                                && (pos.x < object.origin.x)
+                                                                && isFree([pos], state));
+    var rightHoles = allPositions([GRID_SIZE], state).filter(pos => (pos.y == object.origin.y + 1)
+                                                                 && (pos.x > object.origin.x)
+                                                                 && isFree([pos], state))
+    if ((leftHoles.length != 0) || (rightHoles.length != 0)) {
+      if (leftHoles.length == 0) {
+        closestHole = closest(object, rightHoles);
+        if (isFree([move([closestHole, Position([0, -1])]), move([object.origin, Position([1, 0])])], state)) {
+          new_object.origin = move([object.origin, unitVector([object, move([closestHole, Position([0, -1])])], state)], state);
+        }
+      } else if (rightHoles.length == 0) {
+        closestHole = closest(object, leftHoles);
+        if (isFree([move([closestHole, Position([0, -1])]), move([object.origin, Position([-1, 0])])], state)) {
+          new_object.origin = move([object.origin, unitVector([object, move([closestHole, Position([0, -1])])], state)]);                    
+        }
+      } else {
+        var closestLeftHole = closest([object, leftHoles]);
+        var closestRightHole = closest([object, rightHoles]);
+        if (distance([object.origin, closestLeftHole]) > distance([object.origin, closestRightHole])) {
+          if (isFree([move([object.origin, Position([1, 0])]), move([closestRightHole, Position([0, -1])])], state)) {
+            new_object.origin = move([object.origin, unitVector([new_object, move([closestRightHole, Position([0, -1])])], state)]);
+          } else if (isFree([move([closestLeftHole, Position([0, -1])]), move([object.origin, Position([-1, 0])])], state)) {
+            new_object.origin = move([object.origin, unitVector([new_object, move([closestLeftHole, Position([0, -1])])])], state);
+          }
+        } else {
+          if (isFree([move([closestLeftHole, Position([0, -1])]), move([object.origin, Position([-1, 0])])], state)) {
+            new_object.origin = move([object.origin, unitVector([new_object, move([closestLeftHole, Position([0, -1])])], state)]);
+          } else if (isFree([move([object.origin, Position([1, 0])]), move([closestRightHole, Position([0, -1])])], state)) {
+            new_object.origin = move([object.origin, unitVector([new_object, move([closestRightHole, Position([0, -1])])], state)]);
+          }
+        }
+      }
+    }
+  }
+  return new_object;
 }
 
 function nextSolid(args, state=null) {
-
+  return moveDownNoCollision(args, state);
 }
 
 function allPositions(args, state=null) {
@@ -718,3 +833,52 @@ function unfold(args, state=null) {
   }
   return V;
 }
+
+// exports 
+module.exports = { ObjectType,
+                   Position, 
+                   Cell, 
+                   moveLeft, 
+                   moveRight, 
+                   moveUp, 
+                   moveDown, 
+                   prev,
+                   render,
+                   renderScene,
+                   occurred, 
+                   uniformChoice,
+                   isWithinBounds,
+                   isOutsideBounds,
+                   clicked,
+                   objClicked,
+                   intersects, 
+                   addObj,
+                   removeObj,
+                   updateObj,
+                   filter_fallback,
+                   adjPositions,
+                   isFree,
+                   rect,
+                   unitVector,
+                   displacement,
+                   adjacent,
+                   adjacentObjs,
+                   adjacentObjsDiag,
+                   adjacentDiag,
+                   adj,
+                   intersect,
+                   move,
+                   moveNoCollision,
+                   moveLeftNoCollision,
+                   moveRightNoCollision,
+                   moveUpNoCollision,
+                   moveDownNoCollision,
+                   randomPositions,
+                   distance,
+                   closest,
+                   mapPositions,
+                   nextLiquid,
+                   nextSolid,
+                   allPositions,
+                   unfold,
+ };

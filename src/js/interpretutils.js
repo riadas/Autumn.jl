@@ -1,10 +1,56 @@
 // import { parseau } from "./sexpr.js"
 // import * as AutumnStandardLibrary from "./autumnstdlib.js"
-
 const { parseau } = require("./sexpr.js");
-const { Cell, Position, moveLeft, moveRight, moveUp, moveDown, ObjectType, updateObj, removeObj, occurred, addObj, uniformChoice, closest, unitVector, randomPositions, move, intersects, allPositions } = require("./autumnstdlib.js");
-
 module.exports = { interpret, update };
+
+// imports
+const { ObjectType,
+        Position, 
+        Cell, 
+        moveLeft, 
+        moveRight, 
+        moveUp, 
+        moveDown, 
+        prev,
+        render,
+        renderScene,
+        occurred, 
+        uniformChoice,
+        isWithinBounds,
+        isOutsideBounds,
+        clicked,
+        objClicked,
+        intersects, 
+        addObj,
+        removeObj,
+        updateObj,
+        filter_fallback,
+        adjPositions,
+        isFree,
+        rect,
+        unitVector,
+        displacement,
+        adjacent,
+        adjacentObjs,
+        adjacentObjsDiag,
+        adjacentDiag,
+        adj,
+        intersect,
+        move,
+        moveNoCollision,
+        moveLeftNoCollision,
+        moveRightNoCollision,
+        moveUpNoCollision,
+        moveDownNoCollision,
+        randomPositions,
+        distance,
+        closest,
+        mapPositions,
+        nextLiquid,
+        nextSolid,
+        allPositions,
+        unfold, 
+      } = require("./autumnstdlib.js");
 
 function update(env, x, v) {
   var new_env = JSON.parse(JSON.stringify(env))
@@ -57,23 +103,52 @@ function primapl(f, x, y, env) {
   }
 }
 
-var lib_to_func = {"moveLeft" : moveLeft,
-                   "moveRight" : moveRight,
-                   "Position" : Position,
-                   "Cell" : Cell,
-                   "updateObj" : updateObj,
-                   "removeObj" : removeObj,
-                   "addObj" : addObj,
-                   "moveUp" : moveUp,
-                   "moveDown" : moveDown,
+var lib_to_func = {"ObjectType" : ObjectType,
+                   "Position" : Position, 
+                   "Cell" : Cell, 
+                   "moveLeft" : moveLeft, 
+                   "moveRight" : moveRight, 
+                   "moveUp" : moveUp, 
+                   "moveDown" : moveDown, 
+                   "prev" : prev,
+                   "render" : render,
+                   "renderScene" : renderScene,
                    "occurred" : occurred, 
                    "uniformChoice" : uniformChoice,
-                   "closest" : closest, 
-                   "unitVector" : unitVector, 
-                   "randomPositions" : randomPositions,
+                   "isWithinBounds" : isWithinBounds,
+                   "isOutsideBounds" : isOutsideBounds,
+                   "clicked" : clicked,
+                   "objClicked" : objClicked,
+                   "intersects" : intersects, 
+                   "addObj" : addObj,
+                   "removeObj" : removeObj,
+                   "updateObj" : updateObj,
+                   "filter_fallback" : filter_fallback,
+                   "adjPositions" : adjPositions,
+                   "isFree" : isFree,
+                   "rect" : rect,
+                   "unitVector" : unitVector,
+                   "displacement" : displacement,
+                   "adjacent" : adjacent,
+                   "adjacentObjs" : adjacentObjs,
+                   "adjacentObjsDiag" : adjacentObjsDiag,
+                   "adjacentDiag" : adjacentDiag,
+                   "adj" : adj,
+                   "intersect" : intersect,
                    "move" : move,
-                   "intersects" : intersects,
+                   "moveNoCollision" : moveNoCollision,
+                   "moveLeftNoCollision" : moveLeftNoCollision,
+                   "moveRightNoCollision" : moveRightNoCollision,
+                   "moveUpNoCollision" : moveUpNoCollision,
+                   "moveDownNoCollision" : moveDownNoCollision,
+                   "randomPositions" : randomPositions,
+                   "distance" : distance,
+                   "closest" : closest,
+                   "mapPositions" : mapPositions,
+                   "nextLiquid" : nextLiquid,
+                   "nextSolid" : nextSolid,
                    "allPositions" : allPositions,
+                   "unfold" : unfold,
                   }
 
 function islib(f) {
@@ -393,9 +468,9 @@ function interpret_call(f, params, env) {
 
   // construct environment 
   var old_current_var_values = JSON.parse(JSON.stringify(env.current_var_values));
-  var env2 = JSON.parse(JSON.stringify(env))
+  var env2 = env; // JSON.parse(JSON.stringify(env))
   if (isaexpr(func_args)) {
-    for (i = 0; i < func_args.args.length; i++) {
+    for (let i = 0; i < func_args.args.length; i++) {
       var param_name = func_args.args[i];
       var [param_val, env2] = interpret(params[0], env2);
       env2.current_var_values[param_name] = param_val;
@@ -411,7 +486,7 @@ function interpret_call(f, params, env) {
   var [v, env2] = interpret(func_body, env2);
 
   // return value and original environment, except with state updated
-  var env = update(env, "state", update(env.state, "objectsCreated", env2.state.objectsCreated));
+  // env.objectsCreated = env2.state.objectsCreated;
   env.current_var_values = old_current_var_values;
   return [v, env];
 }
@@ -421,8 +496,7 @@ function interpret_object_call(f, args, env) {
   console.log(f);
   console.log(JSON.stringify(args));
   console.log(JSON.stringify(env));
-  var new_state = update(env.state, "objectsCreated", env.state.objectsCreated + 1);
-  var env = update(env, "state", new_state);
+  env.state.objectsCreated = env.state.objectsCreated + 1;
 
   var [origin, env] = interpret(args[args.length - 1], env);
 
@@ -434,7 +508,7 @@ function interpret_object_call(f, args, env) {
   var env2 = env;
   var fields = env2.state.object_types[f].fields;
   var field_values = {}
-  for (i = 0; i < fields.length; i++) {
+  for (let i = 0; i < fields.length; i++) {
     var field_name = fields[i].args[0];
     var [field_value, env2] = interpret(args[i], env2);
     field_values[field_name] = field_value;
@@ -534,7 +608,7 @@ function interpret_updateObj(args, env) {
     // # # # # # @show map_func
 
     var new_list = []
-    for (item of list) { 
+    for (let item of list) { 
       // # # # # # # println("PRE=PLS WORK")
       // # # # # # # @showΓ2.state.objectsCreated      
       var [new_item, env2] = interpret({"head" : "call", "args" : [map_func, item]}, env2);
@@ -553,7 +627,7 @@ function interpret_updateObj(args, env) {
 
 
     var new_list = [];
-    for (item of list) { 
+    for (let item of list) { 
       var [pred, env2] = interpret({"head" : "call", "args" : [filter_func, item]}, env2);
       if (pred == true) { 
         // # # println("PRED TRUE!")
@@ -573,8 +647,8 @@ function interpret_updateObj(args, env) {
     var field_string = JSON.stringify(args[1]).slice(8, -2);
     var new_value = args[2];
 
-    obj.custom_fields = update(obj.custom_fields, field_string, new_value);
-    var new_obj = obj;
+    var new_obj = JSON.parse(JSON.stringify(obj)); // TODO
+    obj.custom_fields[field_string] = new_value;
 
     // # update render
     var object_type = env.state.object_types[obj.type];
@@ -582,7 +656,7 @@ function interpret_updateObj(args, env) {
     var old_current_var_values = JSON.parse(JSON.stringify(env.current_var_values));
     var env3 = JSON.parse(JSON.stringify(env2));
     var fields = object_type.fields;
-    for (i = 0; i < fields.length; i++) {
+    for (let i = 0; i < fields.length; i++) {
       var field_name = fields[i].args[0];
       var field_value = new_obj.custom_fields[field_name];
       env3.current_var_values[field_name] = field_value;
@@ -591,7 +665,7 @@ function interpret_updateObj(args, env) {
     if (fields.length != 0) { 
       var [render, env3] = interpret(env.state.object_types[obj.type].render, env3);
       var render = Array.isArray(render) ? render : [render];
-      var new_obj = update(new_obj, "render", render);
+      new_obj["render"] = render;
     }
     env2.current_var_values = old_current_var_values;
     return [new_obj, env2];
@@ -608,7 +682,7 @@ function interpret_removeObj(args, env) {
   var [list, env] = interpret(args[0], env);
   var func = args[1];
   var new_list = [];
-  for (item of list) {
+  for (let item of list) {
     var [pred, env] = interpret({"head" : "call", "args" : [func, item]}, env);
     console.log("pred");
     console.log(pred);

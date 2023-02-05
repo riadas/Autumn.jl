@@ -3,7 +3,7 @@
 
 const { parseau } = require("./sexpr.js");
 const { interpret, update } = require("./interpretutils.js");
-
+const { renderScene } = require("./autumnstdlib.js");
 
 function interpret_program(aex, env) {
   if (aex.head != "program") {
@@ -88,11 +88,14 @@ function start(aex) {
   return [aex_, env_]
 }
 
-function step(aex, env, user_events) {
+function step(aex, env, user_events=null) {
+  console.log("STEP");
   // update env with user event 
-  for (user_event in user_events) {
-    if (user_events[user_event] != null) {
-      var env = update(env, user_event, user_events[user_event])
+  if (user_events != null) {
+    for (user_event in user_events) {
+      if (user_events[user_event] != null) {
+        env[user_event] = user_events[user_event];
+      }
     }
   }
 
@@ -107,9 +110,9 @@ function step(aex, env, user_events) {
 function update_state(env_) {
   // reset user events 
   for (user_event of ["left", "right", "up", "down"]) {
-    var env_ = update(env_, user_event, false)
+    env_[user_event] = false;
   }
-  var env_ = update(env_, "click", null)
+  env_["click"] = null;
 
   // add updated variable values to history
   for (key in env_.state.histories) {
@@ -123,7 +126,7 @@ function update_state(env_) {
   
     // delete earlier times stored in history, since we only use prev up to 1 level back
     if (env_.state.time > 0) {
-      // delete env_.state.histories[key][(env_.state.time - 1).toString()];
+      delete env_.state.histories[key][(env_.state.time - 1).toString()];
     }
 
   }
@@ -149,25 +152,29 @@ function update_state(env_) {
   env_.state.scene.objects = new_scene_objects
 
   // update time 
-  var new_state = update(env_.state, "time", env_.state.time + 1)
-  var env_ = update(env_, "state", new_state)
+  env_.state.time = env_.state.time + 1;
   return env_
 }
 
 function interpret_over_time(aex, iters, user_events=[]) {
-  var [new_aex, env_] = start(aex)
+  var [new_aex, env_] = start(aex);
   if (user_events.length == 0) {
-    for (i = 0; i < iters; i++) {
+    for (let i = 0; i < iters; i++) {
       // @show i
-      var env_ = step(new_aex, env_)
+      console.log("i am here");
+      console.log(i);
+      console.log(iters);
+      env_ = step(new_aex, env_);
     }
   } else {
-    for (i = 0; i < iters; i++) {
+    for (let i = 0; i < iters; i++) {
       // @show i
-      var env_ = step(new_aex, env_, user_events[i])
+      console.log("i");
+      console.log(i);
+      var env_ = step(new_aex, env_, user_events[i]);
     }
   }
-  return env_
+  return env_;
 }
 
 function interpret_over_time_variable(aex, var_name, iters, user_events=[]) {
@@ -175,7 +182,23 @@ function interpret_over_time_variable(aex, var_name, iters, user_events=[]) {
 }
 
 function interpret_over_time_observations(aex, iters, user_events=[]) {
-
+  var scenes = [];
+  var [new_aex, env_] = start(aex);
+  scenes.push(renderScene([env_.state.scene], env_.state));
+  if (user_events.length == 0) {
+    for (let i = 0; i < iters; i++) {
+      // # # @show i
+      env_ = step(new_aex, env_);
+      scenes.push(renderScene([env_.state.scene], env_.state));
+    }
+  } else {
+    for (let i = 0; i < iters; i++) {
+      // # # @show i
+      env_ = step(new_aex, env_, user_events[i])
+      scenes.push(renderScene([env_.state.scene], env_.state))
+    }
+  }
+  return scenes;
 }
 
 // TODO: check null usage/equality checks, check 1-index vs. 0-index, etc.
@@ -204,6 +227,7 @@ function test_particle() {
     env_ = step(aex_, env_, user_event);
   }
   // console.log(env_.state.histories.particle);
+  return env_;
   return [`0`, `1`, `2`, `3`, `4`, `5`].map(i => env_.state.histories.particle[i].origin);
 }
 
@@ -229,7 +253,8 @@ function test_particle_list() {
     env_ = step(aex_, env_, user_event);
   }
   // console.log(env_.state.histories.particle);
-  return [`0`, `1`, `2`, `3`, `4`, `5`].map(i => [env_.state.histories.particles[i][0].origin, env_.state.histories.particles[i][1].origin]);
+  return env_;
+  // return [`0`, `1`, `2`, `3`, `4`, `5`].map(i => [env_.state.histories.particles[i][0].origin, env_.state.histories.particles[i][1].origin]);
 }
 
 function test_particle_actual() {
@@ -247,8 +272,9 @@ function test_particle_actual() {
                       )`
   var aex = parseau(program_str);
 
-  var [aex_, env_] = start(aex);
+  // var [aex_, env_] = start(aex);
 
+  var user_events = [];
   for (let i = 0; i < 5; i++) {
     if (i % 3 == 1) {
       var user_event = {"left" : false, "right" : false, "up" : false, "down" : false, "click" : {"x" : Math.floor(15 * Math.random()), "y" : Math.floor(15 * Math.random())}}
@@ -256,10 +282,13 @@ function test_particle_actual() {
       var user_event = {"left" : false, "right" : false, "up" : false, "down" : false, "click" : null}
     }
     // console.log(i);
-    env_ = step(aex_, env_, user_event);
+    // env_ = step(aex_, env_, user_event);
+    user_events.push(user_event);
   }
+  var env_ = interpret_over_time_observations(aex, user_events.length, user_events);
   // console.log(env_.state.histories.particle);
-  return [`0`, `1`, `2`, `3`, `4`, `5`].map(i => [env_.state.histories.particles[i].map(o => [o.origin.x, o.origin.y])]);
+  return env_;
+  // return [`0`, `1`, `2`, `3`, `4`, `5`].map(i => [env_.state.histories.particles[i].map(o => [o.origin.x, o.origin.y])]);
 }
 
 function test_ants_actual() {
@@ -285,8 +314,9 @@ function test_ants_actual() {
                       )`
   var aex = parseau(program_str);
 
-  var [aex_, env_] = start(aex);
+  // var [aex_, env_] = start(aex);
 
+  var user_events = [];
   for (let i = 0; i < 60; i++) {
     if (i == 1) {
       var user_event = {"left" : false, "right" : false, "up" : false, "down" : false, "click" : {"x" : Math.floor(15 * Math.random()), "y" : Math.floor(15 * Math.random())}}
@@ -294,10 +324,12 @@ function test_ants_actual() {
       var user_event = {"left" : false, "right" : false, "up" : false, "down" : false, "click" : null}
     }
     // console.log(i);
-    env_ = step(aex_, env_, user_event);
+    user_events.push(user_event);
+    // env_ = step(aex_, env_, user_event);
   }
+  var observations = interpret_over_time_observations(aex, user_events.length, user_events);
   // console.log(env_.state.histories.particle);
-  return env_;
+  return observations;
   // return [`0`, `1`, `2`, `3`, `4`, `5`].map(i => [env_.state.histories.particles[i].map(o => [o.origin.x, o.origin.y])]);
 }
 
@@ -316,8 +348,9 @@ function test_lights_actual() {
                       )`
   var aex = parseau(program_str);
 
-  var [aex_, env_] = start(aex);
+  // var [aex_, env_] = start(aex);
 
+  var user_events = [];
   for (let i = 0; i < 5; i++) {
     if (i % 3 == 1) {
       var user_event = {"left" : false, "right" : false, "up" : false, "down" : false, "click" : {"x" : Math.floor(15 * Math.random()), "y" : Math.floor(15 * Math.random())}}
@@ -325,10 +358,12 @@ function test_lights_actual() {
       var user_event = {"left" : false, "right" : false, "up" : false, "down" : false, "click" : null}
     }
     // console.log(i);
-    env_ = step(aex_, env_, user_event);
+    // env_ = step(aex_, env_, user_event);
+    user_events.push(user_event);
   }
+  var observations = interpret_over_time_observations(aex, user_events.length, user_events);
   // console.log(env_.state.histories.particle);
-  return env_;
+  return observations;
 // return [`0`, `1`, `2`, `3`, `4`, `5`].map(i => [env_.state.histories.particles[i].map(o => [o.origin.x, o.origin.y])]);
 }
 
@@ -353,8 +388,9 @@ function test_paint_actual() {
     )`
   var aex = parseau(program_str);
 
-  var [aex_, env_] = start(aex);
+  // var [aex_, env_] = start(aex);
 
+  var user_events = [];
   for (let i = 0; i < 5; i++) {
     if (i % 3 == 1) {
       var user_event = {"left" : false, "right" : false, "up" : false, "down" : false, "click" : {"x" : Math.floor(15 * Math.random()), "y" : Math.floor(15 * Math.random())}}
@@ -362,8 +398,73 @@ function test_paint_actual() {
       var user_event = {"left" : false, "right" : false, "up" : true, "down" : false, "click" : null}
     }
     // console.log(i);
-    env_ = step(aex_, env_, user_event);
+    // env_ = step(aex_, env_, user_event);
+    user_events.push(user_event);
   }
+  var observations = interpret_over_time_observations(aex, user_events.length, user_events);
   // console.log(env_.state.histories.particle);
-  return env_;
+  return observations;
 // return [`0`, `1`, `2`, `3`, `4`, `5`].map(i => [env_.state.histories.particles[i].map(o => [o.origin.x, o.origin.y])]);
+}
+
+function test_gravity_actual() {
+  var program_str = `(program
+    (= GRID_SIZE 16)
+      
+    (object Button (: color String) (Cell 0 0 color))
+    (object Blob (list (Cell 0 -1 "blue") (Cell 0 0 "blue") (Cell 1 -1 "blue") (Cell 1 0 "blue")))
+    
+    (: leftButton Button)
+    (= leftButton (initnext (Button "red" (Position 0 7)) (prev leftButton)))
+    
+    (: rightButton Button)
+    (= rightButton (initnext (Button "darkorange" (Position 15 7)) (prev rightButton)))
+      
+    (: upButton Button)
+    (= upButton (initnext (Button "gold" (Position 7 0)) (prev upButton)))
+    
+    (: downButton Button)
+    (= downButton (initnext (Button "green" (Position 7 15)) (prev downButton)))
+    
+    (: blobs (List Blob))
+    (= blobs (initnext (list) (prev blobs)))
+    
+    (: gravity String)
+    (= gravity (initnext "down" (prev gravity)))
+    
+    (on (== gravity "left") (= blobs (updateObj blobs (--> obj (moveLeft obj)))))
+    (on (== gravity "right") (= blobs (updateObj blobs (--> obj (moveRight obj)))))
+    (on (== gravity "up") (= blobs (updateObj blobs (--> obj (moveUp obj)))))
+    (on (== gravity "down") (= blobs (updateObj blobs (--> obj (moveDown obj)))))
+    
+    (on (& clicked (isFree click)) (= blobs (addObj blobs (Blob (Position (.. click x) (.. click y))))) )
+    
+    (on (clicked leftButton) (= gravity "left"))
+    
+    (on (clicked rightButton) (= gravity "right"))
+    
+    (on (clicked upButton) (= gravity "up"))
+    
+    (on (clicked downButton) (= gravity "down"))
+    )`
+  var aex = parseau(program_str);
+
+  // var [aex_, env_] = start(aex);
+  
+  var user_events = [];
+  for (let i = 0; i < 20; i++) {
+    if (i % 4 == 2) {
+      var user_event = {"left" : false, "right" : false, "up" : false, "down" : false, "click" : {"x" : 0, "y" : 7}};
+    } else if (i % 4 == 0) {
+      var user_event = {"left" : false, "right" : false, "up" : true, "down" : false, "click" : {"x" : 15, "y" : 7}};
+    } else {
+      var user_event = {"left" : false, "right" : false, "up" : true, "down" : false, "click" : {"x" : Math.floor(15 * Math.random()), "y" : Math.floor(15 * Math.random())}};
+    }
+    // console.log(i);
+    // env_ = step(aex_, env_, user_event);
+    user_events.push(user_event);
+  }
+  var observations = interpret_over_time_observations(aex, user_events.length, user_events);
+  // console.log(env_.state.histories.particle);
+  return observations;
+}
