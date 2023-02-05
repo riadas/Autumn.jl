@@ -11,10 +11,10 @@ function interpret_program(aex, env) {
   }
 
   for (line of aex.args) {
-    console.log("YOOOOOOOOO")
-    console.log(line.head)
-    console.log(env);
-    console.log(JSON.stringify(env));
+    // console.log("YOOOOOOOOO")
+    // console.log(line.head)
+    // console.log(env);
+    // console.log(JSON.stringify(env));
     var [_, env] = interpret(line, env);
   }
   return [aex, env]
@@ -53,8 +53,8 @@ function start(aex) {
   var reordered_lines = grid_params_and_object_type_lines.concat(initnext_lines).concat(on_clause_lines).concat(lifted_lines)
 
   for (line of lifted_lines) {
-    console.log("HUHHHHHHHHHHHH")
-    console.log(line)
+    // console.log("HUHHHHHHHHHHHH")
+    // console.log(line)
     var var_name = line.args[0] 
     // construct history variable in state
     env.state.histories[var_name] = {};
@@ -89,7 +89,7 @@ function start(aex) {
 }
 
 function step(aex, env, user_events=null) {
-  console.log("STEP");
+  // console.log("STEP");
   // update env with user event 
   if (user_events != null) {
     for (user_event in user_events) {
@@ -161,16 +161,16 @@ function interpret_over_time(aex, iters, user_events=[]) {
   if (user_events.length == 0) {
     for (let i = 0; i < iters; i++) {
       // @show i
-      console.log("i am here");
-      console.log(i);
-      console.log(iters);
+      // console.log("i am here");
+      // console.log(i);
+      // console.log(iters);
       env_ = step(new_aex, env_);
     }
   } else {
     for (let i = 0; i < iters; i++) {
       // @show i
-      console.log("i");
-      console.log(i);
+      // console.log("i");
+      // console.log(i);
       var env_ = step(new_aex, env_, user_events[i]);
     }
   }
@@ -223,10 +223,10 @@ function test_particle() {
     } else {
       var user_event = {"left" : false, "right" : false, "up" : false, "down" : false, "click" : null}
     }
-    // console.log(i);
+    // // console.log(i);
     env_ = step(aex_, env_, user_event);
   }
-  // console.log(env_.state.histories.particle);
+  // // console.log(env_.state.histories.particle);
   return env_;
   return [`0`, `1`, `2`, `3`, `4`, `5`].map(i => env_.state.histories.particle[i].origin);
 }
@@ -249,10 +249,10 @@ function test_particle_list() {
     } else {
       var user_event = {"left" : false, "right" : false, "up" : false, "down" : false, "click" : null}
     }
-    // console.log(i);
+    // // console.log(i);
     env_ = step(aex_, env_, user_event);
   }
-  // console.log(env_.state.histories.particle);
+  // // console.log(env_.state.histories.particle);
   return env_;
   // return [`0`, `1`, `2`, `3`, `4`, `5`].map(i => [env_.state.histories.particles[i][0].origin, env_.state.histories.particles[i][1].origin]);
 }
@@ -281,12 +281,12 @@ function test_particle_actual() {
     } else {
       var user_event = {"left" : false, "right" : false, "up" : false, "down" : false, "click" : null}
     }
-    // console.log(i);
+    // // console.log(i);
     // env_ = step(aex_, env_, user_event);
     user_events.push(user_event);
   }
   var env_ = interpret_over_time_observations(aex, user_events.length, user_events);
-  // console.log(env_.state.histories.particle);
+  // // console.log(env_.state.histories.particle);
   return env_;
   // return [`0`, `1`, `2`, `3`, `4`, `5`].map(i => [env_.state.histories.particles[i].map(o => [o.origin.x, o.origin.y])]);
 }
@@ -323,12 +323,12 @@ function test_ants_actual() {
     } else {
       var user_event = {"left" : false, "right" : false, "up" : false, "down" : false, "click" : null}
     }
-    // console.log(i);
+    // // console.log(i);
     user_events.push(user_event);
     // env_ = step(aex_, env_, user_event);
   }
   var observations = interpret_over_time_observations(aex, user_events.length, user_events);
-  // console.log(env_.state.histories.particle);
+  // // console.log(env_.state.histories.particle);
   return observations;
   // return [`0`, `1`, `2`, `3`, `4`, `5`].map(i => [env_.state.histories.particles[i].map(o => [o.origin.x, o.origin.y])]);
 }
@@ -357,12 +357,12 @@ function test_lights_actual() {
     } else {
       var user_event = {"left" : false, "right" : false, "up" : false, "down" : false, "click" : null}
     }
-    // console.log(i);
+    // // console.log(i);
     // env_ = step(aex_, env_, user_event);
     user_events.push(user_event);
   }
   var observations = interpret_over_time_observations(aex, user_events.length, user_events);
-  // console.log(env_.state.histories.particle);
+  // // console.log(env_.state.histories.particle);
   return observations;
 // return [`0`, `1`, `2`, `3`, `4`, `5`].map(i => [env_.state.histories.particles[i].map(o => [o.origin.x, o.origin.y])]);
 }
@@ -397,12 +397,12 @@ function test_paint_actual() {
     } else {
       var user_event = {"left" : false, "right" : false, "up" : true, "down" : false, "click" : null}
     }
-    // console.log(i);
+    // // console.log(i);
     // env_ = step(aex_, env_, user_event);
     user_events.push(user_event);
   }
   var observations = interpret_over_time_observations(aex, user_events.length, user_events);
-  // console.log(env_.state.histories.particle);
+  // // console.log(env_.state.histories.particle);
   return observations;
 // return [`0`, `1`, `2`, `3`, `4`, `5`].map(i => [env_.state.histories.particles[i].map(o => [o.origin.x, o.origin.y])]);
 }
@@ -460,11 +460,11 @@ function test_gravity_actual() {
     } else {
       var user_event = {"left" : false, "right" : false, "up" : true, "down" : false, "click" : {"x" : Math.floor(15 * Math.random()), "y" : Math.floor(15 * Math.random())}};
     }
-    // console.log(i);
+    // // console.log(i);
     // env_ = step(aex_, env_, user_event);
     user_events.push(user_event);
   }
   var observations = interpret_over_time_observations(aex, user_events.length, user_events);
-  // console.log(env_.state.histories.particle);
+  // // console.log(env_.state.histories.particle);
   return observations;
 }

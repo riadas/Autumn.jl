@@ -1,57 +1,57 @@
 function ObjectType(render, fields) {
-  console.log("OBJECT_TYPE");
-  console.log({"render" : render, "fields" : fields});
+  // console.log("OBJECT_TYPE");
+  // console.log({"render" : render, "fields" : fields});
   return {"render" : render, "fields" : fields};
 }
 
 function Position(args, state=null) {
   var [x, y] = args;
-  console.log("POSITION")
-  console.log([x, y])
+  // console.log("POSITION")
+  // console.log([x, y])
   return {"x" : x, "y" : y};
 }
 
 function Cell(args, state=null) {
   if (args.length == 3) {
     var [x, y, color] = args;
-    console.log("CELL")
-    console.log([x, y, color])
+    // console.log("CELL")
+    // console.log([x, y, color])
     return {"position" : {"x" : x, "y" : y}, "color" : color };
   } else {
     var [position, color] = args;
-    console.log("CELL")
-    console.log([position, color])
+    // console.log("CELL")
+    // console.log([position, color])
     return {"position" : {"x" : position.x, "y" : position.y}, "color" : color };
   }
 }
 
 function moveLeft(args, state=null) {
-  console.log("MOVELEFT");
-  console.log(args);
+  // console.log("MOVELEFT");
+  // console.log(args);
   var obj = JSON.parse(JSON.stringify(args[0]));
   obj.origin.x = obj.origin.x - 1;
   return obj;
 }
 
 function moveRight(args, state=null) {
-  console.log("MOVERIGHT");
-  console.log(args);
+  // console.log("MOVERIGHT");
+  // console.log(args);
   var obj = JSON.parse(JSON.stringify(args[0]));
   obj.origin.x = obj.origin.x + 1;
   return obj;
 }
 
 function moveUp(args, state=null) {
-  console.log("MOVEUP");
-  console.log(args);
+  // console.log("MOVEUP");
+  // console.log(args);
   var obj = JSON.parse(JSON.stringify(args[0]));
   obj.origin.y = obj.origin.y - 1;
   return obj;
 }
 
 function moveDown(args, state=null) {
-  console.log("MOVEDOWN");
-  console.log(args);
+  // console.log("MOVEDOWN");
+  // console.log(args);
   var obj = JSON.parse(JSON.stringify(args[0]));
   obj.origin.y = obj.origin.y + 1;
   return obj;
@@ -72,8 +72,8 @@ function render(args, state=null) {
   if (obj.alive) {
     if (obj.render == null) {
       render_ = state.object_types[obj.type].render;
-      console.log("render_");
-      console.log(render_);
+      // console.log("render_");
+      // console.log(render_);
       return render_.map(cell => Cell([move([cell.position, obj.origin]), cell.color]));
     } else {
       return obj.render.map(cell => Cell([move([cell.position, obj.origin]), cell.color]));
@@ -94,10 +94,10 @@ function occurred(args, state=null) {
 }
 
 function uniformChoice(args, state=null) {
-  console.log("UNIFORMCHOICE");
+  // console.log("UNIFORMCHOICE");
   var freePositions = args[0];
-  console.log("freePositions");
-  console.log(freePositions);
+  // console.log("freePositions");
+  // console.log(freePositions);
   if (args.length == 1) {
     return freePositions[Math.floor(Math.random()*freePositions.length)];
   } else {
@@ -133,21 +133,21 @@ function isOutsideBounds(args, state=null) {
 }
 
 function clicked(args, state=null) {
-  console.log("clicked woo");
-  console.log(args);
-  console.log(JSON.stringify(args));
-  console.log(state);
-  console.log(JSON.stringify(state));
+  // console.log("clicked woo");
+  // console.log(args);
+  // console.log(JSON.stringify(args));
+  // console.log(state);
+  // console.log(JSON.stringify(state));
   if (args.length == 2) {
     if (Array.isArray(args[1])) { // clicked array of objects
       var [click, objects] = args;
       if (click == null) {
         return false;
       } else {
-        console.log("clicked sad");
-        console.log("ret_val");
-        console.log(objects.map(obj => clicked([click, obj], state)).reduce((a, b) => a || b, false));
-        console.log("huh");
+        // console.log("clicked sad");
+        // console.log("ret_val");
+        // console.log(objects.map(obj => clicked([click, obj], state)).reduce((a, b) => a || b, false));
+        // console.log("huh");
         return objects.map(obj => clicked([click, obj], state)).reduce((a, b) => a || b, false);
       }
     } else if (args[1].id != undefined) { // clicked(click, object)
@@ -208,8 +208,8 @@ function objClicked(args, state=null) {
 // }
 
 function intersects(args, state=null) {
-  console.log("INTERSECTS");
-  console.log(args);
+  // console.log("INTERSECTS");
+  // console.log(args);
   if (args.length == 2) {
     var [obj1, obj2] = args;
 
@@ -237,23 +237,23 @@ function intersects(args, state=null) {
         
         return nums1.filter(n => nums2.includes(n)).length != 0;
       } else {
-        console.log(JSON.stringify(obj1));
-        console.log(JSON.stringify(obj2));
+        // console.log(JSON.stringify(obj1));
+        // console.log(JSON.stringify(obj2));
 
-        console.log("GRID_SIZE");
-        console.log(GRID_SIZE);
-        console.log("HUH");
-        console.log(render([obj1], state));
-        console.log("HUH END");
-        console.log(unfold([obj2.map(o => render([o], state))]));
-        console.log("HUH END 2");
+        // console.log("GRID_SIZE");
+        // console.log(GRID_SIZE);
+        // console.log("HUH");
+        // console.log(render([obj1], state));
+        // console.log("HUH END");
+        // console.log(unfold([obj2.map(o => render([o], state))]));
+        // console.log("HUH END 2");
         var nums1 = render([obj1], state).map(cell => GRID_SIZE*cell.position.y + cell.position.x);
         var nums2 = unfold([obj2.map(o => render([o], state))]).map(cell => GRID_SIZE*cell.position.y + cell.position.x);
         
-        console.log("nums1");
-        console.log(nums1);
-        console.log("nums2");
-        console.log(nums2);
+        // console.log("nums1");
+        // console.log(nums1);
+        // console.log("nums2");
+        // console.log(nums2);
         
         return nums1.filter(n => nums2.includes(n)).length != 0;
       }
@@ -423,8 +423,8 @@ function rect(args, state=null) {
 }
 
 function unitVector(args, state=null) {
-  console.log("UNITVECTOR");
-  console.log(args);
+  // console.log("UNITVECTOR");
+  // console.log(args);
   if (args.length == 2) {
     var [a, b] = args;
     if (a.id == undefined && b.id == undefined) {
@@ -515,14 +515,14 @@ function intersect(arr1, arr2) {
 // }
 
 function move(args, state=null) {
-  console.log("MOVE");
-  console.log(args);
+  // console.log("MOVE");
+  // console.log(args);
   if (args.length == 2) {
     var [a, b] = args;
     if (a.id != undefined) {
       a.origin = move([a.origin, b]);
-      console.log("a");
-      console.log(a);
+      // console.log("a");
+      // console.log(a);
       return JSON.parse(JSON.stringify(a));
     } else if (a.color == undefined && b.color == undefined) { // position, position
       return Position([a.x + b.x, a.y + b.y]);
@@ -596,8 +596,8 @@ function moveDownNoCollision(args, state=null) {
 // }
 
 function randomPositions(args, state=null) {
-  console.log("RANDOMPOSITIONS");
-  console.log(args);
+  // console.log("RANDOMPOSITIONS");
+  // console.log(args);
   var [GRID_SIZE, n] = args;
   if (Array.isArray(GRID_SIZE)) {
     var [GRID_SIZE_X, GRID_SIZE_Y] = GRID_SIZE;
@@ -670,9 +670,9 @@ function distance(args, state=null) {
 // }
 
 function closest(args, state=null) {
-  console.log("CLOSEST");
-  console.log(args);
-  console.log("huh");
+  // console.log("CLOSEST");
+  // console.log(args);
+  // console.log("huh");
   var GRID_SIZE = state.histories.GRID_SIZE['0'];
   if (Array.isArray(GRID_SIZE)) {
     GRID_SIZE = GRID_SIZE[0];
@@ -708,7 +708,7 @@ function closest(args, state=null) {
     if (objects_of_type.length == 0) {
       return object.origin;
     } else {
-      console.log("hullo");
+      // console.log("hullo");
 
       var min_distance = Math.min(...objects_of_type.map(obj => distance([object, obj])));
       var objects_of_min_distance = JSON.parse(JSON.stringify(objects_of_type.filter(obj => distance([object, obj]) == min_distance)));
@@ -810,15 +810,15 @@ function nextSolid(args, state=null) {
 
 function allPositions(args, state=null) {
   var GRID_SIZE = args[0];
-  console.log("GRID_SIZE");
-  console.log(GRID_SIZE);
+  // console.log("GRID_SIZE");
+  // console.log(GRID_SIZE);
   if (Array.isArray(GRID_SIZE)) {
     var [GRID_SIZE_X, GRID_SIZE_Y] = GRID_SIZE;
   } else {
     var [GRID_SIZE_X, GRID_SIZE_Y] = [GRID_SIZE, GRID_SIZE];
   }
-  console.log(GRID_SIZE_X);
-  console.log(GRID_SIZE_Y);
+  // console.log(GRID_SIZE_X);
+  // console.log(GRID_SIZE_Y);
   var nums = Array.from(Array(GRID_SIZE_X*GRID_SIZE_Y - 1).keys()).map(x => x + 1);
   return nums.map(num => Position([num % GRID_SIZE_X, Math.floor(num / GRID_SIZE_X)], state));
 }
