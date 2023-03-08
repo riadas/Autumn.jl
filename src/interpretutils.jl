@@ -629,6 +629,12 @@ function interpret_on(args, @nospecialize(Γ::Env))
     # # # @showe 
     # # @show update_
     if e == true
+      if Γ2.show_rules != -1
+        open("likelihood_output_$(Γ2.show_rules).txt", "a") do io
+          println(io, "----- global -----")
+          println(io, repr([event isa Symbol ? event : repr(event), repr(update_)]))
+        end
+      end
       # # println("EVENT IS TRUE!") 
       t = interpret(update_, Γ2)
       # # println("WHAT ABOUT HERE")
@@ -647,8 +653,16 @@ function interpret_updateObj(args, @nospecialize(Γ::Env))
   Γ2 = Γ
   numFunctionArgs = count(x -> x == true, map(arg -> (arg isa AbstractArray) && (length(arg) == 2) && (arg[1] isa AExpr || arg[1] isa Symbol) && (arg[2] isa AExpr || arg[2] isa Symbol), args))
   if numFunctionArgs == 1
+    
     list, Γ2 = interpret(args[1], Γ2)
     map_func = args[2]
+
+    if Γ2.show_rules != -1 && list != []
+      open("likelihood_output_$(Γ2.show_rules).txt", "a") do io
+        println(io, "----- updateObj 2 -----")
+        println(io, repr(map(x -> x isa Symbol || x isa AbstractArray ? x : repr(x), [args[1], args[2][1], args[2][2]])))
+      end
+    end
 
     # # # # # @showlist 
     # # # # # @showmap_func
@@ -671,6 +685,12 @@ function interpret_updateObj(args, @nospecialize(Γ::Env))
     # # @show list 
     # # @show map_func
 
+    if Γ2.show_rules != -1
+      open("likelihood_output_$(Γ2.show_rules).txt", "a") do io
+        println(io, "----- updateObj 3 -----")
+        println(io, repr(map(x -> x isa Symbol || x isa AbstractArray ? x : repr(x), [args[1], args[2]..., args[3]...])))
+      end
+    end
 
     new_list = []
     for item in list 
@@ -678,6 +698,13 @@ function interpret_updateObj(args, @nospecialize(Γ::Env))
       if pred == true 
         # # println("PRED TRUE!")
         # # @show item 
+        if Γ2.show_rules != -1
+          open("likelihood_output_$(Γ2.show_rules).txt", "a") do io
+            println(io, "object_id")
+            println(io, item.id) # list, map_func, filter_func, item
+          end
+        end
+
         new_item, Γ2 = interpret(AExpr(:call, map_func, item), Γ2)
         push!(new_list, new_item)
       else

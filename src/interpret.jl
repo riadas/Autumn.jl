@@ -15,7 +15,7 @@ function interpret_program(aex, Γ::Env)
   return aex, Γ
 end
 
-function start(aex::AExpr, rng=Random.GLOBAL_RNG)
+function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
   aex.head == :program || error("Must be a program aex")
   # env = (on_clauses=empty_env(),
   #        left=false, 
@@ -25,7 +25,7 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG)
   #        click=nothing, 
   #        state=(time=0, objectsCreated=0, rng=rng, scene=empty_env(), object_types=empty_env()))
 
-  env = Env(false, false, false, false, nothing, Dict(), Dict(), Dict(), State(0, 0, rng, Scene([], "white"), Dict(), Dict()))
+  env = Env(false, false, false, false, nothing, Dict(), Dict(), Dict(), State(0, 0, rng, Scene([], "white"), Dict(), Dict()), show_rules)
 
   lines = aex.args 
 
@@ -145,8 +145,8 @@ function update_state(env_::Env)
   env_ = update(env_, :state, new_state)
 end
 
-function interpret_over_time(aex::AExpr, iters, user_events=[])::Env
-  new_aex, env_ = start(aex)
+function interpret_over_time(aex::AExpr, iters, user_events=[]; show_rules=-1)::Env
+  new_aex, env_ = start(aex, show_rules=show_rules)
   if user_events == []
     for i in 1:iters
       # # @show i

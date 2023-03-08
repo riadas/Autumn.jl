@@ -72,6 +72,7 @@ mutable struct Env
   lifted::Dict{Symbol, Union{AExpr, BigInt, Int, String}}
   on_clauses::Dict{Symbol, Array{Union{AExpr, Symbol}}}
   state::State
+  show_rules::Int
 end
 
 function update_nt(object::Object, x::Symbol, v)
@@ -1147,7 +1148,7 @@ function allPositions(@nospecialize(state::State))
     GRID_SIZE_X = GRID_SIZE
     GRID_SIZE_Y = GRID_SIZE
   end
-  nums = [1:GRID_SIZE_X*GRID_SIZE_Y - 1;]
+  nums = [0:GRID_SIZE_X*GRID_SIZE_Y - 1;]
   map(num -> Position(num % GRID_SIZE_X, floor(Int, num / GRID_SIZE_X)), nums)
 end
 

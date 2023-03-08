@@ -116,7 +116,7 @@ function isWithinBounds(args, state=null) {
     return render([obj], state).filter(cell => !isWithinBounds([cell.position], state)).length == 0;
   } else {
     var position = args[0];
-    var GRID_SIZE = state.histories.GRID_SIZE['0']; 
+    var GRID_SIZE = state.histories.GRID_SIZE[(state.time - 1).toString()]; 
     if (Array.isArray(GRID_SIZE)) { 
       var [GRID_SIZE_X, GRID_SIZE_Y] = GRID_SIZE;
     } else {
@@ -156,7 +156,7 @@ function clicked(args, state=null) {
       if (click == null) {
         return false;
       } else {
-        var GRID_SIZE = state.histories.GRID_SIZE['0'];
+        var GRID_SIZE = state.histories.GRID_SIZE[(state.time - 1).toString()];
         if (Array.isArray(GRID_SIZE)) {
           var GRID_SIZE_X = GRID_SIZE[0]
           var nums = render([object], state).map(cell => GRID_SIZE_X*cell.position.y + cell.position.x);
@@ -219,7 +219,7 @@ function intersects(args, state=null) {
 
     if (!Array.isArray(obj1) && !Array.isArray(obj2)) {
 
-      var GRID_SIZE = state.histories.GRID_SIZE['0'];
+      var GRID_SIZE = state.histories.GRID_SIZE[(state.time - 1).toString()];
       if (Array.isArray(GRID_SIZE)) {
         var [GRID_SIZE_X, GRID_SIZE_Y] = GRID_SIZE;
         var nums1 = render([obj1], state).map(cell => GRID_SIZE_X*cell.position.y + cell.position.x);
@@ -233,7 +233,7 @@ function intersects(args, state=null) {
 
     } else if (!Array.isArray(obj1) && Array.isArray(obj2)) {
 
-      var GRID_SIZE = state.histories.GRID_SIZE['0'];
+      var GRID_SIZE = state.histories.GRID_SIZE[(state.time - 1).toString()];
       if (Array.isArray(GRID_SIZE)) {
         var [GRID_SIZE_X, GRID_SIZE_Y] = GRID_SIZE;
         var nums1 = render([obj1], state).map(cell => GRID_SIZE_X*cell.position.y + cell.position.x);
@@ -264,7 +264,7 @@ function intersects(args, state=null) {
 
     } else if (Array.isArray(obj1) && !Array.isArray(obj2)) {
 
-      var GRID_SIZE = state.histories.GRID_SIZE['0'];
+      var GRID_SIZE = state.histories.GRID_SIZE[(state.time - 1).toString()];
       if (Array.isArray(GRID_SIZE)) {
         var [GRID_SIZE_X, GRID_SIZE_Y] = GRID_SIZE;
         var nums2 = render([obj2], state).map(cell => GRID_SIZE_X*cell.position.y + cell.position.x);
@@ -278,7 +278,7 @@ function intersects(args, state=null) {
 
     } else if (Array.isArray(obj1) && Array.isArray(obj2)) {
 
-      var GRID_SIZE = state.histories.GRID_SIZE['0'];
+      var GRID_SIZE = state.histories.GRID_SIZE[(state.time - 1).toString()];
       if (Array.isArray(GRID_SIZE)) {
         var [GRID_SIZE_X, GRID_SIZE_Y] = GRID_SIZE;
         var nums2 = unfold([obj2.map(o => render([o], state))]).map(cell => GRID_SIZE_X*cell.position.y + cell.position.x);
@@ -372,7 +372,7 @@ function isFree(args, state=null) {
   } else if (args.length == 2) {
     if (args[0].id == undefined && args[1].id == undefined) { // position, position
       var [start, stop] = args;
-      var GRID_SIZE = state.histories.GRID_SIZE['0'];
+      var GRID_SIZE = state.histories.GRID_SIZE[(state.time - 1).toString()];
       if (Array.isArray(GRID_SIZE)) { 
         var GRID_SIZE_X = GRID_SIZE[0];
         var GRID_SIZE_Y = GRID_SIZE[1];
@@ -390,7 +390,7 @@ function isFree(args, state=null) {
         var ordered_end = translated_start;
       }
       var nums = Array.from(Array(ordered_end - ordered_start + 1).keys()).map(x => x + ordered_start); // [ordered_start:ordered_end;]
-      return nums.map(num => isFree([Position([num % GRID_SIZE_X, Math.floor(Int, num / GRID_SIZE_X)])], state)).reduce((a, b) => (a && b), true);
+      return nums.map(num => isFree([Position([num % GRID_SIZE_X, Math.floor, num / GRID_SIZE_X)])], state)).reduce((a, b) => (a && b), true);
     } else if (args[0].id != undefined && args[1].id != undefined) { // object, object
       var [object, orig_object] = args;
       return render([object], state).map(cell => cell.position).map(x => isFree([x, orig_object], state)).reduce((a, b) => (a && b), true);
@@ -401,7 +401,7 @@ function isFree(args, state=null) {
 
   } else if (args.length == 3) {
     var [start, stop, object] = args;
-    var GRID_SIZE = state.histories.GRID_SIZE['0'];
+    var GRID_SIZE = state.histories.GRID_SIZE[(state.time - 1).toString()];
     if (Array.isArray(GRID_SIZE)) { 
       var GRID_SIZE_X = GRID_SIZE[0];
       var GRID_SIZE_Y = GRID_SIZE[1];
@@ -419,7 +419,7 @@ function isFree(args, state=null) {
       var ordered_end = translated_start;
     }
     var nums = Array.from(Array(ordered_end - ordered_start + 1).keys()).map(x => x + ordered_start); // [ordered_start:ordered_end;]
-    return nums.map(num => isFree([Position([num % GRID_SIZE_X, Math.floor(Int, num / GRID_SIZE_X)]), object], state)).reduce((a, b) => (a && b), true);
+    return nums.map(num => isFree([Position([num % GRID_SIZE_X, Math.floor, num / GRID_SIZE_X)]), object], state)).reduce((a, b) => (a && b), true);
   }
 }
 
@@ -707,7 +707,7 @@ function closest(args, state=null) {
   console.log("CLOSEST");
   console.log(args);
   console.log("huh");
-  var GRID_SIZE = state.histories.GRID_SIZE['0'];
+  var GRID_SIZE = state.histories.GRID_SIZE[(state.time - 1).toString()];
   if (Array.isArray(GRID_SIZE)) {
     GRID_SIZE = GRID_SIZE[0];
   }
@@ -720,7 +720,7 @@ function closest(args, state=null) {
     if (arr[0].x != undefined) { // array of positions
       var [object, positions] = JSON.parse(JSON.stringify(args));
       var distances = positions.map(pos => distance([pos, object.origin]));
-      distances.sort();
+      distances.sort((a, b) => a - b);
       var closestDistance = distances[0];
       var closest = positions.filter(pos => distance([pos, object.origin]) == closestDistance)[0];
       return closest;
@@ -811,18 +811,18 @@ function nextLiquid(args, state=null) {
                                                                  && isFree([pos], state));
     if ((leftHoles.length != 0) || (rightHoles.length != 0)) {
       if (leftHoles.length == 0) {
-        var closestHole = closest([object, rightHoles]);
+        var closestHole = closest([object, rightHoles], state);
         if (isFree([move([closestHole, Position([0, -1])]), move([object.origin, Position([1, 0])])], state)) {
           new_object.origin = move([object.origin, unitVector([object, move([closestHole, Position([0, -1])])], state)], state);
         }
       } else if (rightHoles.length == 0) {
-        var closestHole = closest([object, leftHoles]);
+        var closestHole = closest([object, leftHoles], state);
         if (isFree([move([closestHole, Position([0, -1])]), move([object.origin, Position([-1, 0])])], state)) {
           new_object.origin = move([object.origin, unitVector([object, move([closestHole, Position([0, -1])])], state)]);                    
         }
       } else {
-        var closestLeftHole = closest([object, leftHoles]);
-        var closestRightHole = closest([object, rightHoles]);
+        var closestLeftHole = closest([object, leftHoles], state);
+        var closestRightHole = closest([object, rightHoles], state);
         if (distance([object.origin, closestLeftHole]) > distance([object.origin, closestRightHole])) {
           if (isFree([move([object.origin, Position([1, 0])]), move([closestRightHole, Position([0, -1])])], state)) {
             new_object.origin = move([object.origin, unitVector([new_object, move([closestRightHole, Position([0, -1])])], state)]);
@@ -857,7 +857,7 @@ function allPositions(args, state=null) {
   }
   console.log(GRID_SIZE_X);
   console.log(GRID_SIZE_Y);
-  var nums = Array.from(Array(GRID_SIZE_X*GRID_SIZE_Y - 1).keys()).map(x => x + 1);
+  var nums = Array.from(Array(GRID_SIZE_X*GRID_SIZE_Y).keys());
   return nums.map(num => Position([num % GRID_SIZE_X, Math.floor(num / GRID_SIZE_X)], state));
 }
 
