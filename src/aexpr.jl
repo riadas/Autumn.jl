@@ -120,7 +120,7 @@ function showstring(aexpr::AExpr)
 end
 
 showstring(lst::Array{}) = "$(join(map(showstring, lst), " "))"
-showstring(str::String) = """ "str" """
+showstring(str::String) = """ "$(str)" """
 
 # function needequals(val)
 #   if typeof(val) == Expr && val.head == :fn
