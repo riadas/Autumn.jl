@@ -4,7 +4,7 @@ using ..AExpressions: AExpr
 using ..AutumnStandardLibrary
 using ..SExpr
 using Random
-export empty_env, Environment, std_env, start, step, run, interpret_program, interpret_over_time, interpret_over_time_observations, interpret_over_time_observations_and_env, start, step
+export empty_env, Environment, std_env, start, step, run, interpret_program, interpret_over_time, interpret_over_time_observations, interpret_over_time_observations_and_env
 import MLStyle
 
 function interpret_program(aex, Γ::Env)
