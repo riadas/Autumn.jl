@@ -4,7 +4,7 @@ using ..AExpressions: AExpr
 using ..AutumnStandardLibrary
 using ..SExpr
 using Random
-export empty_env, Environment, std_env, start, step, run, interpret_program, interpret_over_time, interpret_over_time_observations
+export empty_env, Environment, std_env, start, step, run, interpret_program, interpret_over_time, interpret_over_time_observations, interpret_over_time_observations_and_env, start, step
 import MLStyle
 
 function interpret_program(aex, Γ::Env)
@@ -199,6 +199,26 @@ function interpret_over_time_observations(aex::AExpr, iters, user_events=[], rng
     end
   end
   scenes
+end
+
+function interpret_over_time_observations_and_env(aex::AExpr, iters, user_events=[], rng=Random.GLOBAL_RNG)
+  scenes = []
+  new_aex, env_ = start(aex, rng)
+  push!(scenes, AutumnStandardLibrary.renderScene(env_.state.scene, env_.state))
+  if user_events == []
+    for i in 1:iters
+      # # @show i
+      env_ = step(new_aex, env_)
+      push!(scenes, AutumnStandardLibrary.renderScene(env_.state.scene, env_.state))
+    end
+  else
+    for i in 1:iters
+      # # @show i
+      env_ = step(new_aex, env_, user_events[i])
+      push!(scenes, AutumnStandardLibrary.renderScene(env_.state.scene, env_.state))
+    end
+  end
+  scenes, env_
 end
 
 # function render_scene(scene, env)
