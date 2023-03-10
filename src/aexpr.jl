@@ -119,7 +119,7 @@ function showstring(aexpr::AExpr)
   end
 end
 
-showstring(lst::Array{}) = "$(join(map(showstring, lst), " "))"
+showstring(lst::Array{}) = "($(join(map(showstring, lst), " ")))"
 showstring(str::String) = """ "$(str)" """
 
 # function needequals(val)
