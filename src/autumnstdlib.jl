@@ -20,7 +20,6 @@ struct Click
   y::Int                    
 end
 
-
 struct Position
   x::Int
   y::Int

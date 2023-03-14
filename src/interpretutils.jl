@@ -277,7 +277,8 @@ function interpret(aex::AExpr, @nospecialize(Γ::Env))
                                                                           # # # @showx 
                                                                           # # # @showv 
                                                                           if x in fieldnames(typeof(Γ))
-                                                                            # # # println("here") 
+                                                                            # println("here") 
+                                                                            # println(v)
                                                                             # # # @showΓ[x]
                                                                           end
                                                                           # # # @showupdate(Γ, x, v)[x]
@@ -629,6 +630,8 @@ function interpret_on(args, @nospecialize(Γ::Env))
     # # # @showe 
     # # @show update_
     if e == true
+      # @show event 
+      # @show Γ2.current_var_values[:time]
       if Γ2.show_rules != -1
         open("likelihood_output_$(Γ2.show_rules).txt", "a") do io
           println(io, "----- global -----")
@@ -659,8 +662,8 @@ function interpret_updateObj(args, @nospecialize(Γ::Env))
 
     if Γ2.show_rules != -1 && list != []
       open("likelihood_output_$(Γ2.show_rules).txt", "a") do io
-        println(io, "----- updateObj 2 -----")
-        println(io, repr(map(x -> x isa Symbol || x isa AbstractArray ? x : repr(x), [args[1], args[2][1], args[2][2]])))
+        println(io, "----- updateObj 3 -----")
+        println(io, repr(map(x -> x isa Symbol || x isa AbstractArray ? x : repr(x), [args[1], args[2][1], args[2][2], :obj, Symbol("true")])))
       end
     end
 
@@ -669,6 +672,12 @@ function interpret_updateObj(args, @nospecialize(Γ::Env))
 
     new_list = []
     for item in list 
+      if Γ2.show_rules != -1
+        open("likelihood_output_$(Γ2.show_rules).txt", "a") do io
+          println(io, "object_id")
+          println(io, item.id) # list, map_func, filter_func, item
+        end
+      end
       # # # # # # println("PRE=PLS WORK")
       # # # # # # @showΓ2.state.objectsCreated      
       new_item, Γ2 = interpret(AExpr(:call, map_func, item), Γ2)
