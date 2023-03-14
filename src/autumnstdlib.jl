@@ -1151,7 +1151,7 @@ function allPositions(@nospecialize(state::State))
   map(num -> Position(num % GRID_SIZE_X, floor(Int, num / GRID_SIZE_X)), nums)
 end
 
-function unfold(A, state::Union{State, Nothing}=nothing)
+function unfold(A::AbstractArray, state::Union{State, Nothing}=nothing)
   V = []
   for x in A
       for elt in x
@@ -1159,6 +1159,16 @@ function unfold(A, state::Union{State, Nothing}=nothing)
       end
   end
   V
+end
+
+function range(n::Int, state::Union{State, Nothing}=nothing)
+  if n == 0
+    [0]
+  elseif n < 0
+    collect(1:-n)
+  else
+    collect(1:n)
+  end
 end
 
 end

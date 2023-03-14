@@ -184,6 +184,7 @@ lib_to_func = Dict(:Position => AutumnStandardLibrary.Position,
                    :nextLiquid => AutumnStandardLibrary.nextLiquid, 
                    :nextSolid => AutumnStandardLibrary.nextSolid,
                    :unfold => AutumnStandardLibrary.unfold,
+                   :range => AutumnStandardLibrary.range,
                    :prev => AutumnStandardLibrary.prev,
                    :firstWithDefault => AutumnStandardLibrary.firstWithDefault,
                   )
