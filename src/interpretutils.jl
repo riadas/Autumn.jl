@@ -597,13 +597,13 @@ function interpret_object(args, @nospecialize(Γ::Env))
 end
 
 function interpret_on(args, @nospecialize(Γ::Env))
-  println("INTERPRET ON")
+  # println("INTERPRET ON")
   event = args[1]
   update_ = args[2]
-  @show event 
-  @show update_
-  @show update_.head
-  @show Γ.state.time
+  # @show event 
+  # @show update_
+  # @show update_.head
+  # @show Γ.state.time
   Γ2 = Γ
   if Γ2.state.time == 0 
     if update_.head == :assign
@@ -767,7 +767,7 @@ end
 
 function interpret_removeObj(args, @nospecialize(Γ::Env))
   println("interpret_removeObj")
-  @show args
+  # @show args
   list, Γ = interpret(args[1], Γ)
   func = args[2]
   new_list = []
@@ -776,15 +776,15 @@ function interpret_removeObj(args, @nospecialize(Γ::Env))
     if pred == false 
       push!(new_list, item)
     else
-      println("pred true!")
-      @show item.id
-      @show length(new_list)
-      @show length(list)
+      # println("pred true!")
+      # @show item.id
+      # @show length(new_list)
+      # @show length(list)
       new_item = update(update(item, :alive, false), :changed, true)
       push!(new_list, new_item)
     end
   end
-  @show new_list
+  # @show new_list
   new_list, Γ
 end
 
