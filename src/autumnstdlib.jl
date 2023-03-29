@@ -37,7 +37,7 @@ struct Object
   type::Symbol
   alive::Bool 
   changed::Bool
-  custom_fields::Dict{Symbol, Union{Int, String, Bool}}
+  custom_fields::Dict{Symbol, Union{Int, String, Bool, Position}}
   render::Union{Nothing, AbstractArray}
 end
 
@@ -148,6 +148,8 @@ function occurred(click, state::Union{State, Nothing}=nothing)
 end
 
 function uniformChoice(freePositions, @nospecialize(state::State))
+  @show freePositions
+  @show length(freePositions)
   freePositions[rand(state.rng, Categorical(ones(length(freePositions))/length(freePositions)))]
 end
 
@@ -711,6 +713,10 @@ end
 
 # ----- end left/right moveWrap ----- #
 
+function scalarMult(pos::Position, s::Int, state::Union{State, Nothing}=nothing)::Position
+  Position(pos.x * s, pos.y * s)
+end
+
 function randomPositions(GRID_SIZE, n::Int, state::Union{State, Nothing}=nothing)::Array{Position}
   if GRID_SIZE isa AbstractArray 
     GRID_SIZE_X = GRID_SIZE[1]
@@ -1130,6 +1136,9 @@ function isFree(start::Position, stop::Position, object::Object, @nospecialize(s
 end
 
 function isFree(position::Position, object::Object, @nospecialize(state::State))
+  println("isFree")
+  @show position 
+  @show object
   length(filter(cell -> cell.position.x == position.x && cell.position.y == position.y, 
   renderScene(Scene(filter(obj -> obj.id != object.id , state.scene.objects), state.scene.background), state))) == 0
 end

@@ -109,7 +109,7 @@ function showstring(aexpr::AExpr)
     Expr(:initnext, i, n) => "(initnext $(showstring(i)) $(showstring(n)))"
     Expr(:call, f, args...) => "($(showstring(f)) $(join(map(a -> showstring(a), args), " ")))"
     Expr(:let, vars...) => "(let ($(join(map(showstring, vars), " "))))"
-    Expr(:fn, params, body) => "(fn ($(showstring(params))) $(showstring(body)))"
+    Expr(:fn, params, body) => "(fn ($(join(map(p -> showstring(p), params), " "))) $(showstring(body)))"
     Expr(:list, vals...) => "(list $(join(vals, " ")))"
     Expr(:field, var, field) => "(.. $(showstring(var)) $(showstring(field)))"
     Expr(:lambda, var, val) => "(--> $(showstring(var)) $(showstring(val)))"
