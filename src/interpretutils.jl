@@ -245,11 +245,6 @@ function julialibapl(f, args, @nospecialize(Γ::Env))
   # println("JULIALIBAPL")
   # @show f 
   if !(f in [:map, :filter])
-    if f == :in 
-      println("wee in")
-      @show args
-      @show julia_lib_to_func[f](args...)
-    end
     julia_lib_to_func[f](args...), Γ
   elseif f == :map 
     interpret_julia_map(args, Γ)
@@ -766,7 +761,7 @@ function interpret_updateObj(args, @nospecialize(Γ::Env))
 end
 
 function interpret_removeObj(args, @nospecialize(Γ::Env))
-  println("interpret_removeObj")
+  # println("interpret_removeObj")
   # @show args
   list, Γ = interpret(args[1], Γ)
   func = args[2]

@@ -238,7 +238,7 @@ function pushConfiguration(arrow::Position, @nospecialize(obj1::Object), @nospec
 end
 
 function pushConfiguration(arrow::Position, @nospecialize(obj1::Object), @nospecialize(obj2::AbstractArray), @nospecialize(state::State))
-  println("pushConfiguration: obj1 id = $(obj1.id), time = $(state.time)")
+  # println("pushConfiguration: obj1 id = $(obj1.id), time = $(state.time)")
   moveIntersects(arrow, obj1, obj2, state) && isFree(move(move(obj1, arrow, state), arrow, state).origin, state)
 end
 
@@ -1136,9 +1136,9 @@ function isFree(start::Position, stop::Position, object::Object, @nospecialize(s
 end
 
 function isFree(position::Position, object::Object, @nospecialize(state::State))
-  println("isFree")
-  @show position 
-  @show object
+  # println("isFree")
+  # @show position 
+  # @show object
   length(filter(cell -> cell.position.x == position.x && cell.position.y == position.y, 
   renderScene(Scene(filter(obj -> obj.id != object.id , state.scene.objects), state.scene.background), state))) == 0
 end
