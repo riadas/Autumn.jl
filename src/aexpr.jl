@@ -110,7 +110,7 @@ function showstring(aexpr::AExpr)
     Expr(:call, f, args...) => "($(showstring(f)) $(join(map(a -> showstring(a), args), " ")))"
     Expr(:let, vars...) => "(let ($(join(map(showstring, vars), " "))))"
     Expr(:fn, params, body) => "(fn ($(join(map(p -> showstring(p), params), " "))) $(showstring(body)))"
-    Expr(:list, vals...) => "(list $(join(vals, " ")))"
+    Expr(:list, vals...) => "(list $(join(map(x -> showstring(x), vals), " ")))"
     Expr(:field, var, field) => "(.. $(showstring(var)) $(showstring(field)))"
     Expr(:lambda, var, val) => "(--> $(showstring(var)) $(showstring(val)))"
     Expr(:object, name, args...) => "(object $(showstring(name)) $(join(map(showstring, args), " ")))"
@@ -120,7 +120,7 @@ function showstring(aexpr::AExpr)
 end
 
 showstring(lst::Array{}) = "($(join(map(showstring, lst), " ")))"
-showstring(str::String) = """ "$(str)" """
+showstring(str::String) = "\"$(str)\""
 
 # function needequals(val)
 #   if typeof(val) == Expr && val.head == :fn
