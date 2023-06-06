@@ -148,8 +148,8 @@ function occurred(click, state::Union{State, Nothing}=nothing)
 end
 
 function uniformChoice(freePositions, @nospecialize(state::State))
-  @show freePositions
-  @show length(freePositions)
+  # @show freePositions
+  # @show length(freePositions)
   freePositions[rand(state.rng, Categorical(ones(length(freePositions))/length(freePositions)))]
 end
 
