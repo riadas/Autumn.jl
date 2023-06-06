@@ -3,40 +3,25 @@ module Autumn
 using Reexport
 
 
-include("aexpr.jl")
+include("base/aexpr.jl")
 @reexport using .AExpressions
 
-include("util.jl")
-@reexport using .Util
-
-include("sexpr.jl")
+include("base/sexpr.jl")
 @reexport using .SExpr
 
-include("subexpr.jl")
-@reexport using .SubExpressions
-
-include("compileutils.jl")
-@reexport using .CompileUtils
-
-include("compile.jl")
-@reexport using .Compile
-
-include("autumnstdlib.jl")
+include("base/autumnstdlib.jl")
 @reexport using .AutumnStandardLibrary
 
-include("interpretutils.jl")
+include("compiler/compileutils.jl")
+@reexport using .CompileUtils
+
+include("compiler/compile.jl")
+@reexport using .Compile
+
+include("interpreter/interpretutils.jl")
 @reexport using .InterpretUtils
 
-include("interpret.jl")
+include("interpreter/interpret.jl")
 @reexport using .Interpret
-
-include("abstractinterpretation.jl")
-@reexport using .AbstractInterpretation
-
-include("scope.jl")
-@reexport using .Scope
-
-include("transform.jl")
-@reexport using .Transform
 
 end
