@@ -17,14 +17,6 @@ end
 
 function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
   aex.head == :program || error("Must be a program aex")
-  # env = (on_clauses=empty_env(),
-  #        left=false, 
-  #        right=false,
-  #        up=false,
-  #        down=false,
-  #        click=nothing, 
-  #        state=(time=0, objectsCreated=0, rng=rng, scene=empty_env(), object_types=empty_env()))
-
   env = Env(false, false, false, false, nothing, Dict(), Dict(), Dict(), State(0, 0, rng, Scene([], "white"), Dict(), Dict()), show_rules)
 
   lines = aex.args 
