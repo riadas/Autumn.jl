@@ -7,24 +7,25 @@ using Random
 export empty_env, Environment, std_env, start, step, run, interpret_program, interpret_over_time, interpret_over_time_observations, interpret_over_time_observations_and_env
 import MLStyle
 
-function interpret_program(aex, Γ::Env)
+"""Interpret program for given number of time steps, returning final environment (Γ)"""
+function interpret_over_time(aex::AExpr, iters, user_events=[]; show_rules=-1)::Env
   aex.head == :program || error("Must be a program aex")
-  for line in aex.args
-    v, Γ = interpret(line, Γ)
+  new_aex, env_ = start(aex, show_rules=show_rules)
+  if user_events == []
+    for i in 1:iters
+      env_ = step(new_aex, env_)
+    end
+  else
+    for i in 1:iters
+      env_ = step(new_aex, env_, user_events[i])
+    end
   end
-  return aex, Γ
+  env_
 end
 
+"""Initialize environment (Γ)"""
 function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
   aex.head == :program || error("Must be a program aex")
-  # env = (on_clauses=empty_env(),
-  #        left=false, 
-  #        right=false,
-  #        up=false,
-  #        down=false,
-  #        click=nothing, 
-  #        state=(time=0, objectsCreated=0, rng=rng, scene=empty_env(), object_types=empty_env()))
-
   env = Env(false, false, false, false, nothing, Dict(), Dict(), Dict(), State(0, 0, rng, Scene([], "white"), Dict(), Dict()), show_rules)
 
   lines = aex.args 
@@ -49,9 +50,7 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
   for line in lifted_lines
     var_name = line.args[1] 
     # construct history variable in state
-    # new_state = update(env.state, Symbol(string(var_name, "History")), Dict())
     env.state.histories[var_name] = Dict()
-    # env = update(env, :state, new_state)
 
     # construct prev function 
     _, env = interpret(AExpr(:assign, Symbol(string(:prev, uppercasefirst(string(var_name)))), parseautumn("""(fn () (get (.. (.. state histories) $(string(var_name))) (- (.. state time) 1) $(var_name)))""")), env) 
@@ -62,12 +61,7 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
   background = background_assignments != [] ? background_assignments[end].args[2] : "#ffffff00"
   env.state.scene.background = background
 
-
-  # initialize scene.objects 
-  # env = update(env, :state, update(env.state, :scene, update(env.state.scene, :objects, [])))
-
   # initialize lifted variables
-  # env = update(env, :lifted, empty_env()) 
   for line in lifted_lines
     var_name = line.args[1]
     env.lifted[var_name] = line.args[2] 
@@ -77,7 +71,6 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
   end 
 
   new_aex = AExpr(:program, reordered_lines_temp...) # try interpreting the init_next's before on for the first time step (init)
-  # # @show new_aex
   aex_, env_ = interpret_program(new_aex, env)
 
   # update state (time, histories, scene)
@@ -86,6 +79,7 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
   AExpr(:program, reordered_lines...), env_
 end
 
+"""Interpret one full time step"""
 function step(aex::AExpr, env::Env, user_events=(click=nothing, left=false, right=false, down=false, up=false))::Env
   # update env with user event 
   for user_event in keys(user_events)
@@ -94,15 +88,17 @@ function step(aex::AExpr, env::Env, user_events=(click=nothing, left=false, righ
     end
   end
 
-  aex_, env_ = interpret_program(aex, env)
+  for line in aex.args
+    v, env = interpret(line, env)
+  end
 
   # update state (time, histories, scene) + reset user_event
-  env_ = update_state(env_)
+  env = update_state(env)
   
-  env_
+  env
 end
 
-"""Update the history variables, scene, and time fields of env_.state"""
+"""Update the history variables, scene, and time fields of env_.state following interpretation of all lines"""
 function update_state(env_::Env)
   # reset user events 
   for user_event in [:left, :right, :up, :down]
@@ -145,22 +141,7 @@ function update_state(env_::Env)
   env_ = update(env_, :state, new_state)
 end
 
-function interpret_over_time(aex::AExpr, iters, user_events=[]; show_rules=-1)::Env
-  new_aex, env_ = start(aex, show_rules=show_rules)
-  if user_events == []
-    for i in 1:iters
-      # # @show i
-      env_ = step(new_aex, env_)
-    end
-  else
-    for i in 1:iters
-      # # @show i
-      env_ = step(new_aex, env_, user_events[i])
-    end
-  end
-  env_
-end
-
+"""Variant of interpret_over_time returning value of individual variable"""
 function interpret_over_time_variable(aex::AExpr, var_name, iters, user_events=[])
   variable_values = []
   new_aex, env_ = start(aex)
@@ -181,6 +162,7 @@ function interpret_over_time_variable(aex::AExpr, var_name, iters, user_events=[
   variable_values
 end
 
+"""Variant of interpret_over_time returning observation sequence"""
 function interpret_over_time_observations(aex::AExpr, iters, user_events=[], rng=Random.GLOBAL_RNG)
   scenes = []
   new_aex, env_ = start(aex, rng)
@@ -201,6 +183,7 @@ function interpret_over_time_observations(aex::AExpr, iters, user_events=[], rng
   scenes
 end
 
+"""Variant of interpret_over_time returning value of observation sequence and final environment"""
 function interpret_over_time_observations_and_env(aex::AExpr, iters, user_events=[], rng=Random.GLOBAL_RNG)
   scenes = []
   new_aex, env_ = start(aex, rng)
@@ -220,13 +203,5 @@ function interpret_over_time_observations_and_env(aex::AExpr, iters, user_events
   end
   scenes, env_
 end
-
-# function render_scene(scene, env)
-#   observations = []
-#   for obj in filter(x -> x.alive, scene.objects) 
-#     push!(observations, AutumnStandardLibrary.render(scene.objects, env)...)
-#   end
-#   observations
-# end
 
 end
