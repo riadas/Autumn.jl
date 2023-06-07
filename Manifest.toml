@@ -262,7 +262,7 @@ version = "0.2.2+2"
 
 [[SExpressions]]
 deps = ["Automa", "DataStructures", "FunctionalCollections", "Reexport"]
-git-tree-sha1 = "eb10caf86e6c20f11073d87ccfd5f99c4315347b"
+git-tree-sha1 = "6eedcd14055a7fd8e851da5528c48dbd9e637380"
 repo-rev = "master"
 repo-url = "https://github.com/riadas/SExpressions.jl"
 uuid = "eaa8e424-c5f6-11e8-1b3d-d576ba0eee97"
