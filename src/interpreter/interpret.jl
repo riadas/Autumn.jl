@@ -7,12 +7,20 @@ using Random
 export empty_env, Environment, std_env, start, step, run, interpret_program, interpret_over_time, interpret_over_time_observations, interpret_over_time_observations_and_env
 import MLStyle
 
-function interpret_program(aex, Γ::Env)
-  aex.head == :program || error("Must be a program aex")
-  for line in aex.args
-    v, Γ = interpret(line, Γ)
+function interpret_over_time(aex::AExpr, iters, user_events=[]; show_rules=-1)::Env
+  new_aex, env_ = start(aex, show_rules=show_rules)
+  if user_events == []
+    for i in 1:iters
+      # # @show i
+      env_ = step(new_aex, env_)
+    end
+  else
+    for i in 1:iters
+      # # @show i
+      env_ = step(new_aex, env_, user_events[i])
+    end
   end
-  return aex, Γ
+  env_
 end
 
 function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
@@ -94,6 +102,14 @@ function step(aex::AExpr, env::Env, user_events=(click=nothing, left=false, righ
   env_
 end
 
+function interpret_program(aex, Γ::Env)
+  aex.head == :program || error("Must be a program aex")
+  for line in aex.args
+    v, Γ = interpret(line, Γ)
+  end
+  return aex, Γ
+end
+
 """Update the history variables, scene, and time fields of env_.state"""
 function update_state(env_::Env)
   # reset user events 
@@ -135,22 +151,6 @@ function update_state(env_::Env)
   # update time 
   new_state = update(env_.state, :time, env_.state.time + 1)
   env_ = update(env_, :state, new_state)
-end
-
-function interpret_over_time(aex::AExpr, iters, user_events=[]; show_rules=-1)::Env
-  new_aex, env_ = start(aex, show_rules=show_rules)
-  if user_events == []
-    for i in 1:iters
-      # # @show i
-      env_ = step(new_aex, env_)
-    end
-  else
-    for i in 1:iters
-      # # @show i
-      env_ = step(new_aex, env_, user_events[i])
-    end
-  end
-  env_
 end
 
 function interpret_over_time_variable(aex::AExpr, var_name, iters, user_events=[])
