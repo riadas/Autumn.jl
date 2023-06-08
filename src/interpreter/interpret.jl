@@ -30,9 +30,10 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
   lines = aex.args 
 
   # reorder program lines
-  grid_params_and_object_type_lines = filter(l -> !(l.head in [:assign, :on]), lines) # || (l.head == :assign && l.args[1] in [:GRID_SIZE, :background])
+  grid_params_and_object_type_lines = filter(l -> !(l.head in [:assign, :on, :deriv]), lines) # || (l.head == :assign && l.args[1] in [:GRID_SIZE, :background])
   initnext_lines = filter(l -> l.head == :assign && (l.args[2] isa AExpr && l.args[2].head == :initnext), lines)
   lifted_lines = filter(l -> l.head == :assign && (!(l.args[2] isa AExpr) || l.args[2].head != :initnext), lines) # GRID_SIZE and background here
+  deriv_lines = filter(l -> l.head == :deriv, lines)
   on_clause_lines = filter(l -> l.head == :on, lines)
 
   default_on_clause_lines = []
@@ -42,7 +43,28 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
     new_on_clause = AExpr(:on, Symbol("true"), AExpr(:assign, var_name, next_clause))
     push!(default_on_clause_lines, new_on_clause)
   end
-  on_clause_lines = [default_on_clause_lines..., on_clause_lines...]
+
+  # ----- START deriv handling -----
+  deriv_on_clause_lines = []
+  for line in deriv_lines 
+    new_on_clause = AExpr(:on, Symbol("true"), line)
+    push!(deriv_on_clause_lines, new_on_clause)
+  end
+
+  on_clause_lines_ = [default_on_clause_lines..., deriv_on_clause_lines..., on_clause_lines...]
+
+  on_clause_lines = []
+  for oc in on_clause_lines_ 
+    if oc.args[2].head == :deriv 
+      var = oc.args[2].args[1]
+      update = oc.args[2].args[2]
+      new_oc = AExpr(:on, oc.args[1], parseautumn("""(= $(var) (+ $(var) (* (/ 1 2) $(repr(update)))))"""))
+      push!(on_clause_lines, new_oc)
+    else
+      push!(on_clause_lines, oc)
+    end
+  end
+  # ----- END deriv handling -----
 
   reordered_lines_temp = vcat(grid_params_and_object_type_lines, 
                               initnext_lines, 
