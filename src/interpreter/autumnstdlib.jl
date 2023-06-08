@@ -324,13 +324,11 @@ function intersects(object::Object, @nospecialize(state::State))::Bool
 end
 
 function addObj(@nospecialize(list::AbstractArray), obj::Object, state::Union{State, Nothing}=nothing)
-  obj = update_nt(obj, :changed, true)
   new_list = vcat(list, obj)
   new_list
 end
 
 function addObj(@nospecialize(list::AbstractArray), @nospecialize(objs::AbstractArray), state::Union{State, Nothing}=nothing)
-  objs = map(obj -> update_nt(obj, :changed, true), objs)
   new_list = vcat(list, objs)
   new_list
 end
@@ -339,7 +337,7 @@ function removeObj(@nospecialize(list::AbstractArray), obj::Object, state::Union
   new_list = deepcopy(list)
   for x in filter(o -> o.id == obj.id, new_list)
     index = findall(o -> o.id == x.id, new_list)[1]
-    new_list[index] = update_nt(update_nt(x, :alive, false), :changed, true)
+    new_list[index] = update_nt(x, :alive, false)
     #x.alive = false 
     #x.changed = true
   end
@@ -350,7 +348,7 @@ function removeObj(@nospecialize(list::AbstractArray), fn, state::Union{State, N
   new_list = deepcopy(list)
   for x in filter(obj -> fn(obj), new_list)
     index = findall(o -> o.id == x.id, new_list)[1]
-    new_list[index] = update_nt(update_nt(x, :alive, false), :changed, true)
+    new_list[index] = update_nt(x, :alive, false)
     #x.alive = false 
     #x.changed = true
   end
@@ -358,8 +356,7 @@ function removeObj(@nospecialize(list::AbstractArray), fn, state::Union{State, N
 end
 
 function removeObj(obj::Object, state::Union{State, Nothing}=nothing)
-  new_obj = deepcopy(obj)
-  new_obj = update_nt(update_nt(new_obj, :alive, false), :changed, true)
+  new_obj = update_nt(new_obj, :alive, false)
   # new_obj.alive = false
   # new_obj.changed = true
   # new_obj
@@ -376,7 +373,6 @@ function updateObj(obj::Object, field::String, value, state::Union{State, Nothin
   new_obj = typeof(obj)(constructor_values...)
   setproperty!(new_obj, :id, obj.id)
   setproperty!(new_obj, :alive, obj.alive)
-  setproperty!(new_obj, :changed, true)
 
   setproperty!(new_obj, Symbol(field), value)
   state.objectsCreated -= 1    

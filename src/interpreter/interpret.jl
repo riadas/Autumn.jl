@@ -35,15 +35,22 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
   lifted_lines = filter(l -> l.head == :assign && (!(l.args[2] isa AExpr) || l.args[2].head != :initnext), lines) # GRID_SIZE and background here
   on_clause_lines = filter(l -> l.head == :on, lines)
 
+  default_on_clause_lines = []
+  for line in initnext_lines 
+    var_name = line.args[1]
+    next_clause = line.args[2].args[2]
+    new_on_clause = AExpr(:on, Symbol("true"), AExpr(:assign, var_name, next_clause))
+    push!(default_on_clause_lines, new_on_clause)
+  end
+  on_clause_lines = [default_on_clause_lines..., on_clause_lines...]
+
   reordered_lines_temp = vcat(grid_params_and_object_type_lines, 
                               initnext_lines, 
                               on_clause_lines, 
                               lifted_lines)
 
   reordered_lines = vcat(grid_params_and_object_type_lines, 
-                         on_clause_lines, 
-                         initnext_lines, 
-                         lifted_lines)
+                         on_clause_lines)
 
   # add prev functions and variable history to state for lifted variables 
   for line in lifted_lines
