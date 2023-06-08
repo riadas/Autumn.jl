@@ -3,6 +3,7 @@ using ..AExpressions: AExpr
 using Random
 using Setfield
 using Distributions: Categorical
+import Base: floor, round, min
 export Object, ObjectType, Scene, State, Env
 
 struct Click
@@ -47,7 +48,7 @@ mutable struct State
   rng::AbstractRNG
   scene::Scene 
   object_types::Dict{Symbol, ObjectType}
-  histories::Dict{Symbol, Dict{Int, Union{Int, String, Bool, Position, Object, AbstractArray}}}
+  histories::Dict{Symbol, Dict{Int, Union{Int, Float64, String, Bool, Position, Object, AbstractArray}}}
 end
 
 
@@ -57,7 +58,7 @@ mutable struct Env
   up::Bool 
   down::Bool
   click::Union{Nothing, Click}
-  current_var_values::Dict{Symbol, Union{Object, Int, Bool, String, Position, State, AbstractArray}}
+  current_var_values::Dict{Symbol, Union{Object, Int, Float64, Bool, String, Position, State, AbstractArray}}
   lifted::Dict{Symbol, Union{AExpr, BigInt, Int, String}}
   on_clauses::Dict{Symbol, Array{Union{AExpr, Symbol}}}
   state::State
@@ -1164,6 +1165,14 @@ function range(n::Int, state::Union{State, Nothing}=nothing)
   else
     collect(1:n)
   end
+end
+
+function floor(n::Union{Float64, Int}, state::Union{State, Nothing}=nothing)::Int
+  floor(Int, n)
+end
+
+function round(n::Union{Float64, Int}, state::Union{State, Nothing}=nothing)::Int
+  round(Int, n)
 end
 
 end

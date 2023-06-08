@@ -172,6 +172,8 @@ lib_to_func = Dict(:Position => AutumnStandardLibrary.Position,
                    :range => AutumnStandardLibrary.range,
                    :prev => AutumnStandardLibrary.prev,
                    :firstWithDefault => AutumnStandardLibrary.firstWithDefault,
+                   :floor => AutumnStandardLibrary.floor,
+                   :round => AutumnStandardLibrary.round,
                   )
 islib(f) = f in keys(lib_to_func)
 
@@ -481,32 +483,7 @@ function interpret_on(args, @nospecialize(Γ::Env))
   event = args[1]
   update_ = args[2]
   Γ2 = Γ
-  if Γ2.state.time == 0 
-    if update_.head == :assign
-      var_name = update_.args[1]
-      if !(var_name in keys(Γ2.on_clauses))
-        Γ2.on_clauses[var_name] = [event]
-      else
-        Γ2.on_clauses[var_name] = vcat(event, Γ2.on_clauses[var_name])
-      end
-    elseif update_.head == :let 
-      assignments = update_.args
-      if length(assignments) > 0 
-        if (assignments[end] isa AExpr) && (assignments[end].head == :assign)
-          for a in assignments 
-            var_name = a.args[1]
-            if !(var_name in keys(Γ2.on_clauses))
-              Γ2.on_clauses[var_name] = [event]
-            else
-              Γ2.on_clauses[var_name] = vcat(event, Γ2.on_clauses[var_name])
-            end
-          end
-        end
-      end
-    else
-      error("Could not interpret $(update_)")
-    end
-  else
+  if Γ2.state.time != 0
     e, Γ2 = interpret(event, Γ2) 
     if e == true
       if Γ2.show_rules != -1
