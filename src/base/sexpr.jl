@@ -7,30 +7,30 @@ using ..AExpressions
 
 export parseau, @au_str, parseautumn
 
-
 fg(s) = s
 fg(s::Cons) = array(s)
+
 "Convert an `SExpression` into nested Array{Any}"
 array(s::SExpression) = [map(fg, s)...]
 
 @inline rest(sexpr::SExpressions.Cons) = sexpr.cdr
 @inline rest2(sexpr::SExpressions.Cons) = rest(rest(sexpr))
-"""Parse string `saexpr` into AExpr
 
-```julia
 
-prog = \"\"\"
-(program
-  (external (:: x Int))
-  (:: y Float64)
-  (group Thing (:: position Int) (:: alpha Bool))
-  (= y 1.2)
-  (= 
-    (-> (x y)
-        (let (z (+ x y))
-              (* z y)))
-)
-\"\"\"
+"""Parse string `SExpr` into AExpr
+
+program = \"\"\"(program
+         (= GRID_SIZE 16)
+
+         (object Particle (Cell 0 0 "blue"))
+
+         (: particles (List Particle))
+         (= particles 
+           (initnext (list) 
+                     (updateObj (prev particles) (--> obj (uniformChoice (list (moveLeft (prev obj)) (moveRight (prev obj)) (moveDown (prev obj)) (moveUp (prev obj))) ))))) 
+
+         (on clicked (= particles (addObj particles (Particle (Position (.. click x) (.. click y))))))
+       )\"\"\"
 
 """
 parseautumn(sexprstring::AbstractString) =
@@ -60,22 +60,10 @@ function parseau(sexpr::AbstractArray)
   end
 end
 
-# function parseletvars(list::Array{})
-#   result = []
-#   i = 1
-#   while i < length(list)
-#     push!(result, AExpr(:assign, parseau(list[i]), parseau(list[i+1])))
-#     i += 2
-#   end
-#   push!(result, parseau(list[length(list)]))
-#   result
-# end
-
 function parsealias(expr)
   AExpr(:typealiasargs, map(parseau, expr)...)
 end
 
-#(: map (-> (-> a b) (List a) (List b)))
 function parsetypeau(sexpr::AbstractArray)
   MLStyle.@match sexpr begin
     [τ, tvs...] && if (istypesymbol(τ) && all(istypevarsymbol.(tvs)))   end => AExpr(:paramtype, τ, tvs...)

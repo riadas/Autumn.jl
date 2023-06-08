@@ -5,16 +5,6 @@ using Setfield
 using Distributions: Categorical
 export Object, ObjectType, Scene, State, Env
 
-# update_nt(@nospecialize(Γ::NamedTuple), x::Symbol, v) = merge(Γ, NamedTuple{(x,)}((v,)))
-
-# abstract type Object end
-# abstract type KeyPress end
-
-# struct Left <: KeyPress end
-# struct Right <: KeyPress end
-# struct Up <: KeyPress end
-# struct Down <: KeyPress end
-
 struct Click
   x::Int
   y::Int                    
