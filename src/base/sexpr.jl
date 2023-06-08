@@ -39,7 +39,7 @@ parseautumn(sexprstring::AbstractString) =
 "Parse SExpression into Autumn Expressions"
 function parseau(sexpr::AbstractArray)
   res = MLStyle.@match sexpr begin
-    [:program, lines...]              => AExpr(:program, map(parseau, lines)...)
+    [:program, lines...]              => AExpr(:program, map(parseau, filter(l -> l[1] != Symbol("%%"), lines))...)
     [:if, c, :then, t, :else, e]      => AExpr(:if, parseau(c), parseau(t), parseau(e))
     [:initnext, i, n]                 => AExpr(:initnext, parseau(i), parseau(n))
     [:(=), x::Symbol, y]              => AExpr(:assign, x, parseau(y))
