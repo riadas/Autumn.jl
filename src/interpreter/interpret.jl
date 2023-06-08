@@ -57,7 +57,6 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
     var_name = line.args[1] 
     # construct history variable in state
     env.state.histories[var_name] = Dict()
-    # env = update(env, :state, new_state)
 
     # construct prev function 
     _, env = interpret(AExpr(:assign, Symbol(string(:prev, uppercasefirst(string(var_name)))), parseautumn("""(fn () (get (.. (.. state histories) $(string(var_name))) (- (.. state time) 1) $(var_name)))""")), env) 
