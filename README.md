@@ -10,7 +10,7 @@ Autumn is a library for causal and probabilistic inference in Julia.
 
 
 ```julia
-] add Autumn
+] add https://github.com/riadas/Autumn.jl#master
 ```
 
 See the documentation for how to use Autumn. 
