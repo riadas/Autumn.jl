@@ -2,7 +2,7 @@ module InterpretUtils
 using ..AExpressions: AExpr
 using ..SExpr
 using ..AutumnStandardLibrary
-using ..CompileUtils
+# using ..CompileUtils
 using Setfield
 export interpret, interpret_let, interpret_call, interpret_init_next, interpret_object, interpret_object_call, interpret_on, Environment, empty_env, std_env, update, primapl, isprim, update
 import MLStyle
