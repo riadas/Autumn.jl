@@ -228,17 +228,18 @@ function libapl(f, args, @nospecialize(Γ::Env))
   end
 end
 
-julia_lib_to_func = Dict(:get => get, 
-                         :map => map,
-                         :filter => filter,
-                         :first => first,
-                         :last => last,
-                         :in => in, 
-                         :intersect => intersect,
-                         :length => length,
-                         :sign => sign,
-                         :vcat => vcat, 
-                         :count => count,)
+const julia_lib_to_func = 
+  (get = get, 
+   map = map,
+   filter = filter,
+   first = first,
+   last = last,
+   in = in, 
+   intersect = intersect,
+   length = length,
+   sign = sign,
+   vcat = vcat, 
+   count = count)
 isjulialib(f) = f in keys(julia_lib_to_func)
 
 function julialibapl(f, args, @nospecialize(Γ::Env))
