@@ -27,7 +27,7 @@ function sub(aex::AExpr, (x, v))
       # [:case, args...] => compilecase(expr, data)            
       # [:typealias, args...] => compiletypealias(expr, data)      
       [:lambda, args, body]                                   => AExpr(:fn, args, sub(body, x => v))
-      [:call, f, args...]                                     => AExpr(:call, f, map(arg -> sub(arg, x => v) , args)...)      
+      [:call, f, args...]                                     => AExpr(:call, f, map(arg -> sub(arg, x => v), args)...)      
       [:field, o, fieldname]                                  => AExpr(:field, sub(o, x => v), fieldname)
       [:object, args...]                                      => AExpr(:object, args...)
       [:on, event, update]                                    => AExpr(:on, sub(event, x => v), sub(update, x => v))
@@ -90,20 +90,9 @@ function update(Γ::Object, x::Symbol, v)::Object
 end
 
 # primitive function handling 
-prim_to_func = Dict(:+ => +,
-                    :- => -,
-                    :* => *,
-                    :/ => /,
-                    :& => &,
-                    :! => !,
-                    :| => |,
-                    :> => >,
-                    :>= => >=,
-                    :< => <,
-                    :<= => <=,
-                    :(==) => ==,
-                    :% => %,
-                    :!= => !=)
+const prim_to_func = let prims = (:+, :-, :*, :/, :&, :!, :|, :>, :>=, :<, :<=, :(==), :%, :!=,)
+  NamedTuple{prims}(getproperty.(Ref(Base), prims))
+end
 
 isprim(f) = f in keys(prim_to_func)
 # primapl(f, x...) = (prim_to_func[f](x[1:end-1]...), x[end])
