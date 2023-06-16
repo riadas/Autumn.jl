@@ -26,16 +26,13 @@ state = compiledMod.next(state, nothing, nothing, nothing, nothing, nothing)
 @test compiledMod.render(state.scene) == []
 
 # time 2
-state = compiledMod.next(state, compiledMod.Click(5, 5), nothing, nothing, nothing, nothing)
-@test compiledMod.render(state.scene) ==
-      [compiledMod.Cell(compiledMod.Position(5, 5), "blue", 0.8)]
+state = compiledMod.next(state, compiledMod.Click(5,5), nothing, nothing, nothing, nothing)
+@test compiledMod.render(state.scene) == [compiledMod.Cell(compiledMod.Position(5, 5), "blue", 0.8)]
 
 # time 3
 state = compiledMod.next(state, nothing, nothing, nothing, nothing, nothing)
-@test compiledMod.render(state.scene) ==
-      [compiledMod.Cell(compiledMod.Position(4, 5), "blue", 0.8)]
+@test compiledMod.render(state.scene) == [compiledMod.Cell(compiledMod.Position(4, 5), "blue", 0.8)]
 
 # time 4
 state = compiledMod.next(state, nothing, nothing, nothing, nothing, nothing)
-@test compiledMod.render(state.scene) ==
-      [compiledMod.Cell(compiledMod.Position(3, 5), "blue", 0.8)]
+@test compiledMod.render(state.scene) == [compiledMod.Cell(compiledMod.Position(3, 5), "blue", 0.8)]
