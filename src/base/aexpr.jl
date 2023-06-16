@@ -4,17 +4,11 @@ module AExpressions
 using MLStyle
 export AExpr
 
-export istypesymbol,
-       istypevarsymbol,
-       args,
-       arg,
-       wrap,
-       showstring,
-       AutumnError
+export istypesymbol, istypevarsymbol, args, arg, wrap, showstring, AutumnError
 
 "Autumn Error"
 struct AutumnError <: Exception
-  msg
+    msg
 end
 AutumnError() = AutumnError("")
 
@@ -52,9 +46,9 @@ lambdaexpr  := x --> expr
 
 "Autumn Expression"
 struct AExpr
-  head::Symbol
-  args::Vector{Any}
-  AExpr(head::Symbol, @nospecialize args...) = new(head, [args...])
+    head::Symbol
+    args::Vector{Any}
+    AExpr(head::Symbol, @nospecialize args...) = new(head, [args...])
 end
 "Arguements of expression"
 function args end
@@ -86,7 +80,6 @@ Base.Expr(aex::AExpr) = Expr(aex.head, aex.args...)
 #   end
 # end
 
-
 # Expression types
 "Is `sym` a type symbol"
 istypesymbol(sym) = (q = string(sym); length(q) > 0 && isuppercase(q[1]))
@@ -96,27 +89,46 @@ istypevarsymbol(sym) = (q = string(sym); length(q) > 0 && islowercase(q[1]))
 isinfix(f::Symbol) = f ∈ [:+, :-, :/, :*, :&&, :||, :>=, :<=, :>, :<, :(==)]
 isinfix(f) = false
 
-
 "Pretty print"
 function showstring(aexpr::AExpr)
-  # repr(expr)
-  expr = Expr(aexpr)
-  @match expr begin
-    Expr(:program, statements...) => "(program\n$(join(map(s -> showstring(s), statements), "\n")))"
-    Expr(:typedecl, x, val) => "(: $(x) $(showstring(val)))"
-    Expr(:assign, x, val) => "(= $(x) $(showstring(val)))"
-    Expr(:if, i, t, e) => "(if $(showstring(i)) then $(showstring(t)) else $(showstring(e)))"
-    Expr(:initnext, i, n) => "(initnext $(showstring(i)) $(showstring(n)))"
-    Expr(:call, f, args...) => "($(showstring(f)) $(join(map(a -> showstring(a), args), " ")))"
-    Expr(:let, vars...) => "(let ($(join(map(showstring, vars), " "))))"
-    Expr(:fn, params, body) => "(fn ($(join(map(p -> showstring(p), params), " "))) $(showstring(body)))"
-    Expr(:list, vals...) => "(list $(join(map(x -> showstring(x), vals), " ")))"
-    Expr(:field, var, field) => "(.. $(showstring(var)) $(showstring(field)))"
-    Expr(:lambda, var, val) => "(--> $(showstring(var)) $(showstring(val)))"
-    Expr(:object, name, args...) => "(object $(showstring(name)) $(join(map(showstring, args), " ")))"
-    Expr(:on, event, upd) => "(on $(showstring(event)) $(showstring(upd)))"
-    x                       => "Fail $x"
-  end
+    # repr(expr)
+    expr = Expr(aexpr)
+    @match expr begin
+        Expr(
+            :program,
+            statements...,
+        ) => "(program\n$(join(map(s -> showstring(s), statements), "\n")))"
+        Expr(:typedecl, x, val) => "(: $(x) $(showstring(val)))"
+        Expr(:assign, x, val) => "(= $(x) $(showstring(val)))"
+        Expr(
+            :if,
+            i,
+            t,
+            e,
+        ) => "(if $(showstring(i)) then $(showstring(t)) else $(showstring(e)))"
+        Expr(:initnext, i, n) => "(initnext $(showstring(i)) $(showstring(n)))"
+        Expr(
+            :call,
+            f,
+            args...,
+        ) => "($(showstring(f)) $(join(map(a -> showstring(a), args), " ")))"
+        Expr(:let, vars...) => "(let ($(join(map(showstring, vars), " "))))"
+        Expr(
+            :fn,
+            params,
+            body,
+        ) => "(fn ($(join(map(p -> showstring(p), params), " "))) $(showstring(body)))"
+        Expr(:list, vals...) => "(list $(join(map(x -> showstring(x), vals), " ")))"
+        Expr(:field, var, field) => "(.. $(showstring(var)) $(showstring(field)))"
+        Expr(:lambda, var, val) => "(--> $(showstring(var)) $(showstring(val)))"
+        Expr(
+            :object,
+            name,
+            args...,
+        ) => "(object $(showstring(name)) $(join(map(showstring, args), " ")))"
+        Expr(:on, event, upd) => "(on $(showstring(event)) $(showstring(upd)))"
+        x => "Fail $x"
+    end
 end
 
 showstring(lst::Array{}) = "($(join(map(showstring, lst), " ")))"
@@ -130,8 +142,8 @@ showstring(str::String) = "\"$(str)\""
 #   end
 # end
 
-showstring(s::Union{Symbol, Integer}) = s
-showstring(s::Type{T}) where {T <: Number} = s
+showstring(s::Union{Symbol,Integer}) = s
+showstring(s::Type{T}) where {T<:Number} = s
 Base.show(io::IO, aexpr::AExpr) = print(io, showstring(aexpr))
 
 end
