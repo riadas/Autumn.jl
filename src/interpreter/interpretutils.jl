@@ -283,7 +283,7 @@ function interpret(aex::AExpr, @nospecialize(Γ::Env))
     # next(x) = interpret(x, Γ)
     isaexpr(x) = x isa AExpr
     t = MLStyle.@match arr begin
-        [:if, c, t, e]                                   => let (v, Γ2) = interpret(c, Γ)
+        [:if, c, t, e] => let (v, Γ2) = interpret(c, Γ)
             if v == true
                 interpret(t, Γ2)
             else
@@ -292,12 +292,12 @@ function interpret(aex::AExpr, @nospecialize(Γ::Env))
         end
         [:assign, x, v::AExpr] && if v.head == :initnext
         end => interpret_init_next(x, v, Γ)
-        [:assign, x, v::Union{AExpr,Symbol}]             => let (v2, Γ_) = interpret(v, Γ)
+        [:assign, x, v::Union{AExpr,Symbol}] => let (v2, Γ_) = interpret(v, Γ)
             # # # # @showv 
             # # # # @showx
             interpret(AExpr(:assign, x, v2), Γ_)
         end
-        [:assign, x, v]                                  => let
+        [:assign, x, v] => let
             # # # @showx 
             # # # @showv 
             if x in fieldnames(typeof(Γ))
@@ -311,30 +311,33 @@ function interpret(aex::AExpr, @nospecialize(Γ::Env))
             Γ.current_var_values[x] = v isa BigInt ? convert(Int, v) : v
             (aex, Γ)
         end
-        [:list, args...]                                 => interpret_list(args, Γ)
-        [:typedecl, args...]                             => (aex, Γ)
-        [:let, args...]                                  => interpret_let(args, Γ)
-        [:lambda, args...]                               => (args, Γ)
-        [:fn, args...]                                   => (args, Γ)
+        [:list, args...] => interpret_list(args, Γ)
+        [:typedecl, args...] => (aex, Γ)
+        [:let, args...] => interpret_let(args, Γ)
+        [:lambda, args...] => (args, Γ)
+        [:fn, args...] => (args, Γ)
         [:call, f, arg1] && if isprim(f)
-        end                 => let (new_arg, Γ2) = interpret(arg1, Γ)
+        end => let (new_arg, Γ2) = interpret(arg1, Γ)
             primapl(f, new_arg, Γ2)
         end
 
         [:call, f, arg1, arg2] && if isprim(f)
-        end                    => let (new_arg1, Γ2) = interpret(arg1, Γ)
+        end => let (new_arg1, Γ2) = interpret(arg1, Γ)
             (new_arg2, Γ2) = interpret(arg2, Γ2)
             primapl(f, new_arg1, new_arg2, Γ2)
         end
         [:call, f, args...] && if f == :prev && args != [:obj]
-        end    => interpret(AExpr(:call, Symbol(string(f, uppercasefirst(string(args[1])))), :state), Γ)
+        end => interpret(
+            AExpr(:call, Symbol(string(f, uppercasefirst(string(args[1])))), :state),
+            Γ,
+        )
         [:call, f, args...] && if islib(f)
-        end                        => interpret_lib(f, args, Γ)
+        end => interpret_lib(f, args, Γ)
         [:call, f, args...] && if isjulialib(f)
-        end                   => interpret_julia_lib(f, args, Γ)
+        end => interpret_julia_lib(f, args, Γ)
         [:call, f, args...] && if f in keys(Γ.state.object_types)
         end => interpret_object_call(f, args, Γ)
-        [:call, f, args...]                                       => interpret_call(f, args, Γ)
+        [:call, f, args...] => interpret_call(f, args, Γ)
 
         [:field, x, fieldname] => interpret_field(x, fieldname, Γ)
         [:object, args...]     => interpret_object(args, Γ)

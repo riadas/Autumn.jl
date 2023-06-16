@@ -503,16 +503,13 @@ function compilestatestruct(data::Dict{String,Any})
         expr -> :(
             $(Symbol(
                 string(expr.args[1]) * "History",
-            ))::Dict{
-                Int64,
-                $(
-                    if haskey(data["types"], expr.args[1])
-                        compile(data["types"][expr.args[1]], data)
-                    else
-                        Any
-                    end
-                ),
-            }
+            ))::Dict{Int64,$(
+                if haskey(data["types"], expr.args[1])
+                    compile(data["types"][expr.args[1]], data)
+                else
+                    Any
+                end
+            )}
         ),
         vcat(data["initnext"], data["lifted"]),
     )
@@ -541,16 +538,13 @@ end
 # initialize state::STATE variable
 function compileinitstate(data::Dict{String,Any})
     initStateParamsInternal = map(
-        expr -> :(Dict{
-            Int64,
-            $(
-                if haskey(data["types"], expr.args[1])
-                    compile(data["types"][expr.args[1]], data)
-                else
-                    Any
-                end
-            ),
-        }()),
+        expr -> :(Dict{Int64,$(
+            if haskey(data["types"], expr.args[1])
+                compile(data["types"][expr.args[1]], data)
+            else
+                Any
+            end
+        )}()),
         vcat(data["initnext"], data["lifted"]),
     )
     initStateParamsExternal = map(

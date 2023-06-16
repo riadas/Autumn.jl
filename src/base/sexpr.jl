@@ -80,8 +80,8 @@ function parsetypeau(sexpr::AbstractArray)
     MLStyle.@match sexpr begin
         [τ, tvs...] && if (istypesymbol(τ) && all(istypevarsymbol.(tvs)))
         end => AExpr(:paramtype, τ, tvs...)
-        [:->, τs...]                                                      => AExpr(:functiontype, map(parsetypeau, τs)...)
-        [args...]                                                         => [args...]
+        [:->, τs...] => AExpr(:functiontype, map(parsetypeau, τs)...)
+        [args...] => [args...]
     end
 end
 

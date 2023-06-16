@@ -30,7 +30,8 @@ end
 function test_compile_if()
     data = construct_data()
     aexpr = au"""(if (== x 3) then (= y 4) else (= y 5))"""
-    @test string(compile(aexpr, data)) == "if x == 3\n    #= /home/chads/git/Autumn.jl/src/compiler/compileutils.jl:34 =#\n    y = 4\nelse\n    #= /home/chads/git/Autumn.jl/src/compiler/compileutils.jl:36 =#\n    y = 5\nend" == "if x == 3\n    y = 4\nelse\n    y = 5\nend"
+    @test string(compile(aexpr, data)) ==
+    "if x == 3\n    #= /home/chads/git/Autumn.jl/src/compiler/compileutils.jl:34 =#\n    y = 4\nelse\n    #= /home/chads/git/Autumn.jl/src/compiler/compileutils.jl:36 =#\n    y = 5\nend"
 end
 
 function test_compile_assign()
