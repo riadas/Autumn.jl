@@ -386,7 +386,7 @@ function interpret_julia_lib(f, args, @nospecialize(Γ::Env))
   # @show f 
   # @show args
   new_args = []
-  for i in 1:length(args)
+  for i in eachindex(args)
     arg = args[i] 
     # # # # @showarg
     if f == :get && i == 2 && args[i] isa Symbol
@@ -452,7 +452,7 @@ function interpret_call(f, params, @nospecialize(Γ::Env))
   old_current_var_values = copy(Γ.current_var_values) 
   Γ2 = Γ
   if func_args isa AExpr 
-    for i in 1:length(func_args.args)
+    for i in eachindex(func_args.args)
       param_name = func_args.args[i]
       param_val, Γ2 = interpret(params[i], Γ2)
       Γ2.current_var_values[param_name] = param_val
@@ -488,7 +488,7 @@ function interpret_object_call(f, args, @nospecialize(Γ::Env))
   Γ2 = Γ
   fields = Γ2.state.object_types[f].fields
   field_values = Dict()
-  for i in 1:length(fields)
+  for i in eachindex(fields)
     field_name = fields[i].args[1]
     field_value, Γ2 = interpret(args[i], Γ2)
     field_values[field_name] = field_value
@@ -741,7 +741,7 @@ function interpret_updateObj(args, @nospecialize(Γ::Env))
     old_current_var_values = copy(Γ.current_var_values)
     Γ3 = Γ2
     fields = object_type.fields
-    for i in 1:length(fields)
+    for i in eachindex(fields)
       field_name = fields[i].args[1]
       field_value = new_obj.custom_fields[field_name]
       Γ3.current_var_values[field_name] = field_value

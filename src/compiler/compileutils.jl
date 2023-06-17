@@ -67,7 +67,7 @@ function compileassign(expr::AExpr, data::Dict{String, Any}, parent::Union{AExpr
     if type !== nothing # handle function with typed arguments/return type
       args = compile(expr.args[2].args[1], data).args # function args
       argtypes = map(x -> compile(x, data), type.args[1:(end-1)]) # function arg types
-      tuples = [(args[i], argtypes[i]) for i in [1:length(args);]]
+      tuples = [(args[i], argtypes[i]) for i in [eachindex(args);]]
       typedargexprs = map(x -> :($(x[1])::$(x[2])), tuples)
       quote 
         function $(compile(expr.args[1], data))($(typedargexprs...))::$(compile(type.args[end], data))
