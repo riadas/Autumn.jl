@@ -27,7 +27,7 @@ function sub(aex::AExpr, (x, v))
       # [:case, args...] => compilecase(expr, data)            
       # [:typealias, args...] => compiletypealias(expr, data)      
       [:lambda, args, body]                                   => AExpr(:fn, args, sub(body, x => v))
-      [:call, f, args...]                                     => AExpr(:call, f, map(arg -> sub(arg, x => v) , args)...)      
+      [:call, f, args...]                                     => AExpr(:call, f, map(arg -> sub(arg, x => v), args)...)      
       [:field, o, fieldname]                                  => AExpr(:field, sub(o, x => v), fieldname)
       [:object, args...]                                      => AExpr(:object, args...)
       [:on, event, update]                                    => AExpr(:on, sub(event, x => v), sub(update, x => v))
@@ -90,20 +90,9 @@ function update(Γ::Object, x::Symbol, v)::Object
 end
 
 # primitive function handling 
-prim_to_func = Dict(:+ => +,
-                    :- => -,
-                    :* => *,
-                    :/ => /,
-                    :& => &,
-                    :! => !,
-                    :| => |,
-                    :> => >,
-                    :>= => >=,
-                    :< => <,
-                    :<= => <=,
-                    :(==) => ==,
-                    :% => %,
-                    :!= => !=)
+const prim_to_func = let prims = (:+, :-, :*, :/, :&, :!, :|, :>, :>=, :<, :<=, :(==), :%, :!=,)
+  NamedTuple{prims}(getproperty.(Ref(Base), prims))
+end
 
 isprim(f) = f in keys(prim_to_func)
 # primapl(f, x...) = (prim_to_func[f](x[1:end-1]...), x[end])
@@ -116,79 +105,81 @@ function primapl(f, x1, x2, @nospecialize(Γ::Env))
   prim_to_func[f](x1, x2), Γ
 end
 
-lib_to_func = Dict(:Position => AutumnStandardLibrary.Position,
-                   :Cell => AutumnStandardLibrary.Cell,
-                   :Click => AutumnStandardLibrary.Click,
-                   :render => AutumnStandardLibrary.render, 
-                   :renderScene => AutumnStandardLibrary.renderScene, 
-                   :occurred => AutumnStandardLibrary.occurred,
-                   :uniformChoice => AutumnStandardLibrary.uniformChoice, 
-                   :min => AutumnStandardLibrary.min,
-                   :isWithinBounds => AutumnStandardLibrary.isWithinBounds, 
-                   :isOutsideBounds => AutumnStandardLibrary.isOutsideBounds,
-                   :clicked => AutumnStandardLibrary.clicked, 
-                   :objClicked => AutumnStandardLibrary.objClicked, 
-                   :intersects => AutumnStandardLibrary.intersects, 
-                   :moveIntersects => AutumnStandardLibrary.moveIntersects,
-                   :pushConfiguration => AutumnStandardLibrary.pushConfiguration,
-                   :addObj => AutumnStandardLibrary.addObj, 
-                   :removeObj => AutumnStandardLibrary.removeObj, 
-                   :updateObj => AutumnStandardLibrary.updateObj,
-                   :filter_fallback => AutumnStandardLibrary.filter_fallback,
-                   :adjPositions => AutumnStandardLibrary.adjPositions,
-                   :isWithinBounds => AutumnStandardLibrary.isWithinBounds,
-                   :isFree => AutumnStandardLibrary.isFree, 
-                   :rect => AutumnStandardLibrary.rect, 
-                   :unitVector => AutumnStandardLibrary.unitVector, 
-                   :displacement => AutumnStandardLibrary.displacement, 
-                   :adjacent => AutumnStandardLibrary.adjacent, 
-                   :adjacentObjs => AutumnStandardLibrary.adjacentObjs, 
-                   :adjacentObjsDiag => AutumnStandardLibrary.adjacentObjsDiag,
-                   :adj => AutumnStandardLibrary.adj,
-                   :adjCorner => AutumnStandardLibrary.adjCorner,
-                  #  :rotate => AutumnStandardLibrary.rotate, 
-                  #  :rotateNoCollision => AutumnStandardLibrary.rotateNoCollision, 
-                   :move => AutumnStandardLibrary.move, 
-                   :moveLeft => AutumnStandardLibrary.moveLeft, 
-                   :moveRight => AutumnStandardLibrary.moveRight, 
-                   :moveUp => AutumnStandardLibrary.moveUp, 
-                   :moveDown => AutumnStandardLibrary.moveDown, 
-                   :moveNoCollision => AutumnStandardLibrary.moveNoCollision, 
-                   :moveNoCollisionColor => AutumnStandardLibrary.moveNoCollisionColor, 
-                   :moveLeftNoCollision => AutumnStandardLibrary.moveLeftNoCollision, 
-                   :moveRightNoCollision => AutumnStandardLibrary.moveRightNoCollision, 
-                   :moveDownNoCollision => AutumnStandardLibrary.moveDownNoCollision, 
-                   :moveUpNoCollision => AutumnStandardLibrary.moveUpNoCollision, 
-                   :moveWrap => AutumnStandardLibrary.moveWrap, 
-                   :moveLeftWrap => AutumnStandardLibrary.moveLeftWrap,
-                   :moveRightWrap => AutumnStandardLibrary.moveRightWrap, 
-                   :moveUpWrap => AutumnStandardLibrary.moveUpWrap, 
-                   :moveDownWrap => AutumnStandardLibrary.moveDownWrap, 
-                   :scalarMult => AutumnStandardLibrary.scalarMult,
-                   :randomPositions => AutumnStandardLibrary.randomPositions, 
-                   :distance => AutumnStandardLibrary.distance,
-                   :closest => AutumnStandardLibrary.closest,
-                   :closestRandom => AutumnStandardLibrary.closestRandom,
-                   :closestLeft => AutumnStandardLibrary.closestLeft,
-                   :closestRight => AutumnStandardLibrary.closestRight,
-                   :closestUp => AutumnStandardLibrary.closestUp,
-                   :closestDown => AutumnStandardLibrary.closestDown, 
-                   :farthestRandom => AutumnStandardLibrary.farthestRandom,
-                   :farthestLeft => AutumnStandardLibrary.farthestLeft,
-                   :farthestRight => AutumnStandardLibrary.farthestRight,
-                   :farthestUp => AutumnStandardLibrary.farthestUp,
-                   :farthestDown => AutumnStandardLibrary.farthestDown, 
-                   :mapPositions => AutumnStandardLibrary.mapPositions, 
-                   :allPositions => AutumnStandardLibrary.allPositions, 
-                   :updateOrigin => AutumnStandardLibrary.updateOrigin, 
-                   :updateAlive => AutumnStandardLibrary.updateAlive, 
-                   :nextLiquid => AutumnStandardLibrary.nextLiquid, 
-                   :nextSolid => AutumnStandardLibrary.nextSolid,
-                   :unfold => AutumnStandardLibrary.unfold,
-                   :range => AutumnStandardLibrary.range,
-                   :prev => AutumnStandardLibrary.prev,
-                   :firstWithDefault => AutumnStandardLibrary.firstWithDefault,
-                  )
+lib_to_func = let keys = (
+    :Position,
+    :Cell,
+    :Click,
+    :render, 
+    :renderScene, 
+    :occurred,
+    :uniformChoice, 
+    :min,
+    :isWithinBounds, 
+    :isOutsideBounds,
+    :clicked, 
+    :objClicked, 
+    :intersects, 
+    :moveIntersects,
+    :pushConfiguration,
+    :addObj, 
+    :removeObj, 
+    :updateObj,
+    :filter_fallback,
+    :adjPositions,
+    :isFree, 
+    :rect, 
+    :unitVector, 
+    :displacement, 
+    :adjacent, 
+    :adjacentObjs, 
+    :adjacentObjsDiag,
+    :adj,
+    :adjCorner,
+    #  :rotate, 
+    #  :rotateNoCollision, 
+    :move, 
+    :moveLeft, 
+    :moveRight, 
+    :moveUp, 
+    :moveDown, 
+    :moveNoCollision, 
+    :moveNoCollisionColor, 
+    :moveLeftNoCollision, 
+    :moveRightNoCollision, 
+    :moveDownNoCollision, 
+    :moveUpNoCollision, 
+    :moveWrap, 
+    :moveLeftWrap,
+    :moveRightWrap, 
+    :moveUpWrap, 
+    :moveDownWrap, 
+    :scalarMult,
+    :randomPositions, 
+    :distance,
+    :closest,
+    :closestRandom,
+    :closestLeft,
+    :closestRight,
+    :closestUp,
+    :closestDown, 
+    :farthestRandom,
+    :farthestLeft,
+    :farthestRight,
+    :farthestUp,
+    :farthestDown, 
+    :mapPositions, 
+    :allPositions, 
+    :updateOrigin, 
+    :updateAlive, 
+    :nextLiquid, 
+    :nextSolid,
+    :unfold,
+    :range,
+    :prev,
+    :firstWithDefault)
+  NamedTuple{keys}(getproperty.(Ref(AutumnStandardLibrary), keys))
+end
+
 islib(f) = f in keys(lib_to_func)
 
 # library function handling 
@@ -228,17 +219,18 @@ function libapl(f, args, @nospecialize(Γ::Env))
   end
 end
 
-julia_lib_to_func = Dict(:get => get, 
-                         :map => map,
-                         :filter => filter,
-                         :first => first,
-                         :last => last,
-                         :in => in, 
-                         :intersect => intersect,
-                         :length => length,
-                         :sign => sign,
-                         :vcat => vcat, 
-                         :count => count,)
+const julia_lib_to_func = 
+  (get = get, 
+   map = map,
+   filter = filter,
+   first = first,
+   last = last,
+   in = in, 
+   intersect = intersect,
+   length = length,
+   sign = sign,
+   vcat = vcat, 
+   count = count)
 isjulialib(f) = f in keys(julia_lib_to_func)
 
 function julialibapl(f, args, @nospecialize(Γ::Env))
