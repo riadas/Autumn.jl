@@ -25,13 +25,13 @@ function sub(aex::AExpr, (x, v))
       [:fn, args, body]                                       => AExpr(:fn, args, sub(body, x => v))
       [:if, c, t, e]                                          => AExpr(:if, sub(c, x => v), sub(t, x => v), sub(e, x => v))
       [:assign, a1, a2]                                       => AExpr(:assign, a1, sub(a2, x => v))
-      [:list, args...]                                        => AExpr(:list, mappedarray(arg -> sub(arg, x => v), args)...)
+      [:list, args...]                                        => AExpr(:list, (sub(arg, x => v) for arg in args)...)
       [:typedecl, args...]                                    => AExpr(:typedecl, args...)
-      [:let, args...]                                         => AExpr(:let, mappedarray(arg -> sub(arg, x => v), args)...)      
+      [:let, args...]                                         => AExpr(:let, (sub(arg, x => v) for arg in args)...)      
       # [:case, args...] => compilecase(expr, data)            
       # [:typealias, args...] => compiletypealias(expr, data)      
       [:lambda, args, body]                                   => AExpr(:fn, args, sub(body, x => v))
-      [:call, f, args...]                                     => AExpr(:call, f, mappedarray(arg -> sub(arg, x => v) , args)...)      
+      [:call, f, args...]                                     => AExpr(:call, f, (sub(arg, x => v) for arg in args)...)      
       [:field, o, fieldname]                                  => AExpr(:field, sub(o, x => v), fieldname)
       [:object, args...]                                      => AExpr(:object, args...)
       [:on, event, update]                                    => AExpr(:on, sub(event, x => v), sub(update, x => v))
@@ -55,13 +55,13 @@ function sub_emptyv(aex::AExpr, x)
       [:fn, args, body]                                       => AExpr(:fn, args, sub_emptyv(body, x))
       [:if, c, t, e]                                          => AExpr(:if, sub_emptyv(c, x), sub_emptyv(t, x), sub_emptyv(e, x))
       [:assign, a1, a2]                                       => AExpr(:assign, a1, sub_emptyv(a2, x))
-      [:list, args...]                                        => AExpr(:list, mappedarray(arg -> sub_emptyv(arg, x), args)...)
+      [:list, args...]                                        => AExpr(:list, (sub_emptyv(arg, x) for arg in args)...)
       [:typedecl, args...]                                    => AExpr(:typedecl, args...)
-      [:let, args...]                                         => AExpr(:let, mappedarray(arg -> sub_emptyv(arg, x), args)...)      
+      [:let, args...]                                         => AExpr(:let, (sub_emptyv(arg, x) for arg in args)...)      
       # [:case, args...] => compilecase(expr, data)            
       # [:typealias, args...] => compiletypealias(expr, data)      
       [:lambda, args, body]                                   => AExpr(:fn, args, sub_emptyv(body, x))
-      [:call, f, args...]                                     => AExpr(:call, f, mappedarray(arg -> sub_emptyv(arg, x) , args)...)      
+      [:call, f, args...]                                     => AExpr(:call, f, (sub_emptyv(arg, x) for arg in args)...)      
       [:field, o, fieldname]                                  => AExpr(:field, sub_emptyv(o, x), fieldname)
       [:object, args...]                                      => AExpr(:object, args...)
       [:on, event, update]                                    => AExpr(:on, sub_emptyv(event, x), sub_emptyv(update, x))
@@ -245,14 +245,14 @@ function libapl(f, args, @nospecialize(Γ::Env))
       # # # # # @showargs
       # # # # # @showkeys(Γ.state)
       # # # # @showargs 
-      lib_to_func[f](mappedarray(x -> interpret(x, Γ)[1], args)..., Γ.state), Γ    
+      lib_to_func[f]((interpret(arg, Γ)[1] for arg in args)..., Γ.state), Γ    
     else
       if f == :updateObj 
         interpret_updateObj(args, Γ)
       elseif f == :removeObj 
         interpret_removeObj(args, Γ)
       else 
-        lib_to_func[f](mappedarray(x -> interpret(x, Γ)[1], args)..., Γ.state), Γ
+        lib_to_func[f]((interpret(arg, Γ)[1] for arg in args)..., Γ.state), Γ
       end
     end
   end
@@ -325,6 +325,8 @@ function _assign_interpret(@nospecialize(Γ::Env), x, v::BigInt)
 end
 
 function _assign_interpret(@nospecialize(Γ::Env), x, v)
+  @show x
+  @show v
   Γ.current_var_values[x] = v
   (AExpr(:assign, x, v), Γ) 
 end
@@ -334,7 +336,7 @@ function _list_interpret(@nospecialize(Γ::Env), args...)
 end
 
 function _typedecl_interpret(@nospecialize(Γ::Env), args...)
-  (aex, Γ)
+  (AExpr(:typedecl, args...), Γ)
 end
 
 function _let_interpret(@nospecialize(Γ::Env), args...)
@@ -379,7 +381,7 @@ function _field_interpret(@nospecialize(Γ::Env), x, fieldname)
 end
 
 function _object_interpret(@nospecialize(Γ::Env), args...)
-  interpret_object(args, Γ)
+  interpret_object(collect(args), Γ)
 end
 
 function _on_interpret(@nospecialize(Γ::Env), args...)
