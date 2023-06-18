@@ -529,10 +529,11 @@ function interpret_lib(f, args, @nospecialize(Γ::Env))
   # # println("INTERPRET_LIB")
   # # @show f 
   # # @show args 
-  new_args = Any[]
-  for arg in args 
+  new_args = Vector{Any}(undef, length(args))
+  for (j, arg) in enumerate(args) 
     new_arg, Γ = interpret(arg, Γ)
-    push!(new_args, new_arg)
+    new_args[j] = new_arg
+    # push!(new_args, new_arg)
   end
   # # # # @shownew_args
   libapl(f, new_args, Γ)
