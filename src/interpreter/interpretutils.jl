@@ -6,28 +6,32 @@ using ..CompileUtils
 using Setfield
 export interpret, interpret_let, interpret_call, interpret_init_next, interpret_object, interpret_object_call, interpret_on, Environment, empty_env, std_env, update, primapl, isprim, update
 import MLStyle
+using MappedArrays
 
 function sub(aex::AExpr, (x, v))
+  if isempty(v)
+    return sub_emptyv(aex, x)
+  end
   # print("SUB")
   # # # # # # # @showaex
   # # # # # # # @showx
   # # # # # # # @showv
   arr = [aex.head, aex.args...]
   # next(x) = interpret(x, Γ)
-  if (x isa AExpr) && ([x.head, x.args...] == arr)  
+  if (x isa AExpr) && first(arr) == x.head && view(arr, 2:length(arr)) == x.args
     v 
   else
     MLStyle.@match arr begin
       [:fn, args, body]                                       => AExpr(:fn, args, sub(body, x => v))
       [:if, c, t, e]                                          => AExpr(:if, sub(c, x => v), sub(t, x => v), sub(e, x => v))
       [:assign, a1, a2]                                       => AExpr(:assign, a1, sub(a2, x => v))
-      [:list, args...]                                        => AExpr(:list, map(arg -> sub(arg, x => v), args)...)
+      [:list, args...]                                        => AExpr(:list, mappedarray(arg -> sub(arg, x => v), args)...)
       [:typedecl, args...]                                    => AExpr(:typedecl, args...)
-      [:let, args...]                                         => AExpr(:let, map(arg -> sub(arg, x => v), args)...)      
+      [:let, args...]                                         => AExpr(:let, mappedarray(arg -> sub(arg, x => v), args)...)      
       # [:case, args...] => compilecase(expr, data)            
       # [:typealias, args...] => compiletypealias(expr, data)      
       [:lambda, args, body]                                   => AExpr(:fn, args, sub(body, x => v))
-      [:call, f, args...]                                     => AExpr(:call, f, map(arg -> sub(arg, x => v) , args)...)      
+      [:call, f, args...]                                     => AExpr(:call, f, mappedarray(arg -> sub(arg, x => v) , args)...)      
       [:field, o, fieldname]                                  => AExpr(:field, sub(o, x => v), fieldname)
       [:object, args...]                                      => AExpr(:object, args...)
       [:on, event, update]                                    => AExpr(:on, sub(event, x => v), sub(update, x => v))
@@ -37,8 +41,43 @@ function sub(aex::AExpr, (x, v))
   end
 end
 
+function sub_emptyv(aex::AExpr, x)
+  # print("SUB")
+  # # # # # # # @showaex
+  # # # # # # # @showx
+  # # # # # # # @showv
+  arr = [aex.head, aex.args...]
+  # next(x) = interpret(x, Γ)
+  if (x isa AExpr) && first(arr) == x.head && view(arr, 2:length(arr)) == x.args
+    Any[] 
+  else
+    MLStyle.@match arr begin
+      [:fn, args, body]                                       => AExpr(:fn, args, sub_emptyv(body, x))
+      [:if, c, t, e]                                          => AExpr(:if, sub_emptyv(c, x), sub_emptyv(t, x), sub_emptyv(e, x))
+      [:assign, a1, a2]                                       => AExpr(:assign, a1, sub_emptyv(a2, x))
+      [:list, args...]                                        => AExpr(:list, mappedarray(arg -> sub_emptyv(arg, x), args)...)
+      [:typedecl, args...]                                    => AExpr(:typedecl, args...)
+      [:let, args...]                                         => AExpr(:let, mappedarray(arg -> sub_emptyv(arg, x), args)...)      
+      # [:case, args...] => compilecase(expr, data)            
+      # [:typealias, args...] => compiletypealias(expr, data)      
+      [:lambda, args, body]                                   => AExpr(:fn, args, sub_emptyv(body, x))
+      [:call, f, args...]                                     => AExpr(:call, f, mappedarray(arg -> sub_emptyv(arg, x) , args)...)      
+      [:field, o, fieldname]                                  => AExpr(:field, sub_emptyv(o, x), fieldname)
+      [:object, args...]                                      => AExpr(:object, args...)
+      [:on, event, update]                                    => AExpr(:on, sub_emptyv(event, x), sub_emptyv(update, x))
+      [args...]                                               => throw(AutumnError(string("Invalid AExpr Head: ", expr.head)))
+      _                                                       => error("Could not sub $arr")
+    end
+  end
+end
+
 sub(aex::Symbol, (x, v)) = aex == x ? v : aex
+
+sub_emptyv(aex::Symbol, x) = aex == x ? Any[] : aex
+
 sub(aex, (x, v)) = aex # aex is a value
+
+sub_emptyv(aex, x) = aex # aex is a value
 
 const Environment = NamedTuple
 empty_env() = NamedTuple()
@@ -215,14 +254,14 @@ function libapl(f, args, @nospecialize(Γ::Env))
       # # # # # @showargs
       # # # # # @showkeys(Γ.state)
       # # # # @showargs 
-      lib_to_func[f](map(x -> interpret(x, Γ)[1], args)..., Γ.state), Γ    
+      lib_to_func[f](mappedarray(x -> interpret(x, Γ)[1], args)..., Γ.state), Γ    
     else
       if f == :updateObj 
         interpret_updateObj(args, Γ)
       elseif f == :removeObj 
         interpret_removeObj(args, Γ)
       else 
-        lib_to_func[f](map(x -> interpret(x, Γ)[1], args)..., Γ.state), Γ
+        lib_to_func[f](mappedarray(x -> interpret(x, Γ)[1], args)..., Γ.state), Γ
       end
     end
   end
@@ -247,14 +286,14 @@ function julialibapl(f, args, @nospecialize(Γ::Env))
   if !(f in [:map, :filter])
     julia_lib_to_func[f](args...), Γ
   elseif f == :map 
-    interpret_julia_map(args, Γ)
+    interpret_julia_mappedarray(args, Γ)
   elseif f == :filter 
     interpret_julia_filter(args, Γ)
   end
 end
 
 function interpret(aex::AExpr, @nospecialize(Γ::Env))
-  arr = [aex.head, aex.args...]
+  arr = Any[aex.head, aex.args...]
   # # # # # # # println()
   # # # # # # # println("Env:")
   # display(Γ)
@@ -547,7 +586,7 @@ function interpret_init_next(var_name, var_val, @nospecialize(Γ::Env))
       # # # # # @showdefault_val 
       # # # # # println("HERE I AM ONCE AGAIN 2")
       # # # # # @showΓ.state.objectsCreated
-      final_val = map(o -> update(o, :changed, false), filter(obj -> obj.alive, vcat(changed_val, default_val)))
+      final_val = mappedarray(o -> update(o, :changed, false), filter(obj -> obj.alive, vcat(changed_val, default_val)))
     else # variable is not an array
       if var_name in keys(Γ.on_clauses)
         events = Γ.on_clauses[var_name]
@@ -658,7 +697,7 @@ end
 function interpret_updateObj(args, @nospecialize(Γ::Env))
   # # println("MADE IT!")
   Γ2 = Γ
-  numFunctionArgs = count(x -> x == true, map(arg -> (arg isa AbstractArray) && (length(arg) == 2) && (arg[1] isa AExpr || arg[1] isa Symbol) && (arg[2] isa AExpr || arg[2] isa Symbol), args))
+  numFunctionArgs = count(x -> x == true, mappedarray(arg -> (arg isa AbstractArray) && (length(arg) == 2) && (arg[1] isa AExpr || arg[1] isa Symbol) && (arg[2] isa AExpr || arg[2] isa Symbol), args))
   if numFunctionArgs == 1
     
     list, Γ2 = interpret(args[1], Γ2)
@@ -667,7 +706,7 @@ function interpret_updateObj(args, @nospecialize(Γ::Env))
     if Γ2.show_rules != -1 && list != []
       open("likelihood_output_$(Γ2.show_rules).txt", "a") do io
         println(io, "----- updateObj 3 -----")
-        println(io, repr(map(x -> x isa Symbol || x isa AbstractArray ? x : repr(x), [args[1], args[2][1], args[2][2], :obj, Symbol("true")])))
+        println(io, repr(mappedarray(x -> x isa Symbol || x isa AbstractArray ? x : repr(x), [args[1], args[2][1], args[2][2], :obj, Symbol("true")])))
       end
     end
 
@@ -701,7 +740,7 @@ function interpret_updateObj(args, @nospecialize(Γ::Env))
     if Γ2.show_rules != -1
       open("likelihood_output_$(Γ2.show_rules).txt", "a") do io
         println(io, "----- updateObj 3 -----")
-        println(io, repr(map(x -> x isa Symbol || x isa AbstractArray ? x : repr(x), [args[1], args[2]..., args[3]...])))
+        println(io, repr(mappedarray(x -> x isa Symbol || x isa AbstractArray ? x : repr(x), [args[1], args[2]..., args[3]...])))
       end
     end
 
@@ -783,7 +822,7 @@ function interpret_removeObj(args, @nospecialize(Γ::Env))
   new_list, Γ
 end
 
-function interpret_julia_map(args, @nospecialize(Γ::Env))
+function interpret_julia_mappedarray(args, @nospecialize(Γ::Env))
   new_list = []
   map_func = args[1]
   list, Γ = interpret(args[2], Γ)
