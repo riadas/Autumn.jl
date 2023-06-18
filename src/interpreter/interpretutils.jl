@@ -290,26 +290,17 @@ function interpret(aex::AExpr, @nospecialize(Γ::Env))
     aex.head == :list     && return _list_interpret(Γ, aex.args...)
     aex.head == :typedecl && return _typedecl_interpret(Γ, aex.args...)
     aex.head == :let      && return _let_interpret(Γ, aex.args...)
-    # aex.head == :lambda   && return (args, Γ)
-    # aex.head == :fn       && return (args, Γ)
+    aex.head == :lambda   && return (aex.args, Γ)
+    aex.head == :fn       && return (aex.args, Γ)
     aex.head == :call     && return _call_interpret(Γ, aex.args...)
     aex.head == :field    && return _field_interpret(Γ, aex.args...)
     aex.head == :object   && return _object_interpret(Γ, aex.args...)
     aex.head == :on       && return _on_interpret(Γ, aex.args...)
-  #   error(string("Invalid AExpr Head: ", aex.head))
+    error(string("Invalid AExpr Head: ", aex.head))
   interpret2(aex, Γ)
 end
 
 
-function interpret2(aex::AExpr, @nospecialize(Γ::Env))
-  arr = [aex.head, aex.args...]
-  MLStyle.@match arr begin
-    [:lambda, args...]                                                => (args, Γ)
-    [:fn, args...]                                                    => (args, Γ)
-    [args...]                                                         => error(string("Invalid AExpr Head: ", aex.head))
-    _                                                                 => error("Could not interpret $arr")
-  end
-end
 
 function _if_interpret(@nospecialize(Γ::Env), c, t, e)
   (v, Γ2) = interpret(c, Γ) 
