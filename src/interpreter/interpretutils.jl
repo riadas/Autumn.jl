@@ -848,12 +848,12 @@ function interpret_removeObj(args, @nospecialize(Γ::Env))
 end
 
 function interpret_julia_map(args, @nospecialize(Γ::Env))
-  new_list = []
   map_func = args[1]
   list, Γ = interpret(args[2], Γ)
-  for arg in list  
+  new_list = Vector{Any}(undef, length(list))
+  for (j, arg) in enumerate(list)  
     new_arg, Γ = interpret(AExpr(:call, map_func, arg), Γ)
-    push!(new_list, new_arg)
+    new_list[j] = new_arg
   end
   new_list, Γ
 end
