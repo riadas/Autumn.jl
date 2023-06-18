@@ -620,11 +620,7 @@ function interpret_init_next(var_name, var_val, @nospecialize(Γ::Env))
       # # # # # @showΓ.state.objectsCreated
       final_val = mappedarray(o -> update(o, :changed, false), filter(obj -> obj.alive, vcat(changed_val, default_val)))
     else # variable is not an array
-      if var_name in keys(Γ.on_clauses)
-        events = Γ.on_clauses[var_name]
-      else
-        events = []
-      end
+      events = get(Γ.on_clauses, var_name, [])
       changed = false 
       for e in events 
         v, Γ = interpret(e, Γ)
