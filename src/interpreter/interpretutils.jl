@@ -295,7 +295,7 @@ function interpret(aex::AExpr, @nospecialize(Γ::Env))
     aex.head == :call     && return _call_interpret(Γ, aex.args...)
     aex.head == :field    && return _field_interpret(Γ, aex.args...)
     aex.head == :object   && return _object_interpret(Γ, aex.args...)
-    aex.head == :on       && return _on_interpret(Γ, aex.args...)
+    aex.head == :on       && return interpret_on(aex.args, Γ)
     error(string("Invalid AExpr Head: ", aex.head))
   interpret2(aex, Γ)
 end
@@ -388,9 +388,6 @@ function _object_interpret(@nospecialize(Γ::Env), args...)
   interpret_object(collect(args), Γ)
 end
 
-function _on_interpret(@nospecialize(Γ::Env), args...)
-  interpret_on(args, Γ)
-end
 
 function interpret(x::Symbol, @nospecialize(Γ::Env))
   if x == Symbol("false")
