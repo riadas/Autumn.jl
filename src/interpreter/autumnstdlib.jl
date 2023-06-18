@@ -67,7 +67,7 @@ mutable struct Env
   up::Bool 
   down::Bool
   click::Union{Nothing, Click}
-  current_var_values::Dict{Symbol, Any}
+  current_var_values::Dict{Symbol, Union{Object, Int, Bool, String, Position, State, AbstractArray}}
   lifted::Dict{Symbol, Union{AExpr, BigInt, Int, String}}
   on_clauses::Dict{Symbol, Array{Union{AExpr, Symbol}}}
   state::State
