@@ -428,10 +428,10 @@ function interpret(x, @nospecialize(Γ::Env))
 end 
 
 function interpret_list(args, @nospecialize(Γ::Env))
-  new_list = []
-  for arg in args
+  new_list = Vector{Any}(undef, length(args))
+  for (j, arg) in enumerate(args)
     new_arg, Γ = interpret(arg, Γ)
-    push!(new_list, new_arg)
+    new_list[j] = new_arg
   end
   new_list, Γ
 end
@@ -453,7 +453,7 @@ function interpret_julia_lib(f, args, @nospecialize(Γ::Env))
   # println("INTERPRET_JULIA_LIB")
   # @show f 
   # @show args
-  new_args = []
+  new_args = Vector{Any}(undef, length(args))
   for i in eachindex(args)
     arg = args[i] 
     # # # # @showarg
@@ -464,7 +464,7 @@ function interpret_julia_lib(f, args, @nospecialize(Γ::Env))
     end
     # # # # @shownew_arg 
     # # # # @showΓ
-    push!(new_args, new_arg)
+    new_args[i] = new_arg
   end
   # # @show new_args 
   julialibapl(f, new_args, Γ)
@@ -738,8 +738,8 @@ function interpret_updateObj(args, @nospecialize(Γ::Env))
     # # # # # @showlist 
     # # # # # @showmap_func
 
-    new_list = []
-    for item in list 
+    new_list = Vector{Any}(undef, length(list))
+    for (j, item) in enumerate(list)
       if Γ2.show_rules != -1
         open("likelihood_output_$(Γ2.show_rules).txt", "a") do io
           println(io, "object_id")
@@ -751,7 +751,7 @@ function interpret_updateObj(args, @nospecialize(Γ::Env))
       new_item, Γ2 = interpret(AExpr(:call, map_func, item), Γ2)
       # # # # # # println("PLS WORK")
       # # # # # # @showΓ2.state.objectsCreated
-      push!(new_list, new_item)
+      new_list[j] = new_item
     end
     new_list, Γ2
   elseif numFunctionArgs == 2
@@ -769,8 +769,8 @@ function interpret_updateObj(args, @nospecialize(Γ::Env))
       end
     end
 
-    new_list = []
-    for item in list 
+    new_list = Vector{Any}(undef, length(list))
+    for (j, item) in enumerate(list)
       pred, Γ2 = interpret(AExpr(:call, filter_func, item), Γ2)
       if pred == true 
         # # println("PRED TRUE!")
@@ -783,11 +783,11 @@ function interpret_updateObj(args, @nospecialize(Γ::Env))
         end
 
         new_item, Γ2 = interpret(AExpr(:call, map_func, item), Γ2)
-        push!(new_list, new_item)
+        new_list[j] = new_item
       else
         # # println("PRED FALSE!")
         # # @show item 
-        push!(new_list, item)
+        new_list[j] = item
       end
     end
     # # @show new_list 
