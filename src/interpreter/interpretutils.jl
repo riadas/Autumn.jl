@@ -278,7 +278,7 @@ function julialibapl(f, args, @nospecialize(Γ::Env))
   if !(f in [:map, :filter])
     julia_lib_to_func[f](args...), Γ
   elseif f == :map 
-    interpret_julia_mappedarray(args, Γ)
+    interpret_julia_map(args, Γ)
   elseif f == :filter 
     interpret_julia_filter(args, Γ)
   end
@@ -814,7 +814,7 @@ function interpret_removeObj(args, @nospecialize(Γ::Env))
   new_list, Γ
 end
 
-function interpret_julia_mappedarray(args, @nospecialize(Γ::Env))
+function interpret_julia_map(args, @nospecialize(Γ::Env))
   new_list = []
   map_func = args[1]
   list, Γ = interpret(args[2], Γ)
