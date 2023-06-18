@@ -325,8 +325,6 @@ function _assign_interpret(@nospecialize(Γ::Env), x, v::BigInt)
 end
 
 function _assign_interpret(@nospecialize(Γ::Env), x, v)
-  @show x
-  @show v
   Γ.current_var_values[x] = v
   (AExpr(:assign, x, v), Γ) 
 end
@@ -351,18 +349,21 @@ function _fn_interpret(@nospecialize(Γ::Env), args...)
   (args, Γ)
 end
 
-function _call_interpret(@nospecialize(Γ::Env), f, arg1)
-  (new_arg, Γ2) = interpret(arg1, Γ)
-  primapl(f, new_arg, Γ2)
-end
-
-function _call_interpret(@nospecialize(Γ::Env), f, arg1, arg2)
-  (new_arg1, Γ2) = interpret(arg1, Γ)
-  (new_arg2, Γ2) = interpret(arg2, Γ2)
-  primapl(f, new_arg1, new_arg2, Γ2)
-end
 
 function _call_interpret(@nospecialize(Γ::Env), f, args...)
+  if isprim(f)
+    if length(args) == 1
+      arg1 = only(args)
+      (new_arg, Γ2) = interpret(arg1, Γ)
+      return primapl(f, new_arg, Γ2)
+    elseif length(args) == 2
+      (arg1, arg2) = args
+      (new_arg1, Γ2) = interpret(arg1, Γ)
+      (new_arg2, Γ2) = interpret(arg2, Γ2)
+      return primapl(f, new_arg1, new_arg2, Γ2)
+    end
+  end
+
   if f == :prev && args != [:obj]
     interpret(AExpr(:call, Symbol(string(f, uppercasefirst(string(args[1])))), :state), Γ)
   elseif islib(f)
