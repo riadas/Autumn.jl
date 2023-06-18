@@ -12,13 +12,7 @@ function sub(aex::AExpr, (x, v))
   if isempty(v)
     return sub_emptyv(aex, x)
   end
-  # print("SUB")
-  # # # # # # # @showaex
-  # # # # # # # @showx
-  # # # # # # # @showv
-  arr = [aex.head, aex.args...]
-  # next(x) = interpret(x, Γ)
-  if (x isa AExpr) && first(arr) == x.head && view(arr, 2:length(arr)) == x.args
+  if (x isa AExpr) && aex.head == x.head && aex.args == x.args
     v 
   else
     aex.head == :fn && let 
@@ -91,33 +85,78 @@ function sub(aex::AExpr, (x, v))
   end
 end
 
+
 function sub_emptyv(aex::AExpr, x)
-  # print("SUB")
-  # # # # # # # @showaex
-  # # # # # # # @showx
-  # # # # # # # @showv
-  arr = [aex.head, aex.args...]
-  # next(x) = interpret(x, Γ)
-  if (x isa AExpr) && first(arr) == x.head && view(arr, 2:length(arr)) == x.args
-    Any[] 
+  if (x isa AExpr) && aex.head == x.head && aex.args == x.args
+    Any[]
   else
-    MLStyle.@match arr begin
-      [:fn, args, body]                                       => AExpr(:fn, args, sub_emptyv(body, x))
-      [:if, c, t, e]                                          => AExpr(:if, sub_emptyv(c, x), sub_emptyv(t, x), sub_emptyv(e, x))
-      [:assign, a1, a2]                                       => AExpr(:assign, a1, sub_emptyv(a2, x))
-      [:list, args...]                                        => AExpr(:list, (sub_emptyv(arg, x) for arg in args)...)
-      [:typedecl, args...]                                    => AExpr(:typedecl, args...)
-      [:let, args...]                                         => AExpr(:let, (sub_emptyv(arg, x) for arg in args)...)      
-      # [:case, args...] => compilecase(expr, data)            
-      # [:typealias, args...] => compiletypealias(expr, data)      
-      [:lambda, args, body]                                   => AExpr(:fn, args, sub_emptyv(body, x))
-      [:call, f, args...]                                     => AExpr(:call, f, (sub_emptyv(arg, x) for arg in args)...)      
-      [:field, o, fieldname]                                  => AExpr(:field, sub_emptyv(o, x), fieldname)
-      [:object, args...]                                      => AExpr(:object, args...)
-      [:on, event, update]                                    => AExpr(:on, sub_emptyv(event, x), sub_emptyv(update, x))
-      [args...]                                               => throw(AutumnError(string("Invalid AExpr Head: ", expr.head)))
-      _                                                       => error("Could not sub $arr")
+    aex.head == :fn && let 
+      (args, body) = aex.args
+      return AExpr(:fn, args, sub_emptyv(body, x))
     end
+
+    aex.head == :if && let 
+      (c, t, e) = aex.args
+      return AExpr(:if, sub_emptyv(c, x), sub_emptyv(t, x), sub_emptyv(e, x))
+    end
+
+    aex.head == :assign && let 
+      a1, a2 = aex.args
+      return AExpr(:assign, a1, sub_emptyv(a2, x))
+    end
+
+    aex.head == :list && let 
+      args = aex.args
+      return AExpr(:list, (sub_emptyv(arg, x) for arg in args)...)
+    end
+
+    aex.head == :typedecl && let 
+      args = aex.args
+      return AExpr(:typedecl, args...)
+    end
+
+    aex.head == :let && let 
+      args = aex.args
+      return AExpr(:let, (sub_emptyv(arg, x) for arg in args)...)
+    end
+
+    aex.head == :lambda && let 
+      args, body = aex.args
+      return AExpr(:fn, args, sub_emptyv(body, x))
+    end
+
+    aex.head == :call && let 
+      args = aex.args
+      return AExpr(:call, (sub_emptyv(arg, x) for arg in args)...)
+    end
+
+    aex.head == :object && let 
+      args = aex.args
+      return AExpr(:object, (sub_emptyv(arg, x) for arg in args)...)
+    end
+
+    aex.head == :on && let 
+      event, update = aex.args
+      return AExpr(:on, sub_emptyv(event, x), sub_emptyv(update, x))
+    end
+
+    aex.head == :field && let 
+      o, fieldname = aex.args
+      return AExpr(:field, sub_emptyv(o, x), fieldname)
+    end
+
+    aex.head == :object && let 
+      args = aex.args
+      return AExpr(:object, (sub_emptyv(arg, x) for arg in args)...)
+    end
+
+    aex.head == :on && let 
+      event, update = aex.args
+      return AExpr(:on, sub_emptyv(event, x), sub_emptyv(update, x))
+    end
+
+    error("Could not sub $aex")
+
   end
 end
 
