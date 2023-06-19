@@ -386,7 +386,6 @@ function interpret(aex::AExpr, @nospecialize(Γ::Env))
     aex.head == :object   && return _object_interpret(Γ, aex.args...)
     aex.head == :on       && return interpret_on(aex.args, Γ)
     error(string("Invalid AExpr Head: ", aex.head))
-  interpret2(aex, Γ)
 end
 
 
@@ -402,13 +401,15 @@ function _assign_interpret(@nospecialize(Γ::Env), x, v::AExpr)
     interpret_init_next(x, v, Γ)
   else
     (v2, Γ_) = interpret(v, Γ)
-    interpret(AExpr(:assign, x, v2), Γ_)
+    # interpret(AExpr(:assign, x, v2), Γ_)
+    _assign_interpret(Γ_, x, v2)
   end
 end
 
 function _assign_interpret(@nospecialize(Γ::Env), x, v::Symbol)
   (v2, Γ_) = interpret(v, Γ)
-  interpret(AExpr(:assign, x, v2), Γ_)
+  _assign_interpret(Γ_, x, v2)
+  # interpret(AExpr(:assign, x, v2), Γ_)
 end
 
 function _assign_interpret(@nospecialize(Γ::Env), x, v::BigInt)
@@ -457,7 +458,7 @@ function _call_interpret(@nospecialize(Γ::Env), f, args...)
   end
 
   if f == :prev && args != [:obj]
-    interpret(AExpr(:call, Symbol(string(f, uppercasefirst(string(args[1])))), :state), Γ)
+    _call_interpret(Γ, Symbol(string(f, uppercasefirst(string(args[1])))), :state)
   elseif islib(f)
     interpret_lib(f, collect(args), Γ)
   elseif isjulialib(f)
@@ -494,7 +495,7 @@ function interpret(x::Symbol, @nospecialize(Γ::Env))
   elseif x == :click 
     Γ.click, Γ
   elseif x == :clicked 
-    interpret(AExpr(:call, :occurred, :click), Γ)
+    _call_interpret(Γ, :occurred, :click)
   elseif x in keys(Γ.state.object_types)
     x, Γ
   elseif x == :state 
