@@ -429,7 +429,7 @@ function _typedecl_interpret(@nospecialize(Γ::Env), args...)
 end
 
 function _let_interpret(@nospecialize(Γ::Env), args...)
-  interpret_let(args, Γ) 
+  interpret_let([args...], Γ) 
 end
 
 function _lambda_interpret(@nospecialize(Γ::Env), args...)
@@ -454,8 +454,7 @@ function _call_interpret(@nospecialize(Γ::Env), f, args...)
       return primapl(f, new_arg1, new_arg2, Γ2)
     end
   end
-
-  if f == :prev && args != [:obj]
+  if f == :prev && args != (:obj,)
     _call_interpret(Γ, Symbol(string(f, uppercasefirst(string(args[1])))), :state)
   elseif islib(f)
     interpret_lib(f, args, Γ)
@@ -576,7 +575,7 @@ function interpret_field(x, f, @nospecialize(Γ::Env))
   end
 end
 
-function interpret_let(args::AbstractArray, @nospecialize(Γ::Env))
+function interpret_let(args::Array{AExpr}, @nospecialize(Γ::Env))
   Γ2 = Γ
   if length(args) > 0
     for arg in args[1:end-1] # all lines in let except last
