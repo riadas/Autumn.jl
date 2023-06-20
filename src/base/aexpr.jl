@@ -54,7 +54,7 @@ lambdaexpr  := x --> expr
 struct AExpr
   head::Symbol
   args::Vector{Any}
-  AExpr(head::Symbol, @nospecialize args...) = new(head, [args...])
+  AExpr(head::Symbol, @nospecialize args...) = new(head, collect(args))
   AExpr(head::Symbol, args::Vector{Any}) = new(head, args)
 end
 "Arguements of expression"
