@@ -233,7 +233,7 @@ function primapl(f, x1, x2, @nospecialize(Γ::Env))
   prim_to_func[f](x1, x2), Γ
 end
 
-lib_to_func = let keys = (
+const lib_to_func = let keys = (
     :Position,
     :Cell,
     :Click,
