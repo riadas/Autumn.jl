@@ -30,7 +30,7 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
   lines = aex.args 
 
   # reorder program lines
-  grid_params_and_object_type_lines = filter(l -> !(l.head in [:assign, :on]), lines) # || (l.head == :assign && l.args[1] in [:GRID_SIZE, :background])
+  grid_params_and_object_type_lines = filter(l -> !(l.head in (:assign, :on)), lines) # || (l.head == :assign && l.args[1] in [:GRID_SIZE, :background])
   initnext_lines = filter(l -> l.head == :assign && (l.args[2] isa AExpr && l.args[2].head == :initnext), lines)
   lifted_lines = filter(l -> l.head == :assign && (!(l.args[2] isa AExpr) || l.args[2].head != :initnext), lines) # GRID_SIZE and background here
   on_clause_lines = filter(l -> l.head == :on, lines)
