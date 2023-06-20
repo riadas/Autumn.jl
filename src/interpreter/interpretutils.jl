@@ -704,7 +704,9 @@ function interpret_init_next(var_name, var_val, @nospecialize(Γ::Env))
       # # # # # @showdefault_val 
       # # # # # println("HERE I AM ONCE AGAIN 2")
       # # # # # @showΓ.state.objectsCreated
-      final_val = mappedarray(o -> update(o, :changed, false), filter(obj -> obj.alive, vcat(changed_val, default_val)))
+      val1 = (update(obj, :changed, false) for obj in changed_val if obj.alive)
+      val2 = (update(obj, :changed, false) for obj in default_val if obj.alive)
+      final_val = vcat(val1..., val2...)
     else # variable is not an array
       events = get(Γ.on_clauses, var_name, [])
       changed = false 
