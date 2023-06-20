@@ -460,7 +460,7 @@ function _call_interpret(@nospecialize(Γ::Env), f, args...)
   if f == :prev && args != [:obj]
     _call_interpret(Γ, Symbol(string(f, uppercasefirst(string(args[1])))), :state)
   elseif islib(f)
-    interpret_lib(f, collect(args), Γ)
+    interpret_lib(f, args, Γ)
   elseif isjulialib(f)
     interpret_julia_lib(f, args, Γ)
   elseif f in keys(Γ.state.object_types)
