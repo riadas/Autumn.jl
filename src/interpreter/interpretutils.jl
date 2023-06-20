@@ -401,7 +401,6 @@ function _assign_interpret(@nospecialize(Γ::Env), x, v::AExpr)
     interpret_init_next(x, v, Γ)
   else
     (v2, Γ_) = interpret(v, Γ)
-    # interpret(AExpr(:assign, x, v2), Γ_)
     _assign_interpret(Γ_, x, v2)
   end
 end
@@ -409,7 +408,6 @@ end
 function _assign_interpret(@nospecialize(Γ::Env), x, v::Symbol)
   (v2, Γ_) = interpret(v, Γ)
   _assign_interpret(Γ_, x, v2)
-  # interpret(AExpr(:assign, x, v2), Γ_)
 end
 
 function _assign_interpret(@nospecialize(Γ::Env), x, v::BigInt)
@@ -873,7 +871,9 @@ function interpret_updateObj(args, @nospecialize(Γ::Env))
           end
         end
 
-        new_item, Γ2 = interpret(AExpr(:call, map_func, item), Γ2)
+        new_item, Γ2 = _call_interpret(Γ2, map_func, item)
+
+        # new_item, Γ2 = interpret(AExpr(:call, map_func, item), Γ2)
         new_list[j] = new_item
       else
         # # println("PRED FALSE!")
