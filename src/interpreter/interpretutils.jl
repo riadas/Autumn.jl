@@ -7,6 +7,8 @@ using Setfield
 export interpret, interpret_let, interpret_call, interpret_init_next, interpret_object, interpret_object_call, interpret_on, Environment, empty_env, std_env, update, primapl, isprim, update
 import MLStyle
 
+using ..AutumnStandardLibrary: Cell
+
 """Substitute value v for AExpr/Symbol x in aex"""
 function sub(aex::AExpr, (x, v))
   arr = [aex.head, aex.args...]
@@ -323,6 +325,15 @@ function interpret_list(args, @nospecialize(Γ::Env))
   new_list, Γ
 end
 
+function interpret_render(args, @nospecialize(Γ::Env))
+  new_list = Cell[]
+  for arg in args
+    new_arg, Γ = interpret(arg, Γ)
+    push!(new_list, new_arg)
+  end
+  new_list, Γ
+end
+
 function interpret_lib(f, args, @nospecialize(Γ::Env)) 
   new_args = []
   for arg in args 
@@ -467,7 +478,12 @@ function interpret_object(args, @nospecialize(Γ::Env))
 
   # construct object creation function
   if length(object_fields) == 0
-    render, _ = interpret(object_render, Γ)
+    if object_render.head == :list
+      render, _ = interpret_render(object_render.args, Γ)
+    else
+      render, _ = interpret_render([object_render], Γ)
+    end
+    # @show typeof(render)
     if !(render isa AbstractArray) 
       render = [render]
     end
