@@ -32,7 +32,7 @@ function sub(aex::AExpr, (x, v))
 
     aex.head == :list && let 
       args = aex.args
-      return AExpr(:list, (sub(arg, x => v) for arg in args)...)
+      return AExpr(:list, Any[sub(arg, x => v) for arg in args])
     end
 
     aex.head == :typedecl && let 
@@ -42,7 +42,7 @@ function sub(aex::AExpr, (x, v))
 
     aex.head == :let && let 
       args = aex.args
-      return AExpr(:let, (sub(arg, x => v) for arg in args)...)
+      return AExpr(:let, Any[sub(arg, x => v) for arg in args])
     end
 
     aex.head == :lambda && let 
@@ -52,12 +52,12 @@ function sub(aex::AExpr, (x, v))
 
     aex.head == :call && let 
       args = aex.args
-      return AExpr(:call, (sub(arg, x => v) for arg in args)...)
+      return AExpr(:call, Any[sub(arg, x => v) for arg in args])
     end
 
     aex.head == :object && let 
       args = aex.args
-      return AExpr(:object, (sub(arg, x => v) for arg in args)...)
+      return AExpr(:object, Any[sub(arg, x => v) for arg in args])
     end
 
     aex.head == :on && let 
@@ -72,7 +72,7 @@ function sub(aex::AExpr, (x, v))
 
     aex.head == :object && let 
       args = aex.args
-      return AExpr(:object, (sub(arg, x => v) for arg in args)...)
+      return AExpr(:object, Any[sub(arg, x => v) for arg in args])
     end
 
     aex.head == :on && let 
