@@ -575,7 +575,7 @@ function interpret_field(x, f, @nospecialize(Γ::Env))
   end
 end
 
-function interpret_let(args::Array{AExpr}, @nospecialize(Γ::Env))
+function interpret_let(args::AbstractArray, @nospecialize(Γ::Env))
   Γ2 = Γ
   if length(args) > 0
     for arg in args[1:end-1] # all lines in let except last
