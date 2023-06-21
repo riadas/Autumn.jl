@@ -347,10 +347,10 @@ function removeObj(@nospecialize(list::AbstractArray), fn, state::Union{State, N
 end
 
 function removeObj(obj::Object, state::Union{State, Nothing}=nothing)
-  new_obj = update_nt(new_obj, :alive, false)
+  new_obj = update_nt(obj, :alive, false)
   # new_obj.alive = false
   # new_obj.changed = true
-  # new_obj
+  new_obj
 end
 
 function updateObj(obj::Object, field::String, value, state::Union{State, Nothing}=nothing)
