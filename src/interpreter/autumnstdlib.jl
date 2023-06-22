@@ -1139,7 +1139,8 @@ function isFree(position::Position, object::Object, @nospecialize(state::State))
 end
 
 function isFree(object::Object, @nospecialize(orig_object::Object), @nospecialize(state::State))::Bool
-  reduce(&, map(x -> isFree(x, orig_object, state), map(cell -> cell.position, render(object, state))))
+  l = map(x -> isFree(x, orig_object, state), map(cell -> cell.position, render(object, state)))
+  l == [] ? true : reduce(&, l)
 end
 
 function allPositions(@nospecialize(state::State))
