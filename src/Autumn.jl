@@ -9,12 +9,6 @@ include("base/aexpr.jl")
 include("base/sexpr.jl")
 @reexport using .SExpr
 
-include("compiler/compileutils.jl")
-@reexport using .CompileUtils
-
-include("compiler/compile.jl")
-@reexport using .Compile
-
 include("interpreter/autumnstdlib.jl")
 @reexport using .AutumnStandardLibrary
 
