@@ -3,17 +3,8 @@ using ..AExpressions: AExpr
 using Random
 using Setfield
 using Distributions: Categorical
+import Base: floor, round, min
 export Object, ObjectType, Scene, State, Env
-
-# update_nt(@nospecialize(Γ::NamedTuple), x::Symbol, v) = merge(Γ, NamedTuple{(x,)}((v,)))
-
-# abstract type Object end
-# abstract type KeyPress end
-
-# struct Left <: KeyPress end
-# struct Right <: KeyPress end
-# struct Up <: KeyPress end
-# struct Down <: KeyPress end
 
 struct Click
   x::Int
@@ -57,7 +48,7 @@ mutable struct State
   rng::AbstractRNG
   scene::Scene 
   object_types::Dict{Symbol, ObjectType}
-  histories::Dict{Symbol, Dict{Int, Union{Int, String, Bool, Position, Object, AbstractArray}}}
+  histories::Dict{Symbol, Dict{Int, Union{Int, Float64, String, Bool, Position, Object, AbstractArray}}}
 end
 
 
@@ -67,7 +58,7 @@ mutable struct Env
   up::Bool 
   down::Bool
   click::Union{Nothing, Click}
-  current_var_values::Dict{Symbol, Union{Object, Int, Bool, String, Position, State, AbstractArray}}
+  current_var_values::Dict{Symbol, Union{Object, Int, Float64, Bool, String, Position, State, AbstractArray}}
   lifted::Dict{Symbol, Union{AExpr, BigInt, Int, String}}
   on_clauses::Dict{Symbol, Array{Union{AExpr, Symbol}}}
   state::State
@@ -324,13 +315,11 @@ function intersects(object::Object, @nospecialize(state::State))::Bool
 end
 
 function addObj(@nospecialize(list::AbstractArray), obj::Object, state::Union{State, Nothing}=nothing)
-  obj = update_nt(obj, :changed, true)
   new_list = vcat(list, obj)
   new_list
 end
 
 function addObj(@nospecialize(list::AbstractArray), @nospecialize(objs::AbstractArray), state::Union{State, Nothing}=nothing)
-  objs = map(obj -> update_nt(obj, :changed, true), objs)
   new_list = vcat(list, objs)
   new_list
 end
@@ -339,7 +328,7 @@ function removeObj(@nospecialize(list::AbstractArray), obj::Object, state::Union
   new_list = deepcopy(list)
   for x in filter(o -> o.id == obj.id, new_list)
     index = findall(o -> o.id == x.id, new_list)[1]
-    new_list[index] = update_nt(update_nt(x, :alive, false), :changed, true)
+    new_list[index] = update_nt(x, :alive, false)
     #x.alive = false 
     #x.changed = true
   end
@@ -350,7 +339,7 @@ function removeObj(@nospecialize(list::AbstractArray), fn, state::Union{State, N
   new_list = deepcopy(list)
   for x in filter(obj -> fn(obj), new_list)
     index = findall(o -> o.id == x.id, new_list)[1]
-    new_list[index] = update_nt(update_nt(x, :alive, false), :changed, true)
+    new_list[index] = update_nt(x, :alive, false)
     #x.alive = false 
     #x.changed = true
   end
@@ -358,11 +347,10 @@ function removeObj(@nospecialize(list::AbstractArray), fn, state::Union{State, N
 end
 
 function removeObj(obj::Object, state::Union{State, Nothing}=nothing)
-  new_obj = deepcopy(obj)
-  new_obj = update_nt(update_nt(new_obj, :alive, false), :changed, true)
+  new_obj = update_nt(obj, :alive, false)
   # new_obj.alive = false
   # new_obj.changed = true
-  # new_obj
+  new_obj
 end
 
 function updateObj(obj::Object, field::String, value, state::Union{State, Nothing}=nothing)
@@ -376,7 +364,6 @@ function updateObj(obj::Object, field::String, value, state::Union{State, Nothin
   new_obj = typeof(obj)(constructor_values...)
   setproperty!(new_obj, :id, obj.id)
   setproperty!(new_obj, :alive, obj.alive)
-  setproperty!(new_obj, :changed, true)
 
   setproperty!(new_obj, Symbol(field), value)
   state.objectsCreated -= 1    
@@ -491,6 +478,10 @@ function displacement(cell1::Cell, cell2::Cell, state::Union{State, Nothing}=not
   displacement(cell1.position, cell2.position)
 end
 
+function adjacent(position1::Position, position2::Position, state::Union{State, Nothing}=nothing)::Bool
+  displacement(position1, position2) in [Position(0, 1), Position(1, 0), Position(0, -1), Position(-1, 0)]
+end
+
 function adjacent(position1::Position, position2::Position, unitSize::Int, state::Union{State, Nothing}=nothing)::Bool
   displacement(position1, position2) in [Position(0, unitSize), Position(unitSize, 0), Position(0, -unitSize), Position(-unitSize, 0)]
 end
@@ -501,6 +492,10 @@ end
 
 function adjacent(cell::Cell, cells::Array{Cell}, unitSize::Int, state::Union{State, Nothing}=nothing)
   length(filter(x -> adjacent(cell, x, unitSize), cells)) != 0
+end
+
+function adjacentObjs(obj::Object, @nospecialize(state::State))
+  filter(o -> adjacent(o.origin, obj.origin, 1) && (obj.id != o.id), state.scene.objects)
 end
 
 function adjacentObjs(obj::Object, unitSize::Int, @nospecialize(state::State))
@@ -1144,7 +1139,8 @@ function isFree(position::Position, object::Object, @nospecialize(state::State))
 end
 
 function isFree(object::Object, @nospecialize(orig_object::Object), @nospecialize(state::State))::Bool
-  reduce(&, map(x -> isFree(x, orig_object, state), map(cell -> cell.position, render(object, state))))
+  l = map(x -> isFree(x, orig_object, state), map(cell -> cell.position, render(object, state)))
+  l == [] ? true : reduce(&, l)
 end
 
 function allPositions(@nospecialize(state::State))
@@ -1178,6 +1174,14 @@ function range(n::Int, state::Union{State, Nothing}=nothing)
   else
     collect(1:n)
   end
+end
+
+function floor(n::Union{Float64, Int}, state::Union{State, Nothing}=nothing)::Int
+  floor(Int, n)
+end
+
+function round(n::Union{Float64, Int}, state::Union{State, Nothing}=nothing)::Int
+  round(Int, n)
 end
 
 end

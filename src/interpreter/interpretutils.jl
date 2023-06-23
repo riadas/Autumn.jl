@@ -2,12 +2,12 @@ module InterpretUtils
 using ..AExpressions: AExpr
 using ..SExpr
 using ..AutumnStandardLibrary
-using ..CompileUtils
 using Setfield
 export interpret, interpret_let, interpret_call, interpret_init_next, interpret_object, interpret_object_call, interpret_on, Environment, empty_env, std_env, update, primapl, isprim, update
 import MLStyle
 using MappedArrays
 
+"""Substitute value v for AExpr/Symbol x in aex"""
 function sub(aex::AExpr, (x, v))
   if isempty(v)
     return sub_emptyv(aex, x)
@@ -173,12 +173,6 @@ empty_env() = NamedTuple()
 std_env() = empty_env()
 
 "Produces new environment Γ' s.t. `Γ(x) = v` (and everything else unchanged)"
-# update(@nospecialize(Γ::Env), x::Symbol, v) = merge(Γ, NamedTuple{(x,)}((v,)))
-
-# function update(@nospecialize(Γ::Env), x::Symbol, @nospecialize(v)) 
-#   merge(Γ, NamedTuple{(x,)}((v,)))
-# end
-
 function update(Γ::Env, x::Symbol, v)::Env 
   setfield!(Γ, x, v)
   Γ
@@ -201,8 +195,6 @@ function update(Γ::Object, x::Symbol, v)::Object
     Γ = @set Γ.type = v
   elseif x == :alive 
     Γ = @set Γ.alive = v
-  elseif x == :changed 
-    Γ = @set Γ.changed = v
   elseif x == :custom_fields 
     Γ = @set Γ.custom_fields = v
   elseif x == :render
@@ -223,7 +215,6 @@ const prim_to_func = let prims = (:+, :-, :*, :/, :&, :!, :|, :>, :>=, :<, :<=, 
 end
 
 isprim(f) = f in keys(prim_to_func)
-# primapl(f, x...) = (prim_to_func[f](x[1:end-1]...), x[end])
 
 function primapl(f, x, @nospecialize(Γ::Env)) 
   prim_to_func[f](x), Γ
@@ -310,12 +301,7 @@ end
 
 islib(f) = f in keys(lib_to_func)
 
-# library function handling 
 function libapl(f, args, @nospecialize(Γ::Env))
-  # # println("libapl")
-  # # @show f 
-  # # @show args 
-
   if f == :clicked && (length(args) == 0)
     interpret(f, Γ)
   elseif f == :clicked
@@ -329,11 +315,6 @@ function libapl(f, args, @nospecialize(Γ::Env))
     end
   
     if !has_function_arg && (f != :updateObj)
-      # # # # # println("CHECK HERE")
-      # # # # # @showf
-      # # # # # @showargs
-      # # # # # @showkeys(Γ.state)
-      # # # # @showargs 
       lib_to_func[f]((interpret(arg, Γ)[1] for arg in args)..., Γ.state), Γ    
     else
       if f == :updateObj 
@@ -373,6 +354,7 @@ function julialibapl(f, args, @nospecialize(Γ::Env))
   end
 end
 
+"""Main interpret function: interpret aex given environment Γ"""
 function interpret(aex::AExpr, @nospecialize(Γ::Env))
   aex.head == :if       && return _if_interpret(Γ, aex.args...)
     aex.head == :assign   && return _assign_interpret(Γ, aex.args...)
@@ -387,8 +369,6 @@ function interpret(aex::AExpr, @nospecialize(Γ::Env))
     aex.head == :on       && return interpret_on(aex.args, Γ)
     error(string("Invalid AExpr Head: ", aex.head))
 end
-
-
 
 function _if_interpret(@nospecialize(Γ::Env), c, t, e)
   (v, Γ2) = interpret(c, Γ) 
@@ -498,7 +478,6 @@ function interpret(x::Symbol, @nospecialize(Γ::Env))
   elseif x == :state 
     Γ.state, Γ
   elseif x in keys(Γ.current_var_values)
-    # # # # @showeval(:($(Γ).$(x)))
     Γ.current_var_values[x], Γ
   else
     error("Could not interpret $x")
@@ -524,45 +503,30 @@ function interpret_list(args, @nospecialize(Γ::Env))
 end
 
 function interpret_lib(f, args, @nospecialize(Γ::Env))
-  # # println("INTERPRET_LIB")
-  # # @show f 
-  # # @show args 
   new_args = Vector{Any}(undef, length(args))
   for (j, arg) in enumerate(args) 
     new_arg, Γ = interpret(arg, Γ)
     new_args[j] = new_arg
     # push!(new_args, new_arg)
   end
-  # # # # @shownew_args
   libapl(f, new_args, Γ)
 end
 
 function interpret_julia_lib(f, args, @nospecialize(Γ::Env))
-  # println("INTERPRET_JULIA_LIB")
-  # @show f 
-  # @show args
   new_args = Vector{Any}(undef, length(args))
   for i in eachindex(args)
     arg = args[i] 
-    # # # # @showarg
     if f == :get && i == 2 && args[i] isa Symbol
       new_arg = arg
     else
       new_arg, Γ = interpret(arg, Γ)
     end
-    # # # # @shownew_arg 
-    # # # # @showΓ
     new_args[i] = new_arg
   end
-  # # @show new_args 
   julialibapl(f, new_args, Γ)
 end
 
 function interpret_field(x, f, @nospecialize(Γ::Env))
-  # # # # # println("INTERPRET_FIELD")
-  # # # # # @showkeys(Γ)
-  # # # # # @showx 
-  # # # # # @showf 
   val, Γ2 = interpret(x, Γ)
   if val isa Object
     if f in [:id, :origin, :type, :alive, :changed, :render]
@@ -620,20 +584,16 @@ function interpret_call(f, params, @nospecialize(Γ::Env))
   else
     error("Could not interpret $(func_args)")
   end
-  # # # # # # @showtypeof(Γ2)
   # evaluate func_body in environment 
   v, Γ2 = interpret(func_body, Γ2)
   
   # return value and original environment, except with state updated 
   Γ = update(Γ, :state, update(Γ.state, :objectsCreated, Γ2.state.objectsCreated))
-  # # # # # # println("DONE")
   Γ.current_var_values = old_current_var_values
   (v, Γ)
 end
 
 function interpret_object_call(f, args, @nospecialize(Γ::Env))
-  # # # # # # println("BEFORE")
-  # # # # # # @showΓ.state.objectsCreated 
   new_state = update(Γ.state, :objectsCreated, Γ.state.objectsCreated + 1)
   Γ = update(Γ, :state, new_state)
 
@@ -648,11 +608,8 @@ function interpret_object_call(f, args, @nospecialize(Γ::Env))
     field_name = fields[i].args[1]
     field_value, Γ2 = interpret(args[i], Γ2)
     field_values[field_name] = field_value
-    # object_repr = update(object_repr, field_name, field_value)
     Γ2.current_var_values[field_name] = field_value
   end
-  # # @show f
-  # # @show field_values 
   if length(fields) == 0 
     object_repr = Object(Γ.state.objectsCreated, origin, f, true, false, field_values, nothing)  
   else
@@ -661,67 +618,23 @@ function interpret_object_call(f, args, @nospecialize(Γ::Env))
     object_repr = Object(Γ.state.objectsCreated, origin, f, true, false, field_values, render)
   end
   Γ.current_var_values = old_current_var_values
-  # # # # # # println("AFTER")
-  # # # # # # @showΓ.state.objectsCreated 
   (object_repr, Γ)  
 end
 
 function interpret_init_next(var_name, var_val, @nospecialize(Γ::Env))
-  # # # # println("INTERPRET INIT NEXT")
   init_func = var_val.args[1]
   next_func = var_val.args[2]
 
   Γ2 = Γ
   if !(var_name in keys(Γ2.current_var_values)) # variable not initialized; use init clause
-    # # # # println("HELLO")
-    # initialize var_name
     var_val, Γ2 = interpret(init_func, Γ2)
     Γ2.current_var_values[var_name] = var_val
 
     # construct history variable in state 
     Γ2.state.histories[Symbol(string(var_name))] = Dict()
-    # Γ2 = update(Γ2, :state, new_state)
 
     # construct prev function 
     _, Γ2 = interpret(AExpr(:assign, Symbol(string(:prev, uppercasefirst(string(var_name)))), parseautumn("""(fn (state) (get (get (.. state histories) $(string(var_name)) -1) (- (.. state time) 1) $(var_name)))""")), Γ2) 
-
-  elseif Γ.state.time > 0 # variable initialized; use next clause if simulation time > 0  
-    # update var_val 
-    var_val = Γ.current_var_values[var_name]
-    if var_val isa Array 
-      changed_val = filter(x -> x.changed, var_val) # values changed by on-clauses
-      unchanged_val = filter(x -> !x.changed, var_val) # values unchanged by on-clauses; apply default behavior
-      # # # # # @showvar_val 
-      # # # # # @showchanged_val 
-      # # # # # @showunchanged_val
-      # replace (prev var_name) or var_name with unchanged_val 
-      modified_next_func = sub(next_func, AExpr(:call, :prev, var_name) => unchanged_val)
-      modified_next_func = sub(modified_next_func, var_name => unchanged_val)
-      # # # # # println("HERE I AM ONCE AGAIN")
-      # # # # # @showΓ.state.objectsCreated
-      default_val, Γ = interpret(modified_next_func, Γ)
-      # # # # # @showdefault_val 
-      # # # # # println("HERE I AM ONCE AGAIN 2")
-      # # # # # @showΓ.state.objectsCreated
-      val1 = (update(obj, :changed, false) for obj in changed_val if obj.alive)
-      val2 = (update(obj, :changed, false) for obj in default_val if obj.alive)
-      final_val = vcat(val1..., val2...)
-    else # variable is not an array
-      events = get(Γ.on_clauses, var_name, [])
-      changed = false 
-      for e in events 
-        v, Γ = interpret(e, Γ)
-        if v == true 
-          changed = true
-        end
-      end
-      if !changed 
-        final_val, Γ = interpret(next_func, Γ)
-      else
-        final_val = var_val
-      end
-    end
-    Γ2.current_var_values[var_name] = final_val
   end
   (AExpr(:assign, var_name, var_val), Γ2)
 end
@@ -746,62 +659,20 @@ function interpret_object(args, @nospecialize(Γ::Env))
 end
 
 function interpret_on(args, @nospecialize(Γ::Env))
-  # println("INTERPRET ON")
   event = args[1]
   update_ = args[2]
-  # @show event 
-  # @show update_
-  # @show update_.head
-  # @show Γ.state.time
   Γ2 = Γ
-  if Γ2.state.time == 0 
-    if update_.head == :assign
-      var_name = update_.args[1]
-      if !(var_name in keys(Γ2.on_clauses))
-        Γ2.on_clauses[var_name] = [event]
-      else
-        Γ2.on_clauses[var_name] = vcat(event, Γ2.on_clauses[var_name])
-      end
-    elseif update_.head == :let 
-      assignments = update_.args
-      if length(assignments) > 0 
-        if (assignments[end] isa AExpr) && (assignments[end].head == :assign)
-          for a in assignments 
-            var_name = a.args[1]
-            if !(var_name in keys(Γ2.on_clauses))
-              Γ2.on_clauses[var_name] = [event]
-            else
-              Γ2.on_clauses[var_name] = vcat(event, Γ2.on_clauses[var_name])
-            end
-          end
-        end
-      end
-    else
-      error("Could not interpret $(update_)")
-    end
-  else
-    # # println("ON CLAUSE")
-    # # # @showevent 
-    # # # # @showupdate_  
-    # # @show repr(event)
+  if Γ2.state.time != 0
     e, Γ2 = interpret(event, Γ2) 
-    # # # @showe 
-    # # @show update_
     if e == true
-      # @show event 
-      # @show Γ2.current_var_values[:time]
       if Γ2.show_rules != -1
         open("likelihood_output_$(Γ2.show_rules).txt", "a") do io
           println(io, "----- global -----")
           println(io, repr([event isa Symbol ? event : repr(event), repr(update_)]))
         end
       end
-      # # println("EVENT IS TRUE!") 
       t = interpret(update_, Γ2)
-      # # println("WHAT ABOUT HERE")
-      # # @show t[2]
       Γ3 = t[2]
-      # # # println("hi")
       Γ2 = Γ3
     end
   end
@@ -810,7 +681,6 @@ end
 
 # evaluate updateObj on arguments that include functions 
 function interpret_updateObj(args, @nospecialize(Γ::Env))
-  # # println("MADE IT!")
   Γ2 = Γ
   numFunctionArgs = count(x -> x == true, mappedarray(arg -> (arg isa AbstractArray) && (length(arg) == 2) && (arg[1] isa AExpr || arg[1] isa Symbol) && (arg[2] isa AExpr || arg[2] isa Symbol), args))
   if numFunctionArgs == 1
@@ -825,9 +695,6 @@ function interpret_updateObj(args, @nospecialize(Γ::Env))
       end
     end
 
-    # # # # # @showlist 
-    # # # # # @showmap_func
-
     new_list = Vector{Any}(undef, length(list))
     for (j, item) in enumerate(list)
       if Γ2.show_rules != -1
@@ -836,11 +703,7 @@ function interpret_updateObj(args, @nospecialize(Γ::Env))
           println(io, item.id) # list, map_func, filter_func, item
         end
       end
-      # # # # # # println("PRE=PLS WORK")
-      # # # # # # @showΓ2.state.objectsCreated      
       new_item, Γ2 = interpret(AExpr(:call, map_func, item), Γ2)
-      # # # # # # println("PLS WORK")
-      # # # # # # @showΓ2.state.objectsCreated
       new_list[j] = new_item
     end
     new_list, Γ2
@@ -848,9 +711,6 @@ function interpret_updateObj(args, @nospecialize(Γ::Env))
     list, Γ2 = interpret(args[1], Γ2)
     map_func = args[2]
     filter_func = args[3]
-
-    # # @show list 
-    # # @show map_func
 
     if Γ2.show_rules != -1
       open("likelihood_output_$(Γ2.show_rules).txt", "a") do io
@@ -863,8 +723,6 @@ function interpret_updateObj(args, @nospecialize(Γ::Env))
     for (j, item) in enumerate(list)
       pred, Γ2 = interpret(AExpr(:call, filter_func, item), Γ2)
       if pred == true 
-        # # println("PRED TRUE!")
-        # # @show item 
         if Γ2.show_rules != -1
           open("likelihood_output_$(Γ2.show_rules).txt", "a") do io
             println(io, "object_id")
@@ -877,19 +735,15 @@ function interpret_updateObj(args, @nospecialize(Γ::Env))
         # new_item, Γ2 = interpret(AExpr(:call, map_func, item), Γ2)
         new_list[j] = new_item
       else
-        # # println("PRED FALSE!")
-        # # @show item 
         new_list[j] = item
       end
     end
-    # # @show new_list 
     new_list, Γ2
   elseif numFunctionArgs == 0
     obj = args[1]
     field_string = args[2]
     new_value = args[3]
     new_obj = update(obj, Symbol(field_string), new_value)
-    new_obj = update(new_obj, :changed, true)
 
     # update render
     object_type = Γ.state.object_types[obj.type]
@@ -910,15 +764,12 @@ function interpret_updateObj(args, @nospecialize(Γ::Env))
     end  
     Γ2.current_var_values = old_current_var_values
     new_obj, Γ2
-    # Γ2 = update(Γ2, :state, update(Γ2.state, :objectsCreated, Γ2.state.objectsCreated + 1))
   else
     error("Could not interpret updateObj")
   end
 end
 
 function interpret_removeObj(args, @nospecialize(Γ::Env))
-  # println("interpret_removeObj")
-  # @show args
   list, Γ = interpret(args[1], Γ)
   func = args[2]
   new_list = []
@@ -927,15 +778,10 @@ function interpret_removeObj(args, @nospecialize(Γ::Env))
     if pred == false 
       push!(new_list, item)
     else
-      # println("pred true!")
-      # @show item.id
-      # @show length(new_list)
-      # @show length(list)
-      new_item = update(update(item, :alive, false), :changed, true)
+      new_item = update(item, :alive, false)
       push!(new_list, new_item)
     end
   end
-  # @show new_list
   new_list, Γ
 end
 
