@@ -435,7 +435,7 @@ function _call_interpret(@nospecialize(Γ::Env), f, args...)
     end
   end
   if f == :prev && args != (:obj,)
-    _call_interpret(Γ, Symbol(string(f, uppercasefirst(string(args[1])))), :state)
+    Γ.state.histories[args[1]][Γ.state.time - 1], Γ
   elseif islib(f)
     interpret_lib(f, args, Γ)
   elseif isjulialib(f)
@@ -633,8 +633,6 @@ function interpret_init_next(var_name, var_val, @nospecialize(Γ::Env))
     # construct history variable in state 
     Γ2.state.histories[Symbol(string(var_name))] = Dict()
 
-    # construct prev function 
-    _, Γ2 = interpret(AExpr(:assign, Symbol(string(:prev, uppercasefirst(string(var_name)))), parseautumn("""(fn (state) (get (get (.. state histories) $(string(var_name)) -1) (- (.. state time) 1) $(var_name)))""")), Γ2) 
   end
   (AExpr(:assign, var_name, var_val), Γ2)
 end
