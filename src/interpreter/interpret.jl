@@ -19,7 +19,7 @@ end
 """Initialize environment with variable values"""
 function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
   aex.head == :program || error("Must be a program aex")
-  env = Env(false, false, false, false, nothing, Dict(), Dict(), State(0, 0, rng, Scene([], "white"), Dict(), Dict()), show_rules)
+  env = Env(false, false, false, false, nothing, Dict(), State(0, 0, rng, Scene([], "white"), Dict(), Dict()), show_rules)
 
   lines = aex.args 
 
