@@ -29,16 +29,16 @@ struct Object
   alive::Bool 
   changed::Bool
   custom_fields::Dict{Symbol, Union{Int, String, Bool, Position}}
-  render::Union{Nothing, AbstractArray}
+  render::Union{Nothing, AbstractVector}
 end
 
 struct ObjectType
-  render::Union{Nothing, AExpr, AbstractArray}
-  fields::Array{AExpr}
+  render::Union{Nothing, AExpr, AbstractVector}
+  fields::Vector{AExpr}
 end
 
 mutable struct Scene 
-  objects::Array{Object}
+  objects::Vector{Object}
   background::String
 end
 
@@ -48,7 +48,7 @@ mutable struct State
   rng::AbstractRNG
   scene::Scene 
   object_types::Dict{Symbol, ObjectType}
-  histories::Dict{Symbol, Dict{Int, Union{Int, Float64, String, Bool, Position, Object, AbstractArray}}}
+  histories::Dict{Symbol, Dict{Int, Union{Int, Float64, String, Bool, Position, Object, AbstractVector}}}
 end
 
 
@@ -58,9 +58,9 @@ mutable struct Env
   up::Bool 
   down::Bool
   click::Union{Nothing, Click}
-  current_var_values::Dict{Symbol, Union{Object, Int, Float64, Bool, String, Position, State, AbstractArray}}
+  current_var_values::Dict{Symbol, Union{Object, Int, Float64, Bool, String, Position, State, AbstractVector}}
   lifted::Dict{Symbol, Union{AExpr, BigInt, Int, String}}
-  on_clauses::Dict{Symbol, Array{Union{AExpr, Symbol}}}
+  on_clauses::Dict{Symbol, Vector{Union{AExpr, Symbol}}}
   state::State
   show_rules::Int
 end
@@ -98,13 +98,13 @@ Cell(x, y, color::String, @nospecialize(state::State)) = Cell(floor(Int, x), flo
 Cell(position::Position, color::String, @nospecialize(state::State)) = Cell(position::Position, color::String)
 
 # struct Scene
-#   objects::Array{Object}
+#   objects::Vector{Object}
 #   background::String
 # end
 
-# Scene(@nospecialize(objects::AbstractArray)) = Scene(objects, "#ffffff00")
+# Scene(@nospecialize(objects::AbstractVector)) = Scene(objects, "#ffffff00")
 
-# function render(scene)::Array{Cell}
+# function render(scene)::Vector{Cell}
 #   vcat(map(obj -> render(obj), filter(obj -> obj.alive, scene.objects))...)
 # end
 
@@ -117,7 +117,7 @@ function prev(obj::Object, @nospecialize(state))
   end
 end
 
-function render(obj::Object, state::Union{State, Nothing}=nothing)::Array{Cell}
+function render(obj::Object, state::Union{State, Nothing}=nothing)::Vector{Cell}
   if obj.alive
     if isnothing(obj.render)
       render = state.object_types[obj.type].render
@@ -171,7 +171,7 @@ function clicked(click::Union{Click, Nothing}, object::Object, @nospecialize(sta
     false
   else
     GRID_SIZE = state.histories[:GRID_SIZE][0]
-    if GRID_SIZE isa AbstractArray 
+    if GRID_SIZE isa AbstractVector 
       GRID_SIZE_X = GRID_SIZE[1]
       nums = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, render(object, state))
       (GRID_SIZE_X * click.y + click.x) in nums
@@ -183,7 +183,7 @@ function clicked(click::Union{Click, Nothing}, object::Object, @nospecialize(sta
   end
 end
 
-function clicked(click::Union{Click, Nothing}, @nospecialize(objects::AbstractArray), @nospecialize(state::State))  
+function clicked(click::Union{Click, Nothing}, @nospecialize(objects::AbstractVector), @nospecialize(state::State))  
   # # println("LOOK AT ME")
   # # println(reduce(&, map(obj -> clicked(click, obj), objects)))
   if isnothing(click)
@@ -193,7 +193,7 @@ function clicked(click::Union{Click, Nothing}, @nospecialize(objects::AbstractAr
   end
 end
 
-function objClicked(click::Union{Click, Nothing}, @nospecialize(objects::AbstractArray), state::Union{State, Nothing}=nothing)::Union{Object, Nothing}
+function objClicked(click::Union{Click, Nothing}, @nospecialize(objects::AbstractVector), state::Union{State, Nothing}=nothing)::Union{Object, Nothing}
   # # println(click)
   if isnothing(click)
     nothing
@@ -228,12 +228,12 @@ function pushConfiguration(arrow::Position, @nospecialize(obj1::Object), @nospec
   pushConfiguration(arrow, obj1, [obj2], state)
 end
 
-function pushConfiguration(arrow::Position, @nospecialize(obj1::Object), @nospecialize(obj2::AbstractArray), @nospecialize(state::State))
+function pushConfiguration(arrow::Position, @nospecialize(obj1::Object), @nospecialize(obj2::AbstractVector), @nospecialize(state::State))
   # println("pushConfiguration: obj1 id = $(obj1.id), time = $(state.time)")
   moveIntersects(arrow, obj1, obj2, state) && isFree(move(move(obj1, arrow, state), arrow, state).origin, state)
 end
 
-function pushConfiguration(arrow::Position, @nospecialize(obj1::Object), @nospecialize(obj2::AbstractArray), @nospecialize(obj3::AbstractArray), @nospecialize(state::State))
+function pushConfiguration(arrow::Position, @nospecialize(obj1::Object), @nospecialize(obj2::AbstractVector), @nospecialize(obj3::AbstractVector), @nospecialize(state::State))
   moveIntersects(arrow, obj1, obj2, state) && intersects(move(move(obj1, arrow, state), arrow, state), obj3, state)
 end
 
@@ -241,13 +241,13 @@ function moveIntersects(arrow::Position, @nospecialize(obj1::Object), @nospecial
   (arrow != Position(0, 0)) && intersects(move(obj1, arrow, state), obj2, state)
 end
 
-function moveIntersects(arrow::Position, @nospecialize(obj::Object), @nospecialize(objects::AbstractArray), @nospecialize(state::State)) 
+function moveIntersects(arrow::Position, @nospecialize(obj::Object), @nospecialize(objects::AbstractVector), @nospecialize(state::State)) 
   (arrow != Position(0, 0)) && intersects(move(obj, arrow, state), objects, state)
 end
 
 function intersects(@nospecialize(obj1::Object), @nospecialize(obj2::Object), @nospecialize(state::State))::Bool
   GRID_SIZE = state.histories[:GRID_SIZE][0]
-  if GRID_SIZE isa AbstractArray 
+  if GRID_SIZE isa AbstractVector 
     GRID_SIZE_X = GRID_SIZE[1]
     GRID_SIZE_Y = GRID_SIZE[2]
     nums1 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, render(obj1, state))
@@ -260,9 +260,9 @@ function intersects(@nospecialize(obj1::Object), @nospecialize(obj2::Object), @n
   end
 end
 
-function intersects(@nospecialize(obj1::Object), @nospecialize(obj2::AbstractArray), @nospecialize(state::State))::Bool
+function intersects(@nospecialize(obj1::Object), @nospecialize(obj2::AbstractVector), @nospecialize(state::State))::Bool
   GRID_SIZE = state.histories[:GRID_SIZE][0]
-  if GRID_SIZE isa AbstractArray 
+  if GRID_SIZE isa AbstractVector 
     GRID_SIZE_X = GRID_SIZE[1]
     nums1 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, render(obj1, state))
     nums2 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, vcat(map(o -> render(o, state), obj2)...))
@@ -274,9 +274,9 @@ function intersects(@nospecialize(obj1::Object), @nospecialize(obj2::AbstractArr
   end
 end
 
-function intersects(@nospecialize(obj2::AbstractArray), @nospecialize(obj1::Object), @nospecialize(state::State))::Bool
+function intersects(@nospecialize(obj2::AbstractVector), @nospecialize(obj1::Object), @nospecialize(state::State))::Bool
   GRID_SIZE = state.histories[:GRID_SIZE][0] 
-  if GRID_SIZE isa AbstractArray 
+  if GRID_SIZE isa AbstractVector 
     GRID_SIZE_X = GRID_SIZE[1]
     nums1 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, render(obj1, state))
     nums2 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, vcat(map(o -> render(o, state), obj2)...))
@@ -288,13 +288,13 @@ function intersects(@nospecialize(obj2::AbstractArray), @nospecialize(obj1::Obje
   end
 end
 
-function intersects(@nospecialize(obj1::AbstractArray), @nospecialize(obj2::AbstractArray), @nospecialize(state::State))::Bool
+function intersects(@nospecialize(obj1::AbstractVector), @nospecialize(obj2::AbstractVector), @nospecialize(state::State))::Bool
   if (length(obj1) == 0) || (length(obj2) == 0)
     false  
   elseif (obj1[1] isa Object) && (obj2[1] isa Object)
     # # println("MADE IT")
     GRID_SIZE = state.histories[:GRID_SIZE][0]
-    if GRID_SIZE isa AbstractArray 
+    if GRID_SIZE isa AbstractVector 
       GRID_SIZE_X = GRID_SIZE[1]
       nums1 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, vcat(map(o -> render(o, state), obj1)...))
       nums2 = map(cell -> GRID_SIZE_X*cell.position.y + cell.position.x, vcat(map(o -> render(o, state), obj2)...))
@@ -314,17 +314,17 @@ function intersects(object::Object, @nospecialize(state::State))::Bool
   intersects(object, objects, state)
 end
 
-function addObj(@nospecialize(list::AbstractArray), obj::Object, state::Union{State, Nothing}=nothing)
+function addObj(@nospecialize(list::AbstractVector), obj::Object, state::Union{State, Nothing}=nothing)
   new_list = vcat(list, obj)
   new_list
 end
 
-function addObj(@nospecialize(list::AbstractArray), @nospecialize(objs::AbstractArray), state::Union{State, Nothing}=nothing)
+function addObj(@nospecialize(list::AbstractVector), @nospecialize(objs::AbstractVector), state::Union{State, Nothing}=nothing)
   new_list = vcat(list, objs)
   new_list
 end
 
-function removeObj(@nospecialize(list::AbstractArray), obj::Object, state::Union{State, Nothing}=nothing)
+function removeObj(@nospecialize(list::AbstractVector), obj::Object, state::Union{State, Nothing}=nothing)
   new_list = deepcopy(list)
   for x in filter(o -> o.id == obj.id, new_list)
     index = findall(o -> o.id == x.id, new_list)[1]
@@ -335,7 +335,7 @@ function removeObj(@nospecialize(list::AbstractArray), obj::Object, state::Union
   new_list
 end
 
-function removeObj(@nospecialize(list::AbstractArray), fn, state::Union{State, Nothing}=nothing)
+function removeObj(@nospecialize(list::AbstractVector), fn, state::Union{State, Nothing}=nothing)
   new_list = deepcopy(list)
   for x in filter(obj -> fn(obj), new_list)
     index = findall(o -> o.id == x.id, new_list)[1]
@@ -374,7 +374,7 @@ function filter_fallback(obj::Object, state::Union{State, Nothing}=nothing)
   true
 end
 
-# function updateObj(@nospecialize(list::AbstractArray), map_fn, filter_fn, state::Union{State, Nothing}=nothing)
+# function updateObj(@nospecialize(list::AbstractVector), map_fn, filter_fn, state::Union{State, Nothing}=nothing)
 #   orig_list = filter(obj -> !filter_fn(obj), list)
 #   filtered_list = filter(filter_fn, list)
 #   new_filtered_list = map(map_fn, filtered_list)
@@ -382,7 +382,7 @@ end
 #   vcat(orig_list, new_filtered_list)
 # end
 
-# function updateObj(@nospecialize(list::AbstractArray), map_fn, state::Union{State, Nothing}=nothing)
+# function updateObj(@nospecialize(list::AbstractVector), map_fn, state::Union{State, Nothing}=nothing)
 #   orig_list = filter(obj -> false, list)
 #   filtered_list = filter(obj -> true, list)
 #   new_filtered_list = map(map_fn, filtered_list)
@@ -390,13 +390,13 @@ end
 #   vcat(orig_list, new_filtered_list)
 # end
 
-function adjPositions(position::Position, @nospecialize(state::State))::Array{Position}
+function adjPositions(position::Position, @nospecialize(state::State))::Vector{Position}
   filter(x -> isWithinBounds(x, state), [Position(position.x, position.y + 1), Position(position.x, position.y - 1), Position(position.x + 1, position.y), Position(position.x - 1, position.y)])
 end
 
 function isWithinBounds(position::Position, @nospecialize(state::State))::Bool
   GRID_SIZE = state.histories[:GRID_SIZE][0] 
-  if GRID_SIZE isa AbstractArray 
+  if GRID_SIZE isa AbstractVector 
     GRID_SIZE_X = GRID_SIZE[1]
     GRID_SIZE_Y = GRID_SIZE[2]
   else
@@ -422,7 +422,7 @@ function isFree(click::Union{Click, Nothing}, @nospecialize(state::State))::Bool
   end
 end
 
-function isFree(positions::Array{Position}, @nospecialize(state::State))::Bool 
+function isFree(positions::Vector{Position}, @nospecialize(state::State))::Bool 
   foldl(|, map(pos -> isFree(pos, state), positions), init=false)
 end
 
@@ -490,7 +490,7 @@ function adjacent(cell1::Cell, cell2::Cell, unitSize::Int, state::Union{State, N
   adjacent(cell1.position, cell2.position, unitSize)
 end
 
-function adjacent(cell::Cell, cells::Array{Cell}, unitSize::Int, state::Union{State, Nothing}=nothing)
+function adjacent(cell::Cell, cells::Vector{Cell}, unitSize::Int, state::Union{State, Nothing}=nothing)
   length(filter(x -> adjacent(cell, x, unitSize), cells)) != 0
 end
 
@@ -515,11 +515,11 @@ function adj(@nospecialize(obj1::Object), @nospecialize(obj2::Object), unitSize:
   filter(o -> o.id == obj2.id, adjacentObjs(obj1, unitSize, state)) != []
 end
 
-function adj(@nospecialize(obj1::Object), @nospecialize(obj2::AbstractArray), unitSize::Int, @nospecialize(state::State)) 
+function adj(@nospecialize(obj1::Object), @nospecialize(obj2::AbstractVector), unitSize::Int, @nospecialize(state::State)) 
   filter(o -> o.id in map(x -> x.id, obj2), adjacentObjs(obj1, unitSize, state)) != []
 end
 
-function adj(@nospecialize(obj1::AbstractArray), @nospecialize(obj2::AbstractArray), unitSize::Int, @nospecialize(state::State)) 
+function adj(@nospecialize(obj1::AbstractVector), @nospecialize(obj2::AbstractVector), unitSize::Int, @nospecialize(state::State)) 
   obj1_adjacentObjs = vcat(map(x -> adjacentObjs(x, unitSize, state), obj1)...)
   intersect(map(x -> x.id, obj1_adjacentObjs), map(x -> x.id, obj2)) != []  
 end
@@ -528,11 +528,11 @@ function adjCorner(@nospecialize(obj1::Object), @nospecialize(obj2::Object), uni
   filter(o -> o.id == obj2.id, map(obj -> !(obj.id in map(z -> z.id, adjacentObjs(obj1, unitSize, state))), adjacentObjsDiag(obj1, unitSize, state))) != []
 end
 
-function adjCorner(@nospecialize(obj1::Object), @nospecialize(obj2::AbstractArray), unitSize::Int, @nospecialize(state::State))
+function adjCorner(@nospecialize(obj1::Object), @nospecialize(obj2::AbstractVector), unitSize::Int, @nospecialize(state::State))
   filter(o -> o.id in map(x -> x.id, obj2), map(obj -> !(obj.id in map(z -> z.id, adjacentObjs(obj1, unitSize, state))), adjacentObjsDiag(obj1, unitSize, state))) != []
 end
 
-function adjCorner(@nospecialize(obj1::AbstractArray), @nospecialize(obj2::AbstractArray), unitSize::Int, @nospecialize(state::State))
+function adjCorner(@nospecialize(obj1::AbstractVector), @nospecialize(obj2::AbstractVector), unitSize::Int, @nospecialize(state::State))
   obj1_adjacentObjs = vcat(map(x -> map(obj -> !(obj.id in map(z -> z.id, adjacentObjs(obj1, unitSize, state))), adjacentObjsDiag(x, unitSize, state)), obj1)...)
   intersect(map(x -> x.id, obj1_adjacentObjs), map(x -> x.id, obj2)) != []
 end
@@ -668,7 +668,7 @@ end
 
 function moveWrap(position::Position, x::Int, y::Int, @nospecialize(state::State))::Position
   GRID_SIZE = state.histories[:GRID_SIZE][0]
-  if GRID_SIZE isa AbstractArray 
+  if GRID_SIZE isa AbstractVector 
     GRID_SIZE_X = GRID_SIZE[1]
     GRID_SIZE_Y = GRID_SIZE[2]
     # # println("hello")
@@ -712,8 +712,8 @@ function scalarMult(pos::Position, s::Int, state::Union{State, Nothing}=nothing)
   Position(pos.x * s, pos.y * s)
 end
 
-function randomPositions(GRID_SIZE, n::Int, state::Union{State, Nothing}=nothing)::Array{Position}
-  if GRID_SIZE isa AbstractArray 
+function randomPositions(GRID_SIZE, n::Int, state::Union{State, Nothing}=nothing)::Vector{Position}
+  if GRID_SIZE isa AbstractVector 
     GRID_SIZE_X = GRID_SIZE[1]
     GRID_SIZE_Y = GRID_SIZE[2]
     nums = uniformChoice([0:(GRID_SIZE_X * GRID_SIZE_Y - 1);], n, state)
@@ -742,7 +742,7 @@ function distance(position::Position, object::Object, state::Union{State, Nothin
   distance(object.origin, position)
 end
 
-function distance(object::Object, @nospecialize(objects::AbstractArray), state::Union{State, Nothing}=nothing)::Int
+function distance(object::Object, @nospecialize(objects::AbstractVector), state::Union{State, Nothing}=nothing)::Int
   if objects == []
     typemax(Int)
   else
@@ -751,7 +751,7 @@ function distance(object::Object, @nospecialize(objects::AbstractArray), state::
   end
 end
 
-function distance(@nospecialize(objects1::AbstractArray), @nospecialize(objects2::AbstractArray), state::Union{State, Nothing}=nothing)::Int
+function distance(@nospecialize(objects1::AbstractVector), @nospecialize(objects2::AbstractVector), state::Union{State, Nothing}=nothing)::Int
   if objects1 == [] || objects2 == []
     typemax(Int)
   else
@@ -761,7 +761,7 @@ function distance(@nospecialize(objects1::AbstractArray), @nospecialize(objects2
 end
 
 
-function firstWithDefault(@nospecialize(arr::AbstractArray), state::Union{State, Nothing}=nothing) 
+function firstWithDefault(@nospecialize(arr::AbstractVector), state::Union{State, Nothing}=nothing) 
   if arr == [] 
     Position(-30, -30)
   else 
@@ -769,7 +769,7 @@ function firstWithDefault(@nospecialize(arr::AbstractArray), state::Union{State,
   end
 end
 
-function farthestRandom(object::Object, @nospecialize(types::AbstractArray), unit_size::Int, @nospecialize(state::State))::Position
+function farthestRandom(object::Object, @nospecialize(types::AbstractVector), unit_size::Int, @nospecialize(state::State))::Position
   choices = [farthestLeft(object, types, unit_size, state), 
              farthestRight(object, types, unit_size, state), 
              farthestDown(object, types, unit_size, state), 
@@ -787,7 +787,7 @@ function farthestRandom(object::Object, @nospecialize(types::AbstractArray), uni
   end
 end
 
-function farthestLeft(object::Object, @nospecialize(types::AbstractArray), unit_size::Int, @nospecialize(state::State))::Position 
+function farthestLeft(object::Object, @nospecialize(types::AbstractVector), unit_size::Int, @nospecialize(state::State))::Position 
   orig_position = closestRight(object, types, unit_size, state)
   if orig_position == Position(unit_size, 0)
     Position(-unit_size, 0)
@@ -807,7 +807,7 @@ function farthestLeft(object::Object, @nospecialize(types::AbstractArray), unit_
   end
 end
 
-function farthestRight(object::Object, @nospecialize(types::AbstractArray), unit_size::Int, @nospecialize(state::State))::Position
+function farthestRight(object::Object, @nospecialize(types::AbstractVector), unit_size::Int, @nospecialize(state::State))::Position
   orig_position = closestLeft(object, types, unit_size, state)
   if orig_position == Position(-unit_size, 0) 
     Position(unit_size, 0)
@@ -827,7 +827,7 @@ function farthestRight(object::Object, @nospecialize(types::AbstractArray), unit
   end
 end
 
-function farthestUp(object::Object, @nospecialize(types::AbstractArray), unit_size::Int, @nospecialize(state::State))::Position
+function farthestUp(object::Object, @nospecialize(types::AbstractVector), unit_size::Int, @nospecialize(state::State))::Position
   orig_position = closestDown(object, types, unit_size, state)
   if orig_position == Position(0, unit_size) 
     Position(0, -unit_size)
@@ -847,7 +847,7 @@ function farthestUp(object::Object, @nospecialize(types::AbstractArray), unit_si
   end
 end
 
-function farthestDown(object::Object, @nospecialize(types::AbstractArray), unit_size::Int, @nospecialize(state::State))::Position
+function farthestDown(object::Object, @nospecialize(types::AbstractVector), unit_size::Int, @nospecialize(state::State))::Position
   orig_position = closestUp(object, types, unit_size, state)
   if orig_position == Position(0, -unit_size) 
     Position(0, unit_size)
@@ -878,7 +878,7 @@ function closest(object::Object, type::Symbol, @nospecialize(state::State))::Pos
   end
 end
 
-function closest(object::Object, @nospecialize(types::AbstractArray), @nospecialize(state::State))::Position
+function closest(object::Object, @nospecialize(types::AbstractVector), @nospecialize(state::State))::Position
   objects_of_type = filter(obj -> (obj.type in types) && (obj.alive), state.scene.objects)
   if length(objects_of_type) == 0
     object.origin
@@ -889,7 +889,7 @@ function closest(object::Object, @nospecialize(types::AbstractArray), @nospecial
   end
 end
 
-function closestRandom(object::Object, @nospecialize(types::AbstractArray), unit_size::Int, @nospecialize(state::State))::Position
+function closestRandom(object::Object, @nospecialize(types::AbstractVector), unit_size::Int, @nospecialize(state::State))::Position
   choices = [closestLeft(object, types, unit_size, state), 
              closestRight(object, types, unit_size, state), 
              closestDown(object, types, unit_size, state), 
@@ -907,7 +907,7 @@ function closestRandom(object::Object, @nospecialize(types::AbstractArray), unit
   end
 end
 
-function closestLeft(object::Object, @nospecialize(types::AbstractArray), unit_size::Int, @nospecialize(state::State))::Position
+function closestLeft(object::Object, @nospecialize(types::AbstractVector), unit_size::Int, @nospecialize(state::State))::Position
   objects_of_type = filter(obj -> (obj.type in types) && (obj.alive), state.scene.objects)
   if length(objects_of_type) == 0
     Position(0, 0)
@@ -923,7 +923,7 @@ function closestLeft(object::Object, @nospecialize(types::AbstractArray), unit_s
   end
 end
 
-function closestRight(object::Object, @nospecialize(types::AbstractArray), unit_size::Int, @nospecialize(state::State))::Position
+function closestRight(object::Object, @nospecialize(types::AbstractVector), unit_size::Int, @nospecialize(state::State))::Position
   objects_of_type = filter(obj -> (obj.type in types) && (obj.alive), state.scene.objects)
   if length(objects_of_type) == 0
     Position(0, 0)
@@ -939,7 +939,7 @@ function closestRight(object::Object, @nospecialize(types::AbstractArray), unit_
   end
 end
 
-function closestUp(object::Object, @nospecialize(types::AbstractArray), unit_size::Int, @nospecialize(state::State))::Position
+function closestUp(object::Object, @nospecialize(types::AbstractVector), unit_size::Int, @nospecialize(state::State))::Position
   # @show object 
   # @show types 
   # @show state   
@@ -965,7 +965,7 @@ function closestUp(object::Object, @nospecialize(types::AbstractArray), unit_siz
   end
 end
 
-function closestDown(object::Object, @nospecialize(types::AbstractArray), unit_size::Int, @nospecialize(state::State))::Position
+function closestDown(object::Object, @nospecialize(types::AbstractVector), unit_size::Int, @nospecialize(state::State))::Position
   # @show object 
   # @show types 
   # @show state 
@@ -990,12 +990,12 @@ function closestDown(object::Object, @nospecialize(types::AbstractArray), unit_s
   end
 end
 
-function mapPositions(constructor, GRID_SIZE, filterFunction, args, state::Union{State, Nothing}=nothing)::AbstractArray
+function mapPositions(constructor, GRID_SIZE, filterFunction, args, state::Union{State, Nothing}=nothing)::AbstractVector
   map(pos -> constructor(args..., pos), filter(filterFunction, allPositions(GRID_SIZE)))
 end
 
 function allPositions(GRID_SIZE, state::Union{State, Nothing}=nothing)
-  if GRID_SIZE isa AbstractArray 
+  if GRID_SIZE isa AbstractVector 
     GRID_SIZE_X = GRID_SIZE[1]
     GRID_SIZE_Y = GRID_SIZE[2]
     nums = [0:(GRID_SIZE_X * GRID_SIZE_Y - 1);]
@@ -1021,7 +1021,7 @@ end
 function nextLiquid(object::Object, @nospecialize(state::State))::Object
   # # println("nextLiquid")
   GRID_SIZE = state.histories[:GRID_SIZE][0]
-  if GRID_SIZE isa AbstractArray 
+  if GRID_SIZE isa AbstractVector 
     GRID_SIZE_X = GRID_SIZE[1]
     GRID_SIZE_Y = GRID_SIZE[2]
   else
@@ -1080,7 +1080,7 @@ function nextSolid(object::Object, @nospecialize(state::State))::Object
   new_object
 end
 
-function closest(object::Object, positions::Array{Position}, state::Union{State, Nothing}=nothing)::Position
+function closest(object::Object, positions::Vector{Position}, state::Union{State, Nothing}=nothing)::Position
   closestDistance = sort(map(pos -> distance(pos, object.origin), positions))[1]
   closest = filter(pos -> distance(pos, object.origin) == closestDistance, positions)[1]
   closest
@@ -1088,7 +1088,7 @@ end
 
 function isFree(start::Position, stop::Position, @nospecialize(state::State))::Bool 
   GRID_SIZE = state.histories[:GRID_SIZE][0]
-  if GRID_SIZE isa AbstractArray 
+  if GRID_SIZE isa AbstractVector 
     GRID_SIZE_X = GRID_SIZE[1]
     GRID_SIZE_Y = GRID_SIZE[2]
   else
@@ -1110,7 +1110,7 @@ end
 
 function isFree(start::Position, stop::Position, object::Object, @nospecialize(state::State))::Bool 
   GRID_SIZE = state.histories[:GRID_SIZE][0]
-  if GRID_SIZE isa AbstractArray 
+  if GRID_SIZE isa AbstractVector 
     GRID_SIZE_X = GRID_SIZE[1]
     GRID_SIZE_Y = GRID_SIZE[2]
   else
@@ -1145,7 +1145,7 @@ end
 
 function allPositions(@nospecialize(state::State))
   GRID_SIZE = state.histories[:GRID_SIZE][0]
-  if GRID_SIZE isa AbstractArray 
+  if GRID_SIZE isa AbstractVector 
     GRID_SIZE_X = GRID_SIZE[1]
     GRID_SIZE_Y = GRID_SIZE[2]
   else
@@ -1156,7 +1156,7 @@ function allPositions(@nospecialize(state::State))
   map(num -> Position(num % GRID_SIZE_X, floor(Int, num / GRID_SIZE_X)), nums)
 end
 
-function unfold(A::AbstractArray, state::Union{State, Nothing}=nothing)
+function unfold(A::AbstractVector, state::Union{State, Nothing}=nothing)
   V = []
   for x in A
       for elt in x
