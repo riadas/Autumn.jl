@@ -34,7 +34,7 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
   for line in initnext_lines 
     var_name = line.args[1]
     next_clause = line.args[2].args[2]
-    if !(next_clause.head == :call && length(next_clause.args) == 2 && next_clause.args[1] == :prev && next_clause.args[2] == var_name)
+    if !(next_clause isa AExpr && next_clause.head == :call && length(next_clause.args) == 2 && next_clause.args[1] == :prev && next_clause.args[2] == var_name)
       new_on_clause = AExpr(:on, Symbol("true"), AExpr(:assign, var_name, next_clause))
       push!(default_on_clause_lines, new_on_clause)
     end
