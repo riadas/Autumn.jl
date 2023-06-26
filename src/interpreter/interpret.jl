@@ -66,9 +66,8 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
                               lifted_lines)
 
   # following initialization, we no longer need initnext lines 
-  reordered_lines = vcat(grid_params_and_object_type_lines, 
-                         on_clause_lines,
-                         lifted_lines)
+  reordered_lines = vcat(on_clause_lines,
+                         )
 
   # add prev functions and variable history to state for lifted variables 
   for line in lifted_lines
