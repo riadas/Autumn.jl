@@ -634,7 +634,8 @@ function interpret_init_next(var_name, var_val, @nospecialize(Γ::Env))
     Γ2.state.histories[Symbol(string(var_name))] = Dict()
 
     # construct prev function 
-    _, Γ2 = interpret(AExpr(:assign, Symbol(string(:prev, uppercasefirst(string(var_name)))), parseautumn("""(fn (state) (get (get (.. state histories) $(string(var_name)) -1) (- (.. state time) 1) $(var_name)))""")), Γ2) 
+    Γ2.current_var_values[Symbol(string(:prev, uppercasefirst(string(var_name))))] = [AExpr(:list, []), AExpr(:call, :get, Γ2.state.histories[var_name], Γ2.state.time - 1, var_name)]
+    # _, Γ2 = interpret(AExpr(:assign, Symbol(string(:prev, uppercasefirst(string(var_name)))), parseautumn("""(fn (state) (get (get (.. state histories) $(string(var_name)) -1) (- (.. state time) 1) $(var_name)))""")), Γ2) 
   end
   (AExpr(:assign, var_name, var_val), Γ2)
 end

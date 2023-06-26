@@ -77,7 +77,8 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
     env.state.histories[var_name] = Dict()
 
     # construct prev function 
-    _, env = interpret(AExpr(:assign, Symbol(string(:prev, uppercasefirst(string(var_name)))), parseautumn("""(fn () (get (.. (.. state histories) $(string(var_name))) (- (.. state time) 1) $(var_name)))""")), env) 
+    env.current_var_values[Symbol(string(:prev, uppercasefirst(string(var_name))))] = [AExpr(:list, []), AExpr(:call, :get, env.state.histories[var_name], env.state.time - 1, var_name)]
+    # _, env = interpret(AExpr(:assign, Symbol(string(:prev, uppercasefirst(string(var_name)))), parseautumn("""(fn () (get (.. (.. state histories) $(string(var_name))) (- (.. state time) 1) $(var_name)))""")), env) 
   end
 
   # add background to scene 
