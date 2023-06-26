@@ -19,7 +19,7 @@ end
 """Initialize environment with variable values"""
 function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
   aex.head == :program || error("Must be a program aex")
-  env = Env(false, false, false, false, nothing, Dict(), Dict(), Dict(), State(0, 0, rng, Scene([], "white"), Dict(), Dict()), show_rules)
+  env = Env(false, false, false, false, nothing, Dict(), State(0, 0, rng, Scene([], "white"), Dict(), Dict()), show_rules)
 
   lines = aex.args 
 
@@ -34,8 +34,10 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
   for line in initnext_lines 
     var_name = line.args[1]
     next_clause = line.args[2].args[2]
-    new_on_clause = AExpr(:on, Symbol("true"), AExpr(:assign, var_name, next_clause))
-    push!(default_on_clause_lines, new_on_clause)
+    if !(next_clause isa AExpr && next_clause.head == :call && length(next_clause.args) == 2 && next_clause.args[1] == :prev && next_clause.args[2] == var_name)
+      new_on_clause = AExpr(:on, Symbol("true"), AExpr(:assign, var_name, next_clause))
+      push!(default_on_clause_lines, new_on_clause)
+    end
   end
 
   # ----- START deriv handling -----
@@ -63,12 +65,11 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
   reordered_lines_init = vcat(grid_params_and_object_type_lines, 
                               initnext_lines, 
                               on_clause_lines, 
-                              lifted_lines)
+                              # lifted_lines
+                            )
 
   # following initialization, we no longer need initnext lines 
-  reordered_lines = vcat(grid_params_and_object_type_lines, 
-                         on_clause_lines,
-                         lifted_lines)
+  reordered_lines = on_clause_lines
 
   # add prev functions and variable history to state for lifted variables 
   for line in lifted_lines
@@ -88,7 +89,7 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
   # initialize lifted variables
   for line in lifted_lines
     var_name = line.args[1]
-    env.lifted[var_name] = line.args[2] 
+    # env.lifted[var_name] = line.args[2] 
     if var_name in [:GRID_SIZE, :background]
       env.current_var_values[var_name] = interpret(line.args[2], env)[1]
     end
@@ -148,10 +149,10 @@ function update_state(env_::Env)
 
   end
 
-  # update lifted variables 
-  for var_name in keys(env_.lifted)
-    env_.current_var_values[var_name] = interpret(env_.lifted[var_name], env_)[1]
-  end
+  # # update lifted variables 
+  # for var_name in keys(env_.lifted)
+  #   env_.current_var_values[var_name] = interpret(env_.lifted[var_name], env_)[1]
+  # end
 
   # update scene.objects 
   new_scene_objects = []
