@@ -1,7 +1,7 @@
 module InterpretUtils
 using ..AExpressions: AExpr
 using ..SExpr
-using ..AutumnStandardLibrary: Cell
+using ..AutumnStandardLibrary
 using Setfield
 export interpret, interpret_let, interpret_call, interpret_init_next, interpret_object, interpret_object_call, interpret_on, Environment, empty_env, std_env, update, primapl, isprim, update
 import MLStyle
@@ -501,14 +501,14 @@ function interpret_render(render, @nospecialize(Γ::Env))
     args = render.args 
     map_func = args[1]
     list, Γ = interpret(args[2], Γ)
-    new_list = Vector{Cell}(undef, length(list))
+    new_list = Vector{AutumnStandardLibrary.Cell}(undef, length(list))
     for (j, arg) in enumerate(list)  
       new_arg, Γ = interpret(AExpr(:call, map_func, arg), Γ)
       new_list[j] = new_arg
     end
   else
     args = render.head == :list ? render.args : [render] 
-    new_list = Vector{Cell}(undef, length(args))
+    new_list = Vector{AutumnStandardLibrary.Cell}(undef, length(args))
     for (j, arg) in enumerate(args)  
       new_arg, Γ = interpret(arg, Γ)
       new_list[j] = new_arg
