@@ -1,7 +1,7 @@
 module InterpretUtils
 using ..AExpressions: AExpr
 using ..SExpr
-using ..AutumnStandardLibrary
+using ..AutumnStandardLibrary: Cell
 using Setfield
 export interpret, interpret_let, interpret_call, interpret_init_next, interpret_object, interpret_object_call, interpret_on, Environment, empty_env, std_env, update, primapl, isprim, update
 import MLStyle
@@ -483,7 +483,12 @@ function interpret_object(args, @nospecialize(Γ::Env))
 
   # construct object creation function
   if length(object_fields) == 0
-    render, _ = interpret(object_render, Γ)
+    if object_render.head == :list
+      render, _ = interpret_render(object_render.args, Γ)
+    else
+      render, _ = interpret_render([object_render], Γ)
+    end
+    # @show typeof(render)
     if !(render isa AbstractArray) 
       render = [render]
     end
@@ -493,6 +498,15 @@ function interpret_object(args, @nospecialize(Γ::Env))
   end
   Γ.state.object_types[object_name] = object_tuple
   (AExpr(:object, args...), Γ)
+end
+
+function interpret_render(args, @nospecialize(Γ::Env))
+  new_list = Cell[]
+  for arg in args
+    new_arg, Γ = interpret(arg, Γ)
+    push!(new_list, new_arg)
+  end
+  new_list, Γ
 end
 
 function interpret_on(args, @nospecialize(Γ::Env))
