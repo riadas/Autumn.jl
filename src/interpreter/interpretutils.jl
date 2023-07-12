@@ -483,7 +483,8 @@ function interpret_object(args, @nospecialize(Γ::Env))
 
   # construct object creation function
   if length(object_fields) == 0
-    render, _ = interpret(object_render, Γ)
+    render, _ = interpret_render(object_render, Γ)
+    # @show typeof(render)
     if !(render isa AbstractArray) 
       render = [render]
     end
@@ -493,6 +494,27 @@ function interpret_object(args, @nospecialize(Γ::Env))
   end
   Γ.state.object_types[object_name] = object_tuple
   (AExpr(:object, args...), Γ)
+end
+
+function interpret_render(render, @nospecialize(Γ::Env))
+  if render.head == :map
+    args = render.args 
+    map_func = args[1]
+    list, Γ = interpret(args[2], Γ)
+    new_list = Vector{AutumnStandardLibrary.Cell}(undef, length(list))
+    for (j, arg) in enumerate(list)  
+      new_arg, Γ = interpret(AExpr(:call, map_func, arg), Γ)
+      new_list[j] = new_arg
+    end
+  else
+    args = render.head == :list ? render.args : [render] 
+    new_list = Vector{AutumnStandardLibrary.Cell}(undef, length(args))
+    for (j, arg) in enumerate(args)  
+      new_arg, Γ = interpret(arg, Γ)
+      new_list[j] = new_arg
+    end
+  end
+  new_list, Γ
 end
 
 function interpret_on(args, @nospecialize(Γ::Env))
