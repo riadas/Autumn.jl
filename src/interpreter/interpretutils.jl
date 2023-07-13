@@ -497,10 +497,11 @@ function interpret_object(args, @nospecialize(Γ::Env))
 end
 
 function interpret_render(render, @nospecialize(Γ::Env))
+  @show render
   if render.head == :call && render.args[1] == :map
     args = render.args 
-    map_func = args[1]
-    list, Γ = interpret(args[2], Γ)
+    map_func = args[2]
+    list, Γ = interpret(args[3], Γ)
     new_list = Vector{AutumnStandardLibrary.Cell}(undef, length(list))
     for (j, arg) in enumerate(list)  
       new_arg, Γ = interpret(AExpr(:call, map_func, arg), Γ)
