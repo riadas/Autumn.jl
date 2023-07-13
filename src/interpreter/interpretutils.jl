@@ -497,7 +497,7 @@ function interpret_object(args, @nospecialize(Γ::Env))
 end
 
 function interpret_render(render, @nospecialize(Γ::Env))
-  if render.head == :map
+  if render.head == :call && render.args[1] == :map
     args = render.args 
     map_func = args[1]
     list, Γ = interpret(args[2], Γ)
