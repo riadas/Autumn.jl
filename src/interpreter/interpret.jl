@@ -95,9 +95,14 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
     # env.lifted[var_name] = line.args[2] 
     if var_name in [:GRID_SIZE, :background]
       env.current_var_values[var_name] = interpret(line.args[2], env)[1]
-      env.state.histories[:GRID_SIZE][0] = env.current_var_values[var_name]
+      env.state.histories[var_name][0] = env.current_var_values[var_name]
     end
-  end 
+  end
+  
+  if !(:GRID_SIZE in keys(env.current_var_values))
+    env.current_var_values[:GRID_SIZE] = 16
+    env.state.histories[:GRID_SIZE]= Dict(0 => 16)    
+  end
 
   new_aex = AExpr(:program, reordered_lines_init...) # try interpreting the init_next's before on for the first time step (init)
 
