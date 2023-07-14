@@ -6,11 +6,15 @@ export update_history_depths
 function update_history_depths(aex::AExpr, Γ::Env)
   prev_aexs = findnodes(aex, :prev)
   for prev_aex in prev_aexs 
-    if (length(prev_aex.args) > 2) && (prev_aex.args[end] isa Int || prev_aex.args[end] isa BigInt)
+    if (length(prev_aex.args) > 2)
       var_name = prev_aex.args[2]
       depth = prev_aex.args[3]
-      if depth > Γ.state.history_depths[var_name]
-        Γ.state.history_depths[var_name] = depth
+      if depth isa Int || depth isa BigInt
+        if depth > Γ.state.history_depths[var_name]
+          Γ.state.history_depths[var_name] = Int(depth)
+        end
+      else 
+        Γ.state.history_depths[var_name] = Inf
       end
     end
   end
