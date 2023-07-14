@@ -2,6 +2,7 @@ module Interpret
 using ..InterpretUtils
 using ..AExpressions: AExpr
 using ..AutumnStandardLibrary
+using ..AbstractInterpret
 using ..SExpr
 using Random
 export empty_env, Environment, std_env, start, step, run, interpret_program, interpret_over_time, interpret_over_time_observations, interpret_over_time_observations_and_env
@@ -19,7 +20,7 @@ end
 """Initialize environment with variable values"""
 function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
   aex.head == :program || error("Must be a program aex")
-  env = Env(false, false, false, false, nothing, Dict(), State(0, 0, rng, Scene([], "white"), Dict(), Dict()), show_rules)
+  env = Env(false, false, false, false, nothing, Dict(), State(0, 0, rng, Scene([], "white"), Dict(), Dict(), Dict()), show_rules)
 
   lines = aex.args 
 
@@ -38,6 +39,7 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
       new_on_clause = AExpr(:on, Symbol("true"), AExpr(:assign, var_name, next_clause))
       push!(default_on_clause_lines, new_on_clause)
     end
+    env.state.history_depths[var_name] = 1
   end
 
   # ----- START deriv handling -----
@@ -76,6 +78,7 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
     var_name = line.args[1] 
     # construct history variable in state
     env.state.histories[var_name] = Dict()
+    env.state.history_depths[var_name] = 1
     # construct prev function 
     # env.current_var_values[Symbol(string(:prev, uppercasefirst(string(var_name))))] = [AExpr(:list, [:state]), AExpr(:call, :get, env.state.histories[var_name], AExpr(:call, :-, AExpr(:field, :state, :time), 1), var_name)]
     # _, env = interpret(AExpr(:assign, Symbol(string(:prev, uppercasefirst(string(var_name)))), parseautumn("""(fn () (get (.. (.. state histories) $(string(var_name))) (- (.. state time) 1) $(var_name)))""")), env) 
@@ -92,10 +95,15 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
     # env.lifted[var_name] = line.args[2] 
     if var_name in [:GRID_SIZE, :background]
       env.current_var_values[var_name] = interpret(line.args[2], env)[1]
+      env.state.histories[:GRID_SIZE][0] = env.current_var_values[var_name]
     end
   end 
 
   new_aex = AExpr(:program, reordered_lines_init...) # try interpreting the init_next's before on for the first time step (init)
+
+  # abstract interpretation: update history depths 
+  env = update_history_depths(new_aex, env)
+
   aex_, env_ = interpret_program(new_aex, env)
 
   # update state (time, histories, scene)
@@ -139,14 +147,16 @@ function update_state(env_::Env)
   env_ = update(env_, :click, nothing)
 
   # add updated variable values to history
-  for key in keys(env_.state.histories)    
-    env_.state.histories[key][env_.state.time] = env_.current_var_values[key]
-  
-    # delete earlier times stored in history, since we only use prev up to 1 level back
-    if env_.state.time > 0
-      delete!(env_.state.histories, env_.state.time - 1)
+  for key in keys(env_.state.histories)
+    if key != :GRID_SIZE 
+      env_.state.histories[key][env_.state.time] = env_.current_var_values[key]
+    
+      # delete history items older that history depth
+      depth = env_.state.history_depths[key]
+      if depth <= env_.state.time
+        delete!(env_.state.histories[key], env_.state.time - depth)
+      end
     end
-
   end
 
   # # update lifted variables 

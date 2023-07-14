@@ -274,7 +274,11 @@ function _call_interpret(@nospecialize(Γ::Env), f, args...)
     end
   end
   if f == :prev && args != (:obj,)
-    Γ.state.histories[args[1]][Γ.state.time - 1], Γ
+    if length(args) == 1 
+      Γ.state.histories[args[1]][Γ.state.time - 1], Γ
+    else 
+      (Γ.state.time - args[2]) in keys(Γ.state.histories[args[1]]) ? Γ.state.histories[args[1]][Γ.state.time - args[2]] : Γ.state.histories[args[1]][Γ.state.time - 1], Γ
+    end
   elseif islib(f)
     interpret_lib(f, args, Γ)
   elseif isjulialib(f)

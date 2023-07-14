@@ -49,6 +49,7 @@ mutable struct State
   scene::Scene 
   object_types::Dict{Symbol, ObjectType}
   histories::Dict{Symbol, Dict{Int, Any}}
+  history_depths::Dict{Symbol, Int}
 end
 
 

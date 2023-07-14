@@ -15,6 +15,9 @@ include("interpreter/autumnstdlib.jl")
 include("interpreter/interpretutils.jl")
 @reexport using .InterpretUtils
 
+include("interpreter/abstractinterpret.jl")
+@reexport using .AbstractInterpret
+
 include("interpreter/interpret.jl")
 @reexport using .Interpret
 
