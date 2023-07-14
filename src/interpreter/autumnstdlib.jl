@@ -48,7 +48,7 @@ mutable struct State
   rng::AbstractRNG
   scene::Scene 
   object_types::Dict{Symbol, ObjectType}
-  histories::Dict{Symbol, Dict{Int, Union{Int, Float64, String, Bool, Position, Object, AbstractVector}}}
+  histories::Dict{Symbol, Dict{Int, Any}}
 end
 
 
@@ -58,7 +58,7 @@ mutable struct Env
   up::Bool 
   down::Bool
   click::Union{Nothing, Click}
-  current_var_values::Dict{Symbol, Union{Object, Int, Float64, Bool, String, Position, State, AbstractVector}}
+  current_var_values::Dict{Symbol, Any}
   state::State
   show_rules::Int
 end
