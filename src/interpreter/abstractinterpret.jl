@@ -1,24 +1,59 @@
 module AbstractInterpret
 using ..AExpressions: AExpr
 using ..AutumnStandardLibrary 
-export update_history_depths
+export findnodes, identify_constants, compute_depth_bound, sub_depth
 
-function update_history_depths(aex::AExpr, Γ::Env)
-  prev_aexs = findnodes(aex, :prev)
-  for prev_aex in prev_aexs 
-    if (length(prev_aex.args) > 2)
-      var_name = prev_aex.args[2]
-      depth = prev_aex.args[3]
-      if depth isa Int || depth isa BigInt
-        if depth > Γ.state.history_depths[var_name]
-          Γ.state.history_depths[var_name] = Int(depth)
-        end
-      else 
-        Γ.state.history_depths[var_name] = Inf
+function identify_constants(aex::AExpr, Γ::Env)
+  constant_variables = deepcopy(Γ.current_var_values)
+  for line in aex.args 
+    assign_aexpr = line.args[2]
+    
+    if assign_aexpr.head == :let 
+      assignments = assign_aexpr.args
+    else 
+      assignments = [assign_aexpr]
+    end
+
+    for a in assignments 
+      var_name, val_expr = a.args
+      if repr(var_expr) != "(prev $(var_name))" # TODO: write a better equality check
+        delete!(constant_variables, var_name)        
       end
     end
+
   end
-  Γ
+  constant_variables
+end
+
+function compute_depth_bound(aex::AExpr, constant_variables, Γ) 
+  # TODO
+  if aex.head == :call && aex.args[1] == :uniformChoice 
+    return Inf
+  end
+
+  for arg in aex.args 
+    bound = compute_depth_bound(arg)
+    if bound == Inf 
+      return bound
+    end
+  end
+  0
+end
+
+function compute_depth_bound(aex::Symbol, constant_variables, Γ) 
+  if aex in keys(constant_variables)
+    0    
+  else
+    Inf
+  end 
+end
+
+function compute_depth_bound(aex, constant_variables, Γ) 
+  aex
+end
+
+function sub_depth(aex::AExpr, prev_aex::AExpr, depth::Int)
+  sub(aex, prev_aex, AExpr(:call, [:prev, prev_aex.args[2], depth]))
 end
 
 function findnodes(aex::AExpr, subaex::Symbol)
@@ -38,5 +73,31 @@ function findnodes(aex, subaex::Symbol, parent::Union{Nothing, AExpr}, solutions
     push!(solutions, parent)
   end
 end
+
+function sub(aex::AExpr, (x, v))
+  arr = [aex.head, aex.args...]
+  if (x isa AExpr) && ([x.head, x.args...] == arr)  
+    v 
+  else
+    MLStyle.@match arr begin
+      [:fn, args, body]                                       => AExpr(:fn, args, sub(body, x => v))
+      [:if, c, t, e]                                          => AExpr(:if, sub(c, x => v), sub(t, x => v), sub(e, x => v))
+      [:assign, a1, a2]                                       => AExpr(:assign, a1, sub(a2, x => v))
+      [:list, args...]                                        => AExpr(:list, map(arg -> sub(arg, x => v), args)...)
+      [:typedecl, args...]                                    => AExpr(:typedecl, args...)
+      [:let, args...]                                         => AExpr(:let, map(arg -> sub(arg, x => v), args)...)      
+      [:lambda, args, body]                                   => AExpr(:fn, args, sub(body, x => v))
+      [:call, f, args...]                                     => AExpr(:call, f, map(arg -> sub(arg, x => v) , args)...)      
+      [:field, o, fieldname]                                  => AExpr(:field, sub(o, x => v), fieldname)
+      [:object, args...]                                      => AExpr(:object, args...)
+      [:on, event, update]                                    => AExpr(:on, sub(event, x => v), sub(update, x => v))
+      [args...]                                               => throw(AutumnError(string("Invalid AExpr Head: ", expr.head)))
+      _                                                       => error("Could not sub $arr")
+    end
+  end
+end
+
+sub(aex::Symbol, (x, v)) = aex == x ? v : aex
+sub(aex, (x, v)) = aex # aex is a value
 
 end

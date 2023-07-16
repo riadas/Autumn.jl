@@ -2,7 +2,7 @@ module Interpret
 using ..InterpretUtils
 using ..AExpressions: AExpr
 using ..AutumnStandardLibrary
-using ..AbstractInterpret
+using ..AbstractInterpret: 
 using ..SExpr
 using Random
 export empty_env, Environment, std_env, start, step, run, interpret_program, interpret_over_time, interpret_over_time_observations, interpret_over_time_observations_and_env
@@ -106,15 +106,15 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
 
   new_aex = AExpr(:program, reordered_lines_init...) # try interpreting the init_next's before on for the first time step (init)
 
-  # abstract interpretation: update history depths 
-  env = update_history_depths(new_aex, env)
-
   aex_, env_ = interpret_program(new_aex, env)
+
+  # abstract interpretation: update history depths 
+  aex_, env = compute_history_depths(AExpr(:program, reordered_lines...), env)
 
   # update state (time, histories, scene)
   env_ = update_state(env_)
 
-  AExpr(:program, reordered_lines...), env_
+  aex_, env_
 end
 
 """Interpret program for one time step"""
@@ -141,6 +141,44 @@ function interpret_program(aex, Γ::Env)
     v, Γ = interpret(line, Γ)
   end
   return aex, Γ
+end
+
+"""Compute history depths"""
+function compute_history_depths(aex::AExpr, Γ::Env)
+  prev_aexs = findnodes(aex, :prev)
+  prev_aexes_with_non_literal_depths = []
+  for prev_aex in prev_aexs 
+    if (length(prev_aex.args) > 2)
+      var_name = prev_aex.args[2]
+      depth = prev_aex.args[3]
+      if depth isa Int || depth isa BigInt
+        if depth > Γ.state.history_depths[var_name]
+          Γ.state.history_depths[var_name] = Int(depth)
+        end
+      else
+        push!(prev_aexes_with_non_literal_depths, prev_aex)
+      end
+    end
+  end
+
+  # constant propagation
+  if !isempty(prev_aexes_with_non_literal_depths)
+    # identify constant variables 
+    constant_variables = identify_constants(aex, Γ)
+
+    for prev_aex in prev_aexes_with_non_literal_depths 
+      bound = compute_depth_bound(prev_aex.args[end], constant_variables, Γ)
+      if bound != Inf 
+        depth, _ = interpret(prev_aex, Γ)
+        Γ.state.history_depths[var_name] = depth
+        aex = sub_depth(aex, prev_aex, depth)
+      else
+        Γ.state.history_depths[var_name] = bound
+      end
+    end
+  end
+
+  aex, Γ
 end
 
 """Update the history variables, scene, and time fields of env_.state"""
