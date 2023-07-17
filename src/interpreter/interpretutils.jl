@@ -277,7 +277,8 @@ function _call_interpret(@nospecialize(Γ::Env), f, args...)
     if length(args) == 1 
       Γ.state.histories[args[1]][Γ.state.time - 1], Γ
     else 
-      (Γ.state.time - args[2]) in keys(Γ.state.histories[args[1]]) ? Γ.state.histories[args[1]][Γ.state.time - args[2]] : Γ.state.histories[args[1]][Γ.state.time - 1], Γ
+      offset = interpret(args[2], Γ)[1]
+      (Γ.state.time - offset) in keys(Γ.state.histories[args[1]]) ? Γ.state.histories[args[1]][Γ.state.time - offset] : Γ.state.histories[args[1]][Γ.state.time - 1], Γ
     end
   elseif islib(f)
     interpret_lib(f, args, Γ)

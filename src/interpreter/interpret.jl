@@ -109,8 +109,7 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
   aex_, env_ = interpret_program(new_aex, env)
 
   # abstract interpretation: update history depths 
-  aex_, env = compute_history_depths(AExpr(:program, reordered_lines...), env)
-
+  aex_, env_ = compute_history_depths(AExpr(:program, reordered_lines...), env)
   # update state (time, histories, scene)
   env_ = update_state(env_)
 
@@ -130,7 +129,7 @@ function step(aex::AExpr, env::Env, user_events=(click=nothing, left=false, righ
 
   # update state (time, histories, scene) + reset user_event
   env_ = update_state(env_)
-  
+
   env_
 end
 
@@ -165,11 +164,11 @@ function compute_history_depths(aex::AExpr, Γ::Env)
   if !isempty(prev_aexes_with_non_literal_depths)
     # identify constant variables 
     constant_variables = identify_constants(aex, Γ)
-
-    for prev_aex in prev_aexes_with_non_literal_depths 
+    for prev_aex in prev_aexes_with_non_literal_depths
+      var_name = prev_aex.args[2]
       bound = compute_depth_bound(prev_aex.args[end], constant_variables, Γ)
-      if bound != Inf 
-        depth, _ = interpret(prev_aex, Γ)
+      if bound != Inf
+        depth, _ = interpret(prev_aex.args[end], Γ)
         Γ.state.history_depths[var_name] = depth
         aex = sub_depth(aex, prev_aex, depth)
       else
