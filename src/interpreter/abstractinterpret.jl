@@ -1,6 +1,7 @@
 module AbstractInterpret
 using ..AExpressions: AExpr
 using ..AutumnStandardLibrary 
+using MLStyle
 export findnodes, identify_constants, compute_depth_bound, sub_depth
 
 function identify_constants(aex::AExpr, Γ::Env)
@@ -26,7 +27,6 @@ function identify_constants(aex::AExpr, Γ::Env)
 end
 
 function compute_depth_bound(aex::AExpr, constant_variables, Γ) 
-  # TODO
   if aex.head == :call && aex.args[1] == :uniformChoice 
     return Inf
   end
