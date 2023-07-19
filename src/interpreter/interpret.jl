@@ -213,7 +213,6 @@ function identify_constants(aex::AExpr, Γ::Env)
       for a in assignments 
         var_name, val_expr = a.args
         if var_name in past_round_failures
-          @show val_expr
           if (compute_depth_bound(val_expr, union(constant_variables, Set((var_name,))), Γ) == Inf) || interpret(val_expr, Γ)[1] != Γ.current_var_values[var_name]
             push!(current_round_failures, var_name)
           end
@@ -258,7 +257,8 @@ function identify_constants(aex::AExpr, Γ::Env)
       if assign_aexpr.head == :let 
         assign_aexpr.args = new_assignments 
       end
-      push!(new_lines, assign_aexpr)
+      line.args[2] = assign_aexpr
+      push!(new_lines, line)
     end
   end
 
