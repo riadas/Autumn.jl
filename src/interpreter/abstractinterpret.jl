@@ -1,6 +1,6 @@
 module AbstractInterpret
 using ..AExpressions: AExpr
-using ..AutumnStandardLibrary 
+using ..InterpretUtils: isprim, islib, isjulialib 
 using MLStyle
 export findnodes, compute_depth_bound, sub_depth
 
@@ -20,8 +20,8 @@ function compute_depth_bound(aex::AExpr, constant_variables, Γ)
 end
 
 function compute_depth_bound(aex::Symbol, constant_variables, Γ) 
-  if aex in keys(constant_variables) || (aex in (:+, :-, :*, :/, :&, :!, :|, :>, :>=, :<, :<=, :(==), :%, :!=,))
-    0    
+  if aex in constant_variables || isprim(aex) || islib(aex) || isjulialib(aex)
+    0
   else
     Inf
   end 

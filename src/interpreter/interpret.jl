@@ -115,6 +115,7 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
   # update state (time, histories, scene)
   env_ = update_state(env_)
 
+  @show aex_
   aex_, env_
 end
 
@@ -146,6 +147,8 @@ end
 
 """Compute history depths"""
 function compute_history_depths(aex::AExpr, Γ::Env)
+  # identify constant variables and remove assignments of constants
+  aex, constant_variables = identify_constants(aex, Γ)
   prev_aexs = findnodes(aex, :prev)
   prev_aexes_with_non_literal_depths = []
   for prev_aex in prev_aexs 
@@ -164,8 +167,6 @@ function compute_history_depths(aex::AExpr, Γ::Env)
 
   # constant propagation
   if !isempty(prev_aexes_with_non_literal_depths)
-    # identify constant variables 
-    constant_variables = identify_constants(aex, Γ)
     for prev_aex in prev_aexes_with_non_literal_depths
       var_name = prev_aex.args[2]
       bound = compute_depth_bound(prev_aex.args[end], constant_variables, Γ)
@@ -183,41 +184,21 @@ function compute_history_depths(aex::AExpr, Γ::Env)
 end
 
 function identify_constants(aex::AExpr, Γ::Env)
-  constant_variables = deepcopy(Γ.current_var_values)
-  past_round_failures = Set{Symbol}()
-  # first pass
-  for line in aex.args 
-    assign_aexpr = line.args[2]
-    
-    if assign_aexpr.head == :let 
-      assignments = assign_aexpr.args
-    else 
-      assignments = [assign_aexpr]
-    end
-
-    for a in assignments 
-      var_name, val_expr = a.args
-      if !(repr(val_expr) in ("(prev $(var_name))", "(prev $(var_name) 1)", repr(constant_variables[var_name]))) # TODO: write a better equality check
-        push!(past_round_failures, var_name)
-        delete!(constant_variables, var_name)  
-      end
-    end
-
-  end
-
-  # subsequent passes
+  constant_variables = Set{Symbol}()
+  past_round_failures = Set(keys(Γ.current_var_values))
   current_round_failures = Set{Symbol}()
-  second_pass = true
-  while second_pass || current_round_failures != past_round_failures && !isempty(current_round_failures)
+  first_pass = true
+  # converge when set of constant variables no longer changes!
+  while first_pass || current_round_failures != past_round_failures && !isempty(current_round_failures)
     if isempty(past_round_failures)
       return constant_variables
     end
 
-    if !second_pass 
+    if !first_pass 
        past_round_failures = current_round_failures
        current_round_failures = Set{Symbol}()
     else
-      second_pass = false
+      first_pass = false
     end
 
     for line in aex.args
@@ -232,23 +213,56 @@ function identify_constants(aex::AExpr, Γ::Env)
       for a in assignments 
         var_name, val_expr = a.args
         if var_name in past_round_failures
-          if val_expr.head == :call && val_expr.args[1] == :prev && val_expr.args[2] == var_name
-            depth_expr = val_expr.args[3]
-            if !(compute_depth_bound(depth_expr, constant_variables, Γ) != Inf && interpret(depth_expr, Γ)[1] == 1)
-              push!(current_round_failures, var_name)
-            end
-          elseif !(compute_depth_bound(val_expr, constant_variables, Γ) != Inf && interpret(val_expr, Γ)[1] == Γ.current_var_values[var_name]) 
+          @show val_expr
+          if (compute_depth_bound(val_expr, union(constant_variables, Set((var_name,))), Γ) == Inf) || interpret(val_expr, Γ)[1] != Γ.current_var_values[var_name]
             push!(current_round_failures, var_name)
           end
         end
       end
     end
     for var_name in setdiff(past_round_failures, current_round_failures)
-      constant_variables[var_name] = Γ.current_var_values[var_name]
+      push!(constant_variables, var_name)
     end
   end
 
-  constant_variables
+  prev_aexs = findnodes(aex, :prev)
+  for prev_aex in prev_aexs
+    if prev_aex.args[2] in constant_variables 
+      if Γ.current_var_values[prev_aex.args[2]] isa Int
+        aex = sub(aex, (prev_aex, Γ.current_var_values[prev_aex.args[2]]))
+      else
+        aex = sub(aex, (prev_aex, prev_aex.args[2]))
+      end
+    end
+  end
+
+  # TODO: delete assignments to constant variables (modify aex)
+  new_lines = []
+  for line in aex.args 
+    assign_aexpr = line.args[2]
+      
+    if assign_aexpr.head == :let 
+      assignments = assign_aexpr.args
+    else 
+      assignments = [assign_aexpr]
+    end
+
+    new_assignments = []
+    for a in assignments 
+      var_name, val_expr = a.args
+      if !(var_name in constant_variables) 
+        push!(new_assignments, a)
+      end
+    end
+    if !isempty(new_assignments)
+      if assign_aexpr.head == :let 
+        assign_aexpr.args = new_assignments 
+      end
+      push!(new_lines, assign_aexpr)
+    end
+  end
+
+  AExpr(:program, new_lines), constant_variables
 end
 
 """Update the history variables, scene, and time fields of env_.state"""
