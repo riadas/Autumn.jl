@@ -2,6 +2,7 @@ module Interpret
 using ..InterpretUtils
 using ..AExpressions: AExpr
 using ..AutumnStandardLibrary
+using ..AbstractInterpret
 using ..SExpr
 using Random
 export empty_env, Environment, std_env, start, step, run, interpret_program, interpret_over_time, interpret_over_time_observations, interpret_over_time_observations_and_env
@@ -19,7 +20,7 @@ end
 """Initialize environment with variable values"""
 function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
   aex.head == :program || error("Must be a program aex")
-  env = Env(false, false, false, false, nothing, Dict(), State(0, 0, rng, Scene([], "white"), Dict(), Dict()), show_rules)
+  env = Env(false, false, false, false, nothing, Dict(), State(0, 0, rng, Scene([], "white"), Dict(), Dict(), Dict()), show_rules)
 
   lines = aex.args 
 
@@ -31,13 +32,16 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
   on_clause_lines = filter(l -> l.head == :on, lines)
 
   default_on_clause_lines = []
+  default_on_clause_lines_for_abstract_interpret = []
   for line in initnext_lines 
     var_name = line.args[1]
     next_clause = line.args[2].args[2]
+    new_on_clause = AExpr(:on, Symbol("true"), AExpr(:assign, var_name, next_clause))
     if !(next_clause isa AExpr && next_clause.head == :call && length(next_clause.args) == 2 && next_clause.args[1] == :prev && next_clause.args[2] == var_name)
-      new_on_clause = AExpr(:on, Symbol("true"), AExpr(:assign, var_name, next_clause))
       push!(default_on_clause_lines, new_on_clause)
     end
+    push!(default_on_clause_lines_for_abstract_interpret, new_on_clause)
+    env.state.history_depths[var_name] = 1
   end
 
   # ----- START deriv handling -----
@@ -76,6 +80,7 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
     var_name = line.args[1] 
     # construct history variable in state
     env.state.histories[var_name] = Dict()
+    env.state.history_depths[var_name] = 1
     # construct prev function 
     # env.current_var_values[Symbol(string(:prev, uppercasefirst(string(var_name))))] = [AExpr(:list, [:state]), AExpr(:call, :get, env.state.histories[var_name], AExpr(:call, :-, AExpr(:field, :state, :time), 1), var_name)]
     # _, env = interpret(AExpr(:assign, Symbol(string(:prev, uppercasefirst(string(var_name)))), parseautumn("""(fn () (get (.. (.. state histories) $(string(var_name))) (- (.. state time) 1) $(var_name)))""")), env) 
@@ -92,16 +97,26 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
     # env.lifted[var_name] = line.args[2] 
     if var_name in [:GRID_SIZE, :background]
       env.current_var_values[var_name] = interpret(line.args[2], env)[1]
+      env.state.histories[var_name][0] = env.current_var_values[var_name]
     end
-  end 
+  end
+  
+  if !(:GRID_SIZE in keys(env.current_var_values))
+    env.current_var_values[:GRID_SIZE] = 16
+    env.state.histories[:GRID_SIZE]= Dict(0 => 16)    
+  end
 
   new_aex = AExpr(:program, reordered_lines_init...) # try interpreting the init_next's before on for the first time step (init)
+
   aex_, env_ = interpret_program(new_aex, env)
 
+  # abstract interpretation: update history depths 
+  aex_, env_ = compute_history_depths(AExpr(:program, reordered_lines...), env_)
   # update state (time, histories, scene)
   env_ = update_state(env_)
 
-  AExpr(:program, reordered_lines...), env_
+  @show aex_
+  aex_, env_
 end
 
 """Interpret program for one time step"""
@@ -117,7 +132,7 @@ function step(aex::AExpr, env::Env, user_events=(click=nothing, left=false, righ
 
   # update state (time, histories, scene) + reset user_event
   env_ = update_state(env_)
-  
+
   env_
 end
 
@@ -130,6 +145,126 @@ function interpret_program(aex, Γ::Env)
   return aex, Γ
 end
 
+"""Compute history depths"""
+function compute_history_depths(aex::AExpr, Γ::Env)
+  # identify constant variables and remove assignments of constants
+  aex, constant_variables = identify_constants(aex, Γ)
+  prev_aexs = findnodes(aex, :prev)
+  prev_aexes_with_non_literal_depths = []
+  for prev_aex in prev_aexs 
+    if (length(prev_aex.args) > 2)
+      var_name = prev_aex.args[2]
+      depth = prev_aex.args[3]
+      if depth isa Int || depth isa BigInt
+        if depth > Γ.state.history_depths[var_name]
+          Γ.state.history_depths[var_name] = Int(depth)
+        end
+      else
+        push!(prev_aexes_with_non_literal_depths, prev_aex)
+      end
+    end
+  end
+
+  # constant propagation
+  if !isempty(prev_aexes_with_non_literal_depths)
+    for prev_aex in prev_aexes_with_non_literal_depths
+      var_name = prev_aex.args[2]
+      bound = compute_depth_bound(prev_aex.args[end], constant_variables, Γ)
+      if bound != Inf
+        depth, _ = interpret(prev_aex.args[end], Γ)
+        Γ.state.history_depths[var_name] = depth
+        aex = sub_depth(aex, prev_aex, depth)
+      else
+        Γ.state.history_depths[var_name] = bound
+      end
+    end
+  end
+
+  aex, Γ
+end
+
+function identify_constants(aex::AExpr, Γ::Env)
+  constant_variables = Set{Symbol}()
+  past_round_failures = Set(keys(Γ.current_var_values))
+  current_round_failures = Set{Symbol}()
+  first_pass = true
+  # converge when set of constant variables no longer changes!
+  while first_pass || current_round_failures != past_round_failures && !isempty(current_round_failures)
+    if isempty(past_round_failures)
+      return constant_variables
+    end
+
+    if !first_pass 
+       past_round_failures = current_round_failures
+       current_round_failures = Set{Symbol}()
+    else
+      first_pass = false
+    end
+
+    for line in aex.args
+      assign_aexpr = line.args[2]
+      
+      if assign_aexpr.head == :let 
+        assignments = assign_aexpr.args
+      else 
+        assignments = [assign_aexpr]
+      end
+  
+      for a in assignments 
+        var_name, val_expr = a.args
+        if var_name in past_round_failures
+          if (compute_depth_bound(val_expr, union(constant_variables, Set((var_name,))), Γ) == Inf) || interpret(val_expr, Γ)[1] != Γ.current_var_values[var_name]
+            push!(current_round_failures, var_name)
+          end
+        end
+      end
+    end
+    for var_name in setdiff(past_round_failures, current_round_failures)
+      push!(constant_variables, var_name)
+    end
+  end
+
+  prev_aexs = findnodes(aex, :prev)
+  for prev_aex in prev_aexs
+    if prev_aex.args[2] in constant_variables 
+      if Γ.current_var_values[prev_aex.args[2]] isa Int
+        aex = sub(aex, (prev_aex, Γ.current_var_values[prev_aex.args[2]]))
+      else
+        aex = sub(aex, (prev_aex, prev_aex.args[2]))
+      end
+    end
+  end
+
+  # TODO: delete assignments to constant variables (modify aex)
+  new_lines = []
+  for line in aex.args 
+    assign_aexpr = line.args[2]
+      
+    if assign_aexpr.head == :let 
+      assignments = assign_aexpr.args
+    else 
+      assignments = [assign_aexpr]
+    end
+
+    new_assignments = []
+    for a in assignments 
+      var_name, val_expr = a.args
+      if !(var_name in constant_variables) 
+        push!(new_assignments, a)
+      end
+    end
+    if !isempty(new_assignments)
+      if assign_aexpr.head == :let 
+        assign_aexpr.args = new_assignments 
+      end
+      line.args[2] = assign_aexpr
+      push!(new_lines, line)
+    end
+  end
+
+  AExpr(:program, new_lines), constant_variables
+end
+
 """Update the history variables, scene, and time fields of env_.state"""
 function update_state(env_::Env)
   # reset user events 
@@ -139,14 +274,16 @@ function update_state(env_::Env)
   env_ = update(env_, :click, nothing)
 
   # add updated variable values to history
-  for key in keys(env_.state.histories)    
-    env_.state.histories[key][env_.state.time] = env_.current_var_values[key]
-  
-    # delete earlier times stored in history, since we only use prev up to 1 level back
-    if env_.state.time > 0
-      delete!(env_.state.histories, env_.state.time - 1)
+  for key in keys(env_.state.histories)
+    if key != :GRID_SIZE 
+      env_.state.histories[key][env_.state.time] = env_.current_var_values[key]
+    
+      # delete history items older that history depth
+      depth = env_.state.history_depths[key]
+      if depth <= env_.state.time
+        delete!(env_.state.histories[key], env_.state.time - depth)
+      end
     end
-
   end
 
   # # update lifted variables 
