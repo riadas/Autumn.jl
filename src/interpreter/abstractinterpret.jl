@@ -2,29 +2,8 @@ module AbstractInterpret
 using ..AExpressions: AExpr
 using ..AutumnStandardLibrary 
 using MLStyle
-export findnodes, identify_constants, compute_depth_bound, sub_depth
+export findnodes, compute_depth_bound, sub_depth
 
-function identify_constants(aex::AExpr, Γ::Env)
-  constant_variables = deepcopy(Γ.current_var_values)
-  for line in aex.args 
-    assign_aexpr = line.args[2]
-    
-    if assign_aexpr.head == :let 
-      assignments = assign_aexpr.args
-    else 
-      assignments = [assign_aexpr]
-    end
-
-    for a in assignments 
-      var_name, val_expr = a.args
-      if repr(val_expr) != "(prev $(var_name))" # TODO: write a better equality check
-        delete!(constant_variables, var_name)        
-      end
-    end
-
-  end
-  constant_variables
-end
 
 function compute_depth_bound(aex::AExpr, constant_variables, Γ) 
   if aex.head == :call && aex.args[1] == :uniformChoice 

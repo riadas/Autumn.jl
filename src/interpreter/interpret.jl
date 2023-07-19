@@ -32,13 +32,15 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
   on_clause_lines = filter(l -> l.head == :on, lines)
 
   default_on_clause_lines = []
+  default_on_clause_lines_for_abstract_interpret = []
   for line in initnext_lines 
     var_name = line.args[1]
     next_clause = line.args[2].args[2]
+    new_on_clause = AExpr(:on, Symbol("true"), AExpr(:assign, var_name, next_clause))
     if !(next_clause isa AExpr && next_clause.head == :call && length(next_clause.args) == 2 && next_clause.args[1] == :prev && next_clause.args[2] == var_name)
-      new_on_clause = AExpr(:on, Symbol("true"), AExpr(:assign, var_name, next_clause))
       push!(default_on_clause_lines, new_on_clause)
     end
+    push!(default_on_clause_lines_for_abstract_interpret, new_on_clause)
     env.state.history_depths[var_name] = 1
   end
 
@@ -109,7 +111,7 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
   aex_, env_ = interpret_program(new_aex, env)
 
   # abstract interpretation: update history depths 
-  aex_, env_ = compute_history_depths(AExpr(:program, reordered_lines...), env)
+  aex_, env_ = compute_history_depths(AExpr(:program, reordered_lines...), env_)
   # update state (time, histories, scene)
   env_ = update_state(env_)
 
@@ -178,6 +180,75 @@ function compute_history_depths(aex::AExpr, Γ::Env)
   end
 
   aex, Γ
+end
+
+function identify_constants(aex::AExpr, Γ::Env)
+  constant_variables = deepcopy(Γ.current_var_values)
+  past_round_failures = Set{Symbol}()
+  # first pass
+  for line in aex.args 
+    assign_aexpr = line.args[2]
+    
+    if assign_aexpr.head == :let 
+      assignments = assign_aexpr.args
+    else 
+      assignments = [assign_aexpr]
+    end
+
+    for a in assignments 
+      var_name, val_expr = a.args
+      if !(repr(val_expr) in ("(prev $(var_name))", "(prev $(var_name) 1)", repr(constant_variables[var_name]))) # TODO: write a better equality check
+        push!(past_round_failures, var_name)
+        delete!(constant_variables, var_name)  
+      end
+    end
+
+  end
+
+  # subsequent passes
+  current_round_failures = Set{Symbol}()
+  second_pass = true
+  while second_pass || current_round_failures != past_round_failures && !isempty(current_round_failures)
+    if isempty(past_round_failures)
+      return constant_variables
+    end
+
+    if !second_pass 
+       past_round_failures = current_round_failures
+       current_round_failures = Set{Symbol}()
+    else
+      second_pass = false
+    end
+
+    for line in aex.args
+      assign_aexpr = line.args[2]
+      
+      if assign_aexpr.head == :let 
+        assignments = assign_aexpr.args
+      else 
+        assignments = [assign_aexpr]
+      end
+  
+      for a in assignments 
+        var_name, val_expr = a.args
+        if var_name in past_round_failures
+          if val_expr.head == :call && val_expr.args[1] == :prev && val_expr.args[2] == var_name
+            depth_expr = val_expr.args[3]
+            if !(compute_depth_bound(depth_expr, constant_variables, Γ) != Inf && interpret(depth_expr, Γ)[1] == 1)
+              push!(current_round_failures, var_name)
+            end
+          elseif !(compute_depth_bound(val_expr, constant_variables, Γ) != Inf && interpret(val_expr, Γ)[1] == Γ.current_var_values[var_name]) 
+            push!(current_round_failures, var_name)
+          end
+        end
+      end
+    end
+    for var_name in setdiff(past_round_failures, current_round_failures)
+      constant_variables[var_name] = Γ.current_var_values[var_name]
+    end
+  end
+
+  constant_variables
 end
 
 """Update the history variables, scene, and time fields of env_.state"""
