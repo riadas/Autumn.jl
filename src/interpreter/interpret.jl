@@ -4,8 +4,121 @@ using ..AExpressions: AExpr
 using ..AutumnStandardLibrary
 using ..SExpr
 using Random
-export empty_env, Environment, std_env, start, step, run, interpret_program, interpret_over_time, interpret_over_time_observations, interpret_over_time_observations_and_env
+export empty_env, Environment, std_env, start, step, run, interpret_program, interpret_over_time, interpret_over_time_observations, interpret_over_time_observations_and_env, polystr_interpret_over_time
 import MLStyle
+
+"""Interpret program for given number of time steps, returning final environment"""
+function polystr_interpret_over_time(aex::AExpr, iters, user_events=[]; show_rules=-1)::Env
+  run_line = filter(l -> l.head == :run, aex.args)
+  isempty(run_line) && return interpret_over_time(aex, iters, user_events, show_rules = show_rules) # Did this to keep the old interpreter intact
+  run_model = run_line[1].args[1]
+  interpret_over_time_runner(aex, run_model, iters, user_events, show_rules = show_rules)
+end
+
+function interpret_over_time_runner(aex::AExpr, run_model::Symbol, iters, user_events=[]; show_rules=-1)::Env
+  new_aex, env_ = start_runner(aex, run_model, show_rules=show_rules)
+  for i in 1:iters
+    env_ = (user_events == []) ? step(new_aex, env_) : step(new_aex, env_, user_events[i])
+  end
+  env_
+end
+
+function start_runner(aex::AExpr, run_model::Symbol, rng=Random.GLOBAL_RNG; show_rules=-1)
+  aex.head == :program || error("Must be a program aex")
+  env = Env(false, false, false, false, nothing, Dict(), State(0, 0, rng, Scene([], "white"), Dict(), Dict()), show_rules)
+
+  lines = aex.args 
+
+  # reorder program lines
+  grid_params_and_object_type_lines = filter(l -> !(l.head in (:assign, :on, :deriv, :runner, :in, :run)), lines) # || (l.head == :assign && l.args[1] in [:GRID_SIZE, :background])
+  initnext_lines = filter(l -> l.head == :assign && (l.args[2] isa AExpr && l.args[2].head == :initnext), lines)
+  lifted_lines = filter(l -> l.head == :assign && (!(l.args[2] isa AExpr) || l.args[2].head != :initnext), lines) # GRID_SIZE and background here
+  deriv_lines = filter(l -> l.head == :deriv, lines)
+  on_clause_lines = filter(l -> l.head == :on, lines)
+
+  in_lines_ = filter(l -> l.head == :in && l.args[1] == run_model, lines)
+  in_lines = vcat((l.args[2:end] for l in in_lines_)...)
+
+  push!(grid_params_and_object_type_lines, filter(l -> !(l.head in (:assign, :on, :deriv, :runner, :in, :run)), in_lines)...)
+  push!(initnext_lines, filter(l -> l.head == :assign && (l.args[2] isa AExpr && l.args[2].head == :initnext), in_lines)...)
+  push!(lifted_lines, filter(l -> l.head == :assign && (!(l.args[2] isa AExpr) || l.args[2].head != :initnext), in_lines)...)
+  push!(deriv_lines, filter(l -> l.head == :deriv, in_lines)...)
+  push!(on_clause_lines, filter(l -> l.head == :on, in_lines)...)
+
+  default_on_clause_lines = []
+  for line in initnext_lines 
+    var_name = line.args[1]
+    next_clause = line.args[2].args[2]
+    if !(next_clause isa AExpr && next_clause.head == :call && length(next_clause.args) == 2 && next_clause.args[1] == :prev && next_clause.args[2] == var_name)
+      new_on_clause = AExpr(:on, Symbol("true"), AExpr(:assign, var_name, next_clause))
+      push!(default_on_clause_lines, new_on_clause)
+    end
+  end
+
+  # ----- START deriv handling -----
+  deriv_on_clause_lines = []
+  for line in deriv_lines 
+    new_on_clause = AExpr(:on, Symbol("true"), line)
+    push!(deriv_on_clause_lines, new_on_clause)
+  end
+
+  on_clause_lines_ = [default_on_clause_lines..., deriv_on_clause_lines..., on_clause_lines...]
+
+  on_clause_lines = []
+  for oc in on_clause_lines_ 
+    if oc.args[2].head == :deriv 
+      var = oc.args[2].args[1]
+      update = oc.args[2].args[2]
+      new_oc = AExpr(:on, oc.args[1], parseautumn("""(= $(var) (+ $(var) (* (/ 1 2) $(repr(update)))))"""))
+      push!(on_clause_lines, new_oc)
+    else
+      push!(on_clause_lines, oc)
+    end
+  end
+  # ----- END deriv handling -----
+
+  reordered_lines_init = vcat(grid_params_and_object_type_lines, 
+                              initnext_lines, 
+                              on_clause_lines, 
+                              # lifted_lines
+                            )
+
+  # following initialization, we no longer need initnext lines 
+  reordered_lines = on_clause_lines
+
+  # add prev functions and variable history to state for lifted variables 
+  for line in lifted_lines
+    var_name = line.args[1] 
+    # construct history variable in state
+    env.state.histories[var_name] = Dict()
+    # construct prev function 
+    # env.current_var_values[Symbol(string(:prev, uppercasefirst(string(var_name))))] = [AExpr(:list, [:state]), AExpr(:call, :get, env.state.histories[var_name], AExpr(:call, :-, AExpr(:field, :state, :time), 1), var_name)]
+    # _, env = interpret(AExpr(:assign, Symbol(string(:prev, uppercasefirst(string(var_name)))), parseautumn("""(fn () (get (.. (.. state histories) $(string(var_name))) (- (.. state time) 1) $(var_name)))""")), env) 
+  end
+
+  # add background to scene 
+  background_assignments = filter(l -> l.args[1] == :background, lifted_lines)
+  background = background_assignments != [] ? background_assignments[end].args[2] : "#ffffff00"
+  env.state.scene.background = background
+
+  # initialize lifted variables
+  for line in lifted_lines
+    var_name = line.args[1]
+    # env.lifted[var_name] = line.args[2] 
+    if var_name in [:GRID_SIZE, :background]
+      env.current_var_values[var_name] = interpret(line.args[2], env)[1]
+    end
+  end 
+
+  new_aex = AExpr(:program, reordered_lines_init...) # try interpreting the init_next's before on for the first time step (init)
+  @show new_aex
+  aex_, env_ = interpret_program(new_aex, env)
+
+  # update state (time, histories, scene)
+  env_ = update_state(env_)
+
+  AExpr(:program, reordered_lines...), env_
+end
 
 """Interpret program for given number of time steps, returning final environment"""
 function interpret_over_time(aex::AExpr, iters, user_events=[]; show_rules=-1)::Env
@@ -24,12 +137,11 @@ function start(aex::AExpr, rng=Random.GLOBAL_RNG; show_rules=-1)
   lines = aex.args 
 
   # reorder program lines
-  grid_params_and_object_type_lines = filter(l -> !(l.head in (:assign, :on, :deriv)), lines) # || (l.head == :assign && l.args[1] in [:GRID_SIZE, :background])
+  grid_params_and_object_type_lines = filter(l -> !(l.head in (:assign, :on, :deriv, :runner, :in, :run)), lines) # || (l.head == :assign && l.args[1] in [:GRID_SIZE, :background])
   initnext_lines = filter(l -> l.head == :assign && (l.args[2] isa AExpr && l.args[2].head == :initnext), lines)
   lifted_lines = filter(l -> l.head == :assign && (!(l.args[2] isa AExpr) || l.args[2].head != :initnext), lines) # GRID_SIZE and background here
   deriv_lines = filter(l -> l.head == :deriv, lines)
   on_clause_lines = filter(l -> l.head == :on, lines)
-
   default_on_clause_lines = []
   for line in initnext_lines 
     var_name = line.args[1]

@@ -117,6 +117,9 @@ function showstring(aexpr::AExpr)
     Expr(:object, name, args...) => "(object $(showstring(name)) $(join(map(showstring, args), " ")))"
     Expr(:on, event, upd) => "(on $(showstring(event)) $(showstring(upd)))"
     Expr(:deriv, x, val) => "(deriv $(showstring(x)) $(showstring(val)))"
+    Expr(:in, x, args...) => "(in $(showstring(x)) $(showstring(args...)))"
+    Expr(:runner, x) => "(runner $(showstring(x)))"
+    Expr(:run, x) => "(run $(showstring(x)))"
     x                       => "Fail $x"
   end
 end

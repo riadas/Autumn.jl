@@ -3,7 +3,7 @@ using ..AExpressions: AExpr
 using ..SExpr
 using ..AutumnStandardLibrary
 using Setfield
-export interpret, interpret_let, interpret_call, interpret_init_next, interpret_object, interpret_object_call, interpret_on, Environment, empty_env, std_env, update, primapl, isprim, update
+export interpret, interpret_let, interpret_call, interpret_init_next, interpret_object, interpret_object_call, interpret_on, Environment, empty_env, std_env, update, primapl, isprim, update, +₂
 import MLStyle
 using MappedArrays
 
@@ -47,6 +47,10 @@ function update(Γ::Object, x::Symbol, v)::Object
   end
   Γ
 end
+
+# function +₂(x, y)
+#   (x + y)%2
+# end
 
 # primitive function handling 
 const prim_to_func = let prims = (:+, :-, :*, :/, :&, :!, :|, :>, :>=, :<, :<=, :(==), :%, :!=,)
