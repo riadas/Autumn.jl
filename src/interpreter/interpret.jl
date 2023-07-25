@@ -11,6 +11,7 @@ import MLStyle
 function polystr_interpret_over_time(aex::AExpr, iters, user_events=[]; show_rules=-1)::Env
   run_line = filter(l -> l.head == :run, aex.args)
   isempty(run_line) && return interpret_over_time(aex, iters, user_events, show_rules = show_rules) # Did this to keep the old interpreter intact
+  @assert length(run_line) == 1
   run_model = run_line[1].args[1]
   interpret_over_time_runner(aex, run_model, iters, user_events, show_rules = show_rules)
 end

@@ -14,7 +14,7 @@ arithmatic = au"""(program
   (run R)
 )"""
 
-env = polystr_interpret_over_time(arithmatic, 4, [])
+env_arith = polystr_interpret_over_time(arithmatic, 4, [])
 
 light_switch = au"""(program
   (= GRID_SIZE 16)
@@ -51,9 +51,9 @@ light_switch = au"""(program
   (run P)
 )"""
 
-env = polystr_interpret_over_time(light_switch, 4, [(click=Autumn.AutumnStandardLibrary.Click(5,5),), empty_env(), (click=Autumn.AutumnStandardLibrary.Click(9,9),), empty_env()])
+env_light = polystr_interpret_over_time(light_switch, 4, [(click=Autumn.AutumnStandardLibrary.Click(5,5),), empty_env(), (click=Autumn.AutumnStandardLibrary.Click(9,9),), empty_env()])
 
-a = au"""(program
+lamp_example = au"""(program
     (= GRID_SIZE 16)
 
     (object Lamp (: on Bool) (map (--> pos (Cell pos (if on then "gold" else "gray"))) (vcat (list (Position 0 0)) 
@@ -80,14 +80,26 @@ a = au"""(program
     (: wire Wire)
     (= wire (initnext (Wire true (Position 8 12)) (prev wire)))
 
-    (on (clicked outlet) (= outlet (updateObj outlet "powerOut" (! (.. outlet powerOut)))))
     (on (clicked switch) (= switch (updateObj switch "on" (! (.. switch on)))))
+    (on (.. switch on) (= lamp (updateObj lamp "on" true)))
+    (on (! (.. switch on)) (= lamp (updateObj lamp "on" false)))
+
+    (runner Full)
+    (in Full 
+    (on (clicked outlet) (= outlet (updateObj outlet "powerOut" (! (.. outlet powerOut)))))
     (on (clicked wire) (= wire (updateObj wire "attached" (! (.. wire attached)))))
     (on (& (! (.. outlet powerOut)) (& (.. switch on) (.. wire attached))) (= lamp (updateObj lamp "on" true)))
-    (on (! (& (! (.. outlet powerOut)) (& (.. switch on) (.. wire attached)))) (= lamp (updateObj lamp "on" false)))
+    (on (! (& (! (.. outlet powerOut)) (& (.. switch on) (.. wire attached)))) (= lamp (updateObj lamp "on" false))))
+
+    (runner WithoutPowerOut)
+    (in WithoutPowerOut
+      (on (clicked wire) (= wire (updateObj wire "attached" (! (.. wire attached)))))
+      (on (& (.. switch on) (.. wire attached)) (= lamp (updateObj lamp "on" true)))
+      (on (! (& (.. switch on) (.. wire attached))) (= lamp (updateObj lamp "on" false)))
+    )
 )"""
 
-env = polystr_interpret_over_time(a, 4, [(click=Autumn.AutumnStandardLibrary.Click(5,5),), empty_env(), (click=Autumn.AutumnStandardLibrary.Click(9,9),), empty_env()])
+env_lamp = polystr_interpret_over_time(lamp_example, 3, [(click = Autumn.AutumnStandardLibrary.Click(3, 11), ), (click=Autumn.AutumnStandardLibrary.Click(8,12),), (click=Autumn.AutumnStandardLibrary.Click(3, 11),)])
 
 particles = au"""(program
     (= GRID_SIZE 16)
@@ -108,4 +120,4 @@ particles = au"""(program
     (run R1)
 )"""
 
-env = polystr_interpret_over_time(particles, 4, [(click=Autumn.AutumnStandardLibrary.Click(5,5),), empty_env(), (click=Autumn.AutumnStandardLibrary.Click(9,9),), empty_env()])
+env_particles = polystr_interpret_over_time(particles, 4, [(click=Autumn.AutumnStandardLibrary.Click(5,5),), empty_env(), (click=Autumn.AutumnStandardLibrary.Click(9,9),), empty_env()])
